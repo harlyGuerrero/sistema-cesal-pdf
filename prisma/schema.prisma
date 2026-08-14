@@ -1,0 +1,208 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+//
+// Modelo conceptual: ver ARCHITECTURE.md secciones 5 y 6.
+// Product no tiene relación obligatoria a Import: la trazabilidad es
+// Product <- ImportItem <- Import (ver skill import-workflow).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+// Categorías patrimoniales cerradas (ver ARCHITECTURE.md 5.2). No agregar OTROS.
+enum CategoryCode {
+  EQUIPOS_INFORMATICOS
+  EQUIPOS_DE_OFICINA
+  MUEBLES_DE_OFICINA
+  BIENES_VEHICULARES
+  EQUIPOS_DE_MAQUINARIA
+  BIENES_INMUEBLES
+}
+
+// Relevancia: distinta de la categoría patrimonial (ver skill product-classification).
+enum Relevance {
+  PRODUCT
+  CONSUMABLE
+  SERVICE
+  OTHER
+}
+
+enum ImportStatus {
+  UPLOADED
+  PROCESSING
+  READY_FOR_REVIEW
+  COMPLETED
+  FAILED
+}
+
+// Estado de cada fila detectada. IGNORED = relevance != PRODUCT (auto, sin revisión).
+// REVIEW_REQUIRED = confidence baja/media. CONFIRMED/REJECTED = decisión humana o auto (confidence alta).
+enum ImportItemStatus {
+  REVIEW_REQUIRED
+  CONFIRMED
+  REJECTED
+  IGNORED
+}
+
+// Qué produjo la clasificación de un ImportItem (relevance y/o category).
+enum ClassificationMethod {
+  RULE
+  OLLAMA
+  MANUAL
+}
+
+enum ProcessingEngine {
+  DOCLING
+  OCR
+  GLM_OCR
+  GRANITE_DOCLING
+  OLLAMA
+}
+
+enum ProcessingAttemptStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+model Category {
+  id   String       @id @default(cuid())
+  code CategoryCode @unique
+  name String
+
+  products     Product[]
+  importItems  ImportItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("categories")
+}
+
+// Producto lógico. No tiene importId: puede provenir de múltiples importaciones
+// a través de ImportItem (ver ARCHITECTURE.md 6).
+model Product {
+  id             String  @id @default(cuid())
+  name           String
+  normalizedName String
+  categoryId     String
+  category       Category @relation(fields: [categoryId], references: [id])
+
+  importItems ImportItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([normalizedName])
+  @@index([categoryId])
+  @@map("products")
+}
+
+model Import {
+  id            String       @id @default(cuid())
+  fileName      String
+  fileHash      String       @unique
+  fileSize      Int
+  mimeType      String
+  status        ImportStatus @default(UPLOADED)
+  errorMessage  String?
+
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+  completedAt DateTime?
+
+  items              ImportItem[]
+  processingAttempts ProcessingAttempt[]
+
+  @@index([status])
+  @@map("imports")
+}
+
+// Fila de producto detectada en un PDF. Puente entre lo extraído y el Product
+// lógico persistido (ver skill import-workflow).
+model ImportItem {
+  id String @id @default(cuid())
+
+  importId String
+  import   Import @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  // Origen: nunca se modifica una vez creado (ver skill pdf-extraction).
+  rawText     String
+  sourcePage  Int
+  sourceTable Int
+  sourceRow   Int
+
+  // Normalización (ver skill validation / Normalizer, Fase 5).
+  normalizedName String?
+  quantity       Decimal? @db.Decimal(14, 3)
+  unitPrice      Decimal? @db.Decimal(14, 2)
+  totalPrice     Decimal? @db.Decimal(14, 2)
+  currency       String?
+
+  // Clasificación (ver skill product-classification). Relevance y category son
+  // decisiones independientes (Fase 6 y Fase 7 del pipeline) con su propio
+  // método/confidence cada una — no un único par classificationMethod/confidence,
+  // que perdería cuál de las dos vino de Ollama y con qué confianza.
+  relevance           Relevance?
+  relevanceMethod     ClassificationMethod?
+  relevanceConfidence Float?
+  categoryId          String?
+  category            Category?             @relation(fields: [categoryId], references: [id])
+  categoryMethod      ClassificationMethod?
+  categoryConfidence  Float?
+
+  // Revisión (ver Fase 9).
+  status       ImportItemStatus @default(REVIEW_REQUIRED)
+  reviewNotes  String?
+  reviewedAt   DateTime?
+  reviewedBy   String?
+
+  // Persistencia (ver Fase 8). Nulo hasta confirmación.
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([importId])
+  @@index([status])
+  @@index([categoryId])
+  @@index([productId])
+  @@map("import_items")
+}
+
+// Registro de motor usado por intento de procesamiento de un Import
+// (ver ARCHITECTURE.md 6, skill import-workflow / document-ai).
+model ProcessingAttempt {
+  id String @id @default(cuid())
+
+  importId String
+  import   Import @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  engine ProcessingEngine
+  model  String?
+  status ProcessingAttemptStatus @default(RUNNING)
+
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+  durationMs   Int?
+  errorMessage String?
+  metadata     Json?
+
+  @@index([importId])
+  @@index([engine])
+  @@map("processing_attempts")
+}
