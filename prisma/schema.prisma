@@ -168,7 +168,8 @@ model SubcategoriaActivo {
   estado      Boolean         @default(true)
   orden       Int             @default(0)
 
-  campos CampoEspecificacion[]
+  campos  CampoEspecificacion[]
+  activos Activo[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -270,14 +271,32 @@ model ActivoEspecificacionValor {
   @@map("activo_especificacion_valores")
 }
 
+// Proveedor que vendió un Activo (ej. la factura de compra). Catálogo simple
+// — se resuelve por razonSocial (find-or-create) desde el formulario de
+// Activo, mismo criterio que Sede/Catalogo: es un dato de referencia, no una
+// unidad física, así que sí tiene sentido deduplicarlo por nombre.
+model Proveedor {
+  id          String  @id @default(cuid())
+  razonSocial String  @unique
+  documento   String?
+  contacto    String?
+  estado      Boolean @default(true)
+
+  activos Activo[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("proveedores")
+}
+
 // Activo patrimonial individual — antes "Product" (producto lógico
 // compartido entre importaciones). Ya no se deduplica por nombre: cada
 // unidad física es su propia fila (ver planificación de Activos, decisión
 // "Product se fusiona en Activo" + "1 Activo por unidad").
 //
-// Campos de ubicación (sedeId/unidadOperativaId/ambienteId), proveedorId y
-// responsableActualId llegan en fases posteriores (5, 6, 8) cuando esas
-// tablas existan — no se agregan vacíos de antemano.
+// responsableActualId llega en Fase 8, cuando exista Responsable — no se
+// agrega vacío de antemano.
 model Activo {
   id                String  @id @default(cuid())
   codigoPatrimonial String? @unique
@@ -285,8 +304,34 @@ model Activo {
   nombreNormalizado String
   descripcion       String?
 
+  // Siempre se conoce, aun para un Activo creado desde el pipeline de PDFs
+  // (la clasificación por Ollama/reglas trabaja a este nivel — ver
+  // ARCHITECTURE.md 5.2). subcategoriaId, en cambio, es opcional: un Activo
+  // recién importado no la trae, alguien la completa después editándolo.
   tipoActivoId String
   tipoActivo   TipoActivo @relation(fields: [tipoActivoId], references: [id])
+
+  // Denormalizado desde subcategoria.categoria.tipoActivo cuando existe — se
+  // deriva en el server action, nunca se elige por separado (ver
+  // app/activos/actions.ts). Opcional: un Activo recién creado por el
+  // pipeline de PDFs solo trae tipoActivoId, no la subcategoría fina — eso
+  // requiere un humano. El alta manual (Fase 6) sí la exige a nivel de
+  // formulario, aunque la columna lo permita null.
+  subcategoriaId String?
+  subcategoria   SubcategoriaActivo? @relation(fields: [subcategoriaId], references: [id])
+
+  // sedeId también es opcional por el mismo motivo: un Activo recién
+  // importado no tiene ubicación física conocida hasta que alguien lo
+  // registra. El alta manual la exige a nivel de formulario.
+  sedeId            String?
+  sede              Sede?            @relation(fields: [sedeId], references: [id])
+  unidadOperativaId String?
+  unidadOperativa   UnidadOperativa? @relation(fields: [unidadOperativaId], references: [id])
+  ambienteId        String?
+  ambiente          Ambiente?        @relation(fields: [ambienteId], references: [id])
+
+  proveedorId String?
+  proveedor   Proveedor? @relation(fields: [proveedorId], references: [id])
 
   fechaAdquisicion DateTime?
   numeroFactura    String?
@@ -315,6 +360,11 @@ model Activo {
 
   @@index([nombreNormalizado])
   @@index([tipoActivoId])
+  @@index([subcategoriaId])
+  @@index([sedeId])
+  @@index([unidadOperativaId])
+  @@index([ambienteId])
+  @@index([proveedorId])
   @@index([importItemId])
   @@map("activos")
 }
@@ -427,6 +477,7 @@ model Sede {
 
   unidadesOperativas UnidadOperativa[]
   ambientes          Ambiente[]
+  activos            Activo[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -446,6 +497,7 @@ model UnidadOperativa {
   name   String
 
   ambientes Ambiente[]
+  activos   Activo[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -467,6 +519,8 @@ model Ambiente {
   unidadOperativaId String?
   unidadOperativa   UnidadOperativa? @relation(fields: [unidadOperativaId], references: [id])
   name              String
+
+  activos Activo[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

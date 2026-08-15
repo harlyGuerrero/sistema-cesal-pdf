@@ -11,15 +11,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { deleteProductAction } from "../actions";
+import { deleteActivoAction } from "../actions";
 
-export function DeleteProductButton({
-  productId,
-  hasHistory,
-}: {
-  productId: string;
-  hasHistory: boolean;
-}) {
+export function DeleteActivoButton({ activoId, hasHistory }: { activoId: string; hasHistory: boolean }) {
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,17 +21,17 @@ export function DeleteProductButton({
   if (hasHistory) {
     return (
       <p className="text-sm text-muted-foreground">
-        Este producto tiene importaciones asociadas — no se puede eliminar (ver historial arriba).
+        Este activo proviene de una importación — no se puede eliminar (mantiene trazabilidad).
       </p>
     );
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="destructive" />}>Eliminar producto</DialogTrigger>
+      <DialogTrigger render={<Button variant="destructive" />}>Eliminar activo</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>¿Eliminar este producto?</DialogTitle>
+          <DialogTitle>¿Eliminar este activo?</DialogTitle>
           <DialogDescription>Esta acción no se puede deshacer.</DialogDescription>
         </DialogHeader>
         {error && <p className="text-sm text-destructive">{error}</p>}
@@ -48,10 +42,8 @@ export function DeleteProductButton({
             onClick={() =>
               startTransition(async () => {
                 try {
-                  await deleteProductAction(productId);
+                  await deleteActivoAction(activoId);
                 } catch (err) {
-                  // redirect() de Next.js señaliza la navegación lanzando un
-                  // error con digest "NEXT_REDIRECT;..." — no es un error real.
                   if (
                     err &&
                     typeof err === "object" &&

@@ -28,10 +28,13 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
-// Las 3 áreas funcionales originales (ver ARCHITECTURE.md sección 1).
+// Las 3 áreas funcionales originales (ver ARCHITECTURE.md sección 1) —
+// "Productos" pasó a ser "Activos" en Fase 6: Product se fusionó con Activo
+// desde Fase 1, y esta es la pantalla real (antes solo existía /productos,
+// una versión mínima heredada del pipeline de PDFs).
 const MAIN_NAV_ITEMS: NavMainItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboardIcon },
-  { title: "Productos", url: "/productos", icon: PackageIcon },
+  { title: "Activos", url: "/activos", icon: PackageIcon },
   { title: "Importaciones", url: "/importaciones", icon: FileStackIcon },
 ];
 
@@ -40,10 +43,9 @@ const ORG_NAV_ITEMS: NavMainItem[] = [
   { title: "Sedes", url: "/sedes", icon: Building2Icon },
 ];
 
-// Fase 2 (tipos, solo lectura) + Fase 3 (categorías/subcategorías) + Fase 4
-// (campos dinámicos y catálogos) de Activos. El listado real de Activos
-// llega en Fase 6.
-const ACTIVOS_NAV_ITEMS: NavMainItem[] = [
+// Configuración del módulo de Activos (Fases 2, 3 y 4) — administra la
+// taxonomía y los catálogos que consume el formulario de /activos/nuevo.
+const ACTIVOS_CONFIG_NAV_ITEMS: NavMainItem[] = [
   { title: "Tipos de Activo", url: "/activos/tipos", icon: TagIcon },
   { title: "Categorías", url: "/activos/categorias", icon: FolderTreeIcon },
   { title: "Campos", url: "/activos/campos", icon: ListTreeIcon },
@@ -84,7 +86,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={MAIN_NAV_ITEMS} label="Principal" />
-        <NavMain items={ACTIVOS_NAV_ITEMS} label="Activos" />
+        <NavMain items={ACTIVOS_CONFIG_NAV_ITEMS} label="Configuración de Activos" />
         <NavMain items={ORG_NAV_ITEMS} label="Organización" />
       </SidebarContent>
       <SidebarFooter>

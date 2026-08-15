@@ -30,7 +30,7 @@ export function NewSedeForm() {
           } catch (err) {
             // redirect() de Next.js señaliza la navegación lanzando un error
             // con digest "NEXT_REDIRECT;..." — hay que dejarlo pasar, no es
-            // un error real. Ver app/productos/nuevo/new-product-form.tsx.
+            // un error real. Ver app/activos/nuevo/page.tsx (ActivoForm).
             if (
               err &&
               typeof err === "object" &&

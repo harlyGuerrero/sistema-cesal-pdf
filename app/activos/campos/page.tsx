@@ -13,7 +13,7 @@ import { CampoList } from "./campo-list";
 
 // Fase 4 de Activos: campos de especificación técnica por subcategoría (ej.
 // "Memoria RAM" bajo Laptop). Selector server-side vía ?subcategoriaId= —
-// mismo patrón de filtro por querystring que /productos.
+// mismo patrón de filtro por querystring que /activos.
 export default async function CamposPage({
   searchParams,
 }: {
