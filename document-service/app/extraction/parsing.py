@@ -43,7 +43,7 @@ def is_integer_like(value: float, tolerance: float = 1e-6) -> bool:
 
 
 _LEADING_CURRENCY = re.compile(r"^(S/\.?|US\$|\$|€)\s*", re.IGNORECASE)
-_TRAILING_CURRENCY = re.compile(r"\s+(PEN|USD|EUR|SOLES)$", re.IGNORECASE)
+_TRAILING_CURRENCY = re.compile(r"\s*(PEN|USD|EUR|SOLES|S/\.?|US\$|\$|€)$", re.IGNORECASE)
 _PURE_NUMBER = re.compile(r"^-?\d[\d.,]*$")
 
 

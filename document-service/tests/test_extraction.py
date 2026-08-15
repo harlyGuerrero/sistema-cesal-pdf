@@ -29,6 +29,37 @@ def test_is_numeric_cell_distinguishes_numbers_from_text_containing_digits():
     assert is_numeric_cell(None) is False
 
 
+def test_is_numeric_cell_recognizes_trailing_currency_symbols():
+    """Bug real: facturas con precio formateado como '1500 €' (símbolo de
+    moneda al final, no código ISO) no eran reconocidas como columna numérica
+    -> ninguna columna de precio pasaba el umbral -> 0 candidatos en toda la
+    tabla, aunque la tabla y los datos fueran perfectamente válidos."""
+    assert is_numeric_cell("1500 €") is True
+    assert is_numeric_cell("1500€") is True
+    assert is_numeric_cell("1500 S/") is True
+    assert is_numeric_cell("1500 $") is True
+
+
+def test_detects_product_table_with_trailing_currency_symbol():
+    table = Table(
+        page=1,
+        index=0,
+        rows=[
+            ["CONCEPTO", "CANTIDAD", "PRECIO", "TOTAL"],
+            ["MONITOR TEROS", "1", "1500 €", "1500 €"],
+            ["IMPRESORA CANON", "1", "900 €", "900 €"],
+            ["Forma de pago: Transferencia", "", "SUBTOTAL", "2400 €"],
+        ],
+    )
+
+    candidates, summary = run_pipeline([table])
+
+    assert summary[0]["isProductTable"] is True
+    assert len(candidates) == 2
+    names = {c.name for c in candidates}
+    assert names == {"MONITOR TEROS", "IMPRESORA CANON"}
+
+
 def test_detects_product_table_with_model_numbers_in_description():
     """Reproduce el bug de Fase 9 de punta a punta: sin el fix, esta tabla se
     descartaba entera porque la columna de descripción parecía numérica."""
