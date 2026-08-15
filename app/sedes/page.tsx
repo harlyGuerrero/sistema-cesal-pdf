@@ -6,7 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { REGION_LABELS, REGION_OPTIONS } from "@/lib/sedes/labels";
 
 export default async function SedesPage() {
-  const sedes = await prisma.sede.findMany({ orderBy: [{ region: "asc" }, { city: "asc" }, { name: "asc" }] });
+  const sedes = await prisma.sede.findMany({
+    include: { _count: { select: { unidadesOperativas: true } } },
+    orderBy: [{ region: "asc" }, { name: "asc" }],
+  });
 
   const sedesByRegion = new Map<string, typeof sedes>();
   for (const option of REGION_OPTIONS) sedesByRegion.set(option.value, []);
@@ -45,7 +48,11 @@ export default async function SedesPage() {
                   >
                     <Building2Icon className="size-4 shrink-0 text-muted-foreground" />
                     <span className="flex-1 truncate">{sede.name}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">{sede.city}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {sede._count.unidadesOperativas > 0
+                        ? `${sede._count.unidadesOperativas} unidad${sede._count.unidadesOperativas === 1 ? "" : "es"}`
+                        : "Sin unidades"}
+                    </span>
                   </Link>
                 ))}
                 {regionSedes.length === 0 && (

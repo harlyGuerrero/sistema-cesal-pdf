@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { SedeEditForm } from "./sede-edit-form";
 import { DeleteSedeButton } from "./delete-sede-button";
+import { UnidadOperativaSection } from "./unidad-operativa-section";
+import { AmbienteSection } from "./ambiente-section";
 
 export default async function SedeDetailPage({
   params,
@@ -11,7 +13,17 @@ export default async function SedeDetailPage({
 }) {
   const { id } = await params;
 
-  const sede = await prisma.sede.findUnique({ where: { id } });
+  const sede = await prisma.sede.findUnique({
+    where: { id },
+    include: {
+      unidadesOperativas: { orderBy: { name: "asc" } },
+      ambientes: {
+        orderBy: { name: "asc" },
+        include: { unidadOperativa: { select: { id: true, name: true } } },
+      },
+      _count: { select: { unidadesOperativas: true, ambientes: true } },
+    },
+  });
 
   if (!sede) {
     notFound();
@@ -28,11 +40,32 @@ export default async function SedeDetailPage({
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-muted-foreground">Editar</h2>
-        <SedeEditForm sedeId={sede.id} name={sede.name} city={sede.city} region={sede.region} />
+        <SedeEditForm sedeId={sede.id} name={sede.name} region={sede.region} />
+      </section>
+
+      <section className="space-y-3 border-t pt-4">
+        <h2 className="text-sm font-medium text-muted-foreground">
+          Unidades operativas ({sede.unidadesOperativas.length})
+        </h2>
+        <UnidadOperativaSection sedeId={sede.id} unidades={sede.unidadesOperativas} />
+      </section>
+
+      <section className="space-y-3 border-t pt-4">
+        <h2 className="text-sm font-medium text-muted-foreground">
+          Ambientes ({sede.ambientes.length})
+        </h2>
+        <AmbienteSection
+          sedeId={sede.id}
+          ambientes={sede.ambientes}
+          unidadesOperativas={sede.unidadesOperativas}
+        />
       </section>
 
       <section className="border-t pt-4">
-        <DeleteSedeButton sedeId={sede.id} />
+        <DeleteSedeButton
+          sedeId={sede.id}
+          hasChildren={sede._count.unidadesOperativas > 0 || sede._count.ambientes > 0}
+        />
       </section>
     </main>
   );

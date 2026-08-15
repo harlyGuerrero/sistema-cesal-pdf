@@ -18,12 +18,10 @@ import { updateSedeAction } from "../actions";
 export function SedeEditForm({
   sedeId,
   name,
-  city,
   region,
 }: {
   sedeId: string;
   name: string;
-  city: string;
   region: string;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -47,10 +45,6 @@ export function SedeEditForm({
       <div className="space-y-1">
         <Label htmlFor="name">Nombre</Label>
         <Input id="name" name="name" defaultValue={name} required className="w-56" />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="city">Ciudad</Label>
-        <Input id="city" name="city" defaultValue={city} required className="w-48" />
       </div>
       <div className="space-y-1">
         <Label htmlFor="region">Región</Label>

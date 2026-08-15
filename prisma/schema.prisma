@@ -379,19 +379,63 @@ model ProcessingAttempt {
   @@map("processing_attempts")
 }
 
-// Sede física de la organización. Todavía sin relación a Activo (eso llega
-// en la Fase 5 de Activos, cuando se reestructure a la jerarquía real
-// Zona -> Sede -> Unidad Operativa -> Ambiente) — por ahora es solo el
-// catálogo de ubicaciones, tal como quedó en la Fase B.
+// Sede física de la organización (nivel ciudad, ej. "Huachipa"). Fase 5 de
+// Activos: reestructurada desde el modelo plano de Fase B — lo que antes era
+// Sede.name (ej. "CAE - Huachipa") ahora es UnidadOperativa.name, y lo que
+// antes era Sede.city ahora es este Sede.name. Todavía sin relación a Activo
+// (eso llega en Fase 6, cuando cada activo tenga una sede asignada).
 model Sede {
   id     String @id @default(cuid())
   name   String @unique
-  city   String
   region Region
+
+  unidadesOperativas UnidadOperativa[]
+  ambientes          Ambiente[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([region])
   @@map("sedes")
+}
+
+// Unidad administrativa/física dentro de una Sede (ej. "CAE - Huachipa" bajo
+// Huachipa). Opcional a nivel de Sede a propósito: Abancay, Andahuaylas,
+// Apurímac y Atalaya todavía no tienen ninguna definida — no se inventan
+// unidades ficticias para rellenar el hueco.
+model UnidadOperativa {
+  id     String @id @default(cuid())
+  sedeId String
+  sede   Sede   @relation(fields: [sedeId], references: [id])
+  name   String
+
+  ambientes Ambiente[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([sedeId, name])
+  @@index([sedeId])
+  @@map("unidades_operativas")
+}
+
+// Espacio físico dentro de una Sede (ej. un almacén, una oficina). sedeId es
+// siempre obligatorio; unidadOperativaId es opcional para cubrir sedes que
+// todavía no tienen unidad operativa propia. Si se define, debe pertenecer a
+// la misma sedeId — Prisma no expresa esa condición como FK compuesta, se
+// valida en el server action (ver app/sedes/actions.ts).
+model Ambiente {
+  id                String           @id @default(cuid())
+  sedeId            String
+  sede              Sede             @relation(fields: [sedeId], references: [id])
+  unidadOperativaId String?
+  unidadOperativa   UnidadOperativa? @relation(fields: [unidadOperativaId], references: [id])
+  name              String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sedeId])
+  @@index([unidadOperativaId])
+  @@map("ambientes")
 }

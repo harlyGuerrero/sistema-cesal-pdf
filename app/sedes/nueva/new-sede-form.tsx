@@ -48,11 +48,7 @@ export function NewSedeForm() {
     >
       <div className="space-y-1">
         <Label htmlFor="name">Nombre</Label>
-        <Input id="name" name="name" placeholder="Ej. CAE - Huachipa" required />
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="city">Ciudad</Label>
-        <Input id="city" name="city" placeholder="Ej. Huachipa" required />
+        <Input id="name" name="name" placeholder="Ej. Huachipa" required />
       </div>
       <div className="space-y-1">
         <Label htmlFor="region">Región</Label>

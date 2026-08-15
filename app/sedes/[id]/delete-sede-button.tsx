@@ -13,10 +13,25 @@ import {
 } from "@/components/ui/dialog";
 import { deleteSedeAction } from "../actions";
 
-export function DeleteSedeButton({ sedeId }: { sedeId: string }) {
+export function DeleteSedeButton({
+  sedeId,
+  hasChildren,
+}: {
+  sedeId: string;
+  hasChildren: boolean;
+}) {
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  if (hasChildren) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Esta sede tiene unidades operativas o ambientes asociados — no se puede eliminar (bórralos
+        primero).
+      </p>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

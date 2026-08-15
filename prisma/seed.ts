@@ -14,19 +14,26 @@ const TIPOS_ACTIVO: { code: TipoActivoCode; name: string }[] = [
   { code: TipoActivoCode.BIENES_INMUEBLES, name: "Bienes Inmuebles" },
 ];
 
-// Sedes reales de la organización (Fase B). Cuando una ciudad no tiene
-// sub-sedes propias (Sierra/Selva), la sede toma el nombre de la ciudad.
-const SEDES: { name: string; city: string; region: Region }[] = [
-  { name: "Sede Principal", city: "San Isidro", region: Region.COSTA },
-  { name: "CAE - Huachipa", city: "Huachipa", region: Region.COSTA },
-  { name: "AYTO - Huachipa", city: "Huachipa", region: Region.COSTA },
-  { name: "OIM - Huachipa", city: "Huachipa", region: Region.COSTA },
-  { name: "CETPRO - Huachipa", city: "Huachipa", region: Region.COSTA },
-  { name: "SIRAY WASI", city: "Huachipa", region: Region.COSTA },
-  { name: "Abancay", city: "Abancay", region: Region.SIERRA },
-  { name: "Andahuaylas", city: "Andahuaylas", region: Region.SIERRA },
-  { name: "Apurímac", city: "Apurímac", region: Region.SIERRA },
-  { name: "Atalaya", city: "Atalaya", region: Region.SELVA },
+// Sedes reales de la organización, a nivel ciudad (Fase 5 de Activos).
+// Abancay/Andahuaylas/Apurímac/Atalaya todavía no tienen unidad operativa
+// propia definida por CESAL — no se inventa una para rellenar el hueco.
+const SEDES: { name: string; region: Region }[] = [
+  { name: "San Isidro", region: Region.COSTA },
+  { name: "Huachipa", region: Region.COSTA },
+  { name: "Abancay", region: Region.SIERRA },
+  { name: "Andahuaylas", region: Region.SIERRA },
+  { name: "Apurímac", region: Region.SIERRA },
+  { name: "Atalaya", region: Region.SELVA },
+];
+
+// Unidades operativas reales, cada una bajo su sede (ciudad).
+const UNIDADES_OPERATIVAS: { sedeName: string; name: string }[] = [
+  { sedeName: "San Isidro", name: "Sede Principal" },
+  { sedeName: "Huachipa", name: "CAE - Huachipa" },
+  { sedeName: "Huachipa", name: "AYTO - Huachipa" },
+  { sedeName: "Huachipa", name: "OIM - Huachipa" },
+  { sedeName: "Huachipa", name: "CETPRO - Huachipa" },
+  { sedeName: "Huachipa", name: "SIRAY WASI" },
 ];
 
 async function main() {
@@ -41,8 +48,17 @@ async function main() {
   for (const sede of SEDES) {
     await prisma.sede.upsert({
       where: { name: sede.name },
-      update: { city: sede.city, region: sede.region },
+      update: { region: sede.region },
       create: sede,
+    });
+  }
+
+  for (const unidad of UNIDADES_OPERATIVAS) {
+    const sede = await prisma.sede.findUniqueOrThrow({ where: { name: unidad.sedeName } });
+    await prisma.unidadOperativa.upsert({
+      where: { sedeId_name: { sedeId: sede.id, name: unidad.name } },
+      update: {},
+      create: { sedeId: sede.id, name: unidad.name },
     });
   }
 }
