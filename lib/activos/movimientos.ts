@@ -1,4 +1,10 @@
-import type { Activo, EstadoPatrimonial, Prisma, TipoMovimiento } from "@/lib/generated/prisma/client";
+import type {
+  Activo,
+  EstadoPatrimonial,
+  Prisma,
+  TipoAccionAuditoria,
+  TipoMovimiento,
+} from "@/lib/generated/prisma/client";
 
 type UbicacionSnapshot = Pick<Activo, "sedeId" | "unidadOperativaId" | "ambienteId" | "estadoPatrimonial">;
 
@@ -58,6 +64,15 @@ function inferirTipoDeEdicion(
   // fuera del flujo de asignarResponsableAction) — se registra igual, sin
   // inventar un tipo más específico que no aplique.
   return "CAMBIO_UBICACION";
+}
+
+// Fase 11: reusa la misma inferencia que ya hace Movimiento para decidir qué
+// TipoAccionAuditoria corresponde a una edición de Activo — evita tener dos
+// lógicas de "qué fue lo importante que cambió" divergentes.
+export function movimientoTipoAAccionAuditoria(tipo: TipoMovimiento | null): TipoAccionAuditoria {
+  if (tipo === "BAJA") return "DAR_DE_BAJA";
+  if (tipo === "TRANSFERENCIA") return "TRANSFERIR";
+  return "ACTUALIZAR";
 }
 
 export function buildMovimientoDeAlta(activo: {

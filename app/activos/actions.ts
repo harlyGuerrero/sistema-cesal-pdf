@@ -5,7 +5,12 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { normalizeName } from "@/lib/normalization/normalize";
 import { readEspecificaciones } from "@/lib/activos/especificaciones";
-import { buildMovimientoDeAlta, buildMovimientoDeEdicion } from "@/lib/activos/movimientos";
+import {
+  buildMovimientoDeAlta,
+  buildMovimientoDeEdicion,
+  movimientoTipoAAccionAuditoria,
+} from "@/lib/activos/movimientos";
+import { registrarAuditoria } from "@/lib/auditoria/registrar";
 import type { CondicionFisica, EstadoPatrimonial } from "@/lib/generated/prisma/client";
 
 // Fase 6 de Activos: alta/edición/eliminación de Activo, integrando la
@@ -126,6 +131,10 @@ export async function createActivoAction(formData: FormData): Promise<void> {
       },
     });
     await tx.movimiento.create({ data: { activoId: created.id, ...buildMovimientoDeAlta(created) } });
+    await registrarAuditoria(
+      { accion: "DAR_DE_ALTA", entidad: "Activo", entidadId: created.id, detalle: { nombreActivo: created.nombreActivo } },
+      tx
+    );
     return created;
   });
 
@@ -159,11 +168,22 @@ export async function updateActivoAction(activoId: string, formData: FormData): 
 
     // Fase 9: si cambió ubicación o estado patrimonial, queda un Movimiento
     // (ver lib/activos/movimientos.ts) — no crea uno si solo cambió texto
-    // (nombre, descripción, valores económicos, etc.).
+    // (nombre, descripción, valores económicos, etc.). La Auditoría, en
+    // cambio, se registra siempre que se edita: "qué hizo el usuario" no
+    // depende de si el cambio fue patrimonialmente relevante.
     const movimiento = buildMovimientoDeEdicion(anterior, data);
     if (movimiento) {
       await tx.movimiento.create({ data: { activoId, ...movimiento } });
     }
+    await registrarAuditoria(
+      {
+        accion: movimientoTipoAAccionAuditoria(movimiento?.tipo ?? null),
+        entidad: "Activo",
+        entidadId: activoId,
+        detalle: { nombreActivo: data.nombreActivo },
+      },
+      tx
+    );
   });
 
   revalidatePath(`/activos/${activoId}`);
@@ -199,6 +219,10 @@ export async function asignarResponsableAction(activoId: string, responsableId: 
         estadoNuevo: "ASIGNADO",
       },
     });
+    await registrarAuditoria(
+      { accion: "ASIGNAR", entidad: "Activo", entidadId: activoId, detalle: { responsableId } },
+      tx
+    );
   });
 
   revalidatePath(`/activos/${activoId}`);
@@ -224,6 +248,15 @@ export async function desasignarResponsableAction(activoId: string): Promise<voi
         estadoNuevo: "DISPONIBLE",
       },
     });
+    await registrarAuditoria(
+      {
+        accion: "ACTUALIZAR",
+        entidad: "Activo",
+        entidadId: activoId,
+        detalle: { motivo: "desasignar_responsable" },
+      },
+      tx
+    );
   });
 
   revalidatePath(`/activos/${activoId}`);
@@ -250,7 +283,13 @@ export async function deleteActivoAction(activoId: string): Promise<void> {
     throw new Error("No se puede eliminar: tiene documentos adjuntos.");
   }
 
-  await prisma.activo.delete({ where: { id: activoId } });
+  await prisma.$transaction(async (tx) => {
+    await tx.activo.delete({ where: { id: activoId } });
+    await registrarAuditoria(
+      { accion: "ELIMINAR", entidad: "Activo", entidadId: activoId, detalle: { nombreActivo: activo.nombreActivo } },
+      tx
+    );
+  });
 
   revalidatePath("/activos");
   redirect("/activos");

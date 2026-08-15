@@ -13,6 +13,7 @@ import {
   BookMarkedIcon,
   UsersIcon,
   UserCogIcon,
+  ScrollTextIcon,
   MoonIcon,
 } from "lucide-react";
 
@@ -41,11 +42,13 @@ const MAIN_NAV_ITEMS: NavMainItem[] = [
 ];
 
 // Fase B (Sedes) + Fase 8 de Activos (Responsables, personas a quien se
-// asigna un activo; Usuarios, quién opera el sistema sin login todavía).
+// asigna un activo; Usuarios, quién opera el sistema sin login todavía) +
+// Fase 11 (Auditoría, log de solo lectura de mutaciones del sistema).
 const ORG_NAV_ITEMS: NavMainItem[] = [
   { title: "Sedes", url: "/sedes", icon: Building2Icon },
   { title: "Responsables", url: "/responsables", icon: UsersIcon },
   { title: "Usuarios", url: "/usuarios", icon: UserCogIcon },
+  { title: "Auditoría", url: "/auditoria", icon: ScrollTextIcon },
 ];
 
 // Configuración del módulo de Activos (Fases 2, 3 y 4) — administra la

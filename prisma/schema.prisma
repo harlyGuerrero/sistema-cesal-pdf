@@ -143,6 +143,20 @@ enum TipoDocumento {
   OTRO
 }
 
+// Fase 11: "qué hizo el usuario en el sistema" — distinto de TipoMovimiento
+// ("qué le pasó al activo"). Ver AuditoriaLog.
+enum TipoAccionAuditoria {
+  CREAR
+  ACTUALIZAR
+  ELIMINAR
+  DAR_DE_ALTA
+  DAR_DE_BAJA
+  ASIGNAR
+  TRANSFERIR
+  ADJUNTAR_DOCUMENTO
+  ELIMINAR_DOCUMENTO
+}
+
 // ---------------------------------------------------------------------------
 // Models
 // ---------------------------------------------------------------------------
@@ -333,6 +347,7 @@ model Usuario {
 
   movimientos        Movimiento[]
   documentosCargados Documento[]
+  auditoriaLogs      AuditoriaLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -448,6 +463,30 @@ model Documento {
   @@index([activoId])
   @@index([tipoDocumento])
   @@map("documentos")
+}
+
+// Log genérico de acciones del sistema (Fase 11) — "qué hizo el usuario",
+// distinto de Movimiento ("qué le pasó al activo", Fase 9). Una sola tabla
+// para todas las entidades: entidad+entidadId es una referencia lógica, no
+// una FK tipada — así no hace falta una tabla de auditoría por entidad, y
+// sigue funcionando aunque la fila referenciada se borre después.
+model AuditoriaLog {
+  id String @id @default(cuid())
+
+  usuarioId String?
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
+
+  accion    TipoAccionAuditoria
+  entidad   String
+  entidadId String
+  detalle   Json?
+
+  fecha DateTime @default(now())
+
+  @@index([entidad, entidadId])
+  @@index([usuarioId])
+  @@index([accion])
+  @@map("auditoria_logs")
 }
 
 // Activo patrimonial individual — antes "Product" (producto lógico

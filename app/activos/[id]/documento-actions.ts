@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { validateDocumentUpload, DocumentValidationError } from "@/lib/security/document-validation";
 import { guardarDocumento } from "@/lib/documentos/storage";
+import { registrarAuditoria } from "@/lib/auditoria/registrar";
 import type { TipoDocumento } from "@/lib/generated/prisma/client";
 
 // Fase 10 de Activos: subir/eliminar documentos adjuntos a un Activo. El
@@ -36,18 +37,29 @@ export async function subirDocumentoAction(activoId: string, formData: FormData)
   const extension = tipoArchivo.extensions[0];
   const nombreArchivo = await guardarDocumento(activoId, extension, buffer);
 
-  await prisma.documento.create({
-    data: {
-      activoId,
-      tipoDocumento,
-      nombre: file.name,
-      nombreOriginal: file.name,
-      url: nombreArchivo,
-      mimeType: tipoArchivo.mimeType,
-      extension,
-      tamanoBytes: buffer.length,
-      descripcion,
-    },
+  await prisma.$transaction(async (tx) => {
+    const documento = await tx.documento.create({
+      data: {
+        activoId,
+        tipoDocumento,
+        nombre: file.name,
+        nombreOriginal: file.name,
+        url: nombreArchivo,
+        mimeType: tipoArchivo.mimeType,
+        extension,
+        tamanoBytes: buffer.length,
+        descripcion,
+      },
+    });
+    await registrarAuditoria(
+      {
+        accion: "ADJUNTAR_DOCUMENTO",
+        entidad: "Documento",
+        entidadId: documento.id,
+        detalle: { activoId, tipoDocumento, nombreOriginal: file.name },
+      },
+      tx
+    );
   });
 
   revalidatePath(`/activos/${activoId}`);
@@ -55,9 +67,21 @@ export async function subirDocumentoAction(activoId: string, formData: FormData)
 }
 
 export async function eliminarDocumentoAction(documentoId: string): Promise<void> {
-  const documento = await prisma.documento.update({
-    where: { id: documentoId },
-    data: { estado: false },
+  const documento = await prisma.$transaction(async (tx) => {
+    const updated = await tx.documento.update({
+      where: { id: documentoId },
+      data: { estado: false },
+    });
+    await registrarAuditoria(
+      {
+        accion: "ELIMINAR_DOCUMENTO",
+        entidad: "Documento",
+        entidadId: documentoId,
+        detalle: { activoId: updated.activoId, nombreOriginal: updated.nombreOriginal },
+      },
+      tx
+    );
+    return updated;
   });
 
   revalidatePath(`/activos/${documento.activoId}`);

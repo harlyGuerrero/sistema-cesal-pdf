@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { registrarAuditoria } from "@/lib/auditoria/registrar";
 
 // Fase 8 de Activos: Responsable es la persona a la que se puede asignar un
 // Activo — no implica acceso al sistema (ver Usuario).
@@ -23,7 +24,13 @@ function readResponsableInput(formData: FormData) {
 export async function createResponsableAction(formData: FormData): Promise<void> {
   const data = readResponsableInput(formData);
 
-  await prisma.responsable.create({ data });
+  await prisma.$transaction(async (tx) => {
+    const responsable = await tx.responsable.create({ data });
+    await registrarAuditoria(
+      { accion: "CREAR", entidad: "Responsable", entidadId: responsable.id, detalle: { nombre: responsable.nombre } },
+      tx
+    );
+  });
 
   revalidatePath("/responsables");
   redirect("/responsables");
@@ -32,7 +39,13 @@ export async function createResponsableAction(formData: FormData): Promise<void>
 export async function updateResponsableAction(responsableId: string, formData: FormData): Promise<void> {
   const data = readResponsableInput(formData);
 
-  await prisma.responsable.update({ where: { id: responsableId }, data });
+  await prisma.$transaction(async (tx) => {
+    await tx.responsable.update({ where: { id: responsableId }, data });
+    await registrarAuditoria(
+      { accion: "ACTUALIZAR", entidad: "Responsable", entidadId: responsableId, detalle: { nombre: data.nombre } },
+      tx
+    );
+  });
 
   revalidatePath(`/responsables/${responsableId}`);
   revalidatePath("/responsables");
@@ -50,7 +63,13 @@ export async function deleteResponsableAction(responsableId: string): Promise<vo
     throw new Error("No se puede eliminar: tiene activos asignados.");
   }
 
-  await prisma.responsable.delete({ where: { id: responsableId } });
+  await prisma.$transaction(async (tx) => {
+    await tx.responsable.delete({ where: { id: responsableId } });
+    await registrarAuditoria(
+      { accion: "ELIMINAR", entidad: "Responsable", entidadId: responsableId, detalle: { nombre: responsable.nombre } },
+      tx
+    );
+  });
 
   revalidatePath("/responsables");
   redirect("/responsables");
