@@ -7,6 +7,7 @@ import {
   PackageIcon,
   FileStackIcon,
   Building2Icon,
+  TagIcon,
   MoonIcon,
 } from "lucide-react";
 
@@ -31,9 +32,15 @@ const MAIN_NAV_ITEMS: NavMainItem[] = [
   { title: "Importaciones", url: "/importaciones", icon: FileStackIcon },
 ];
 
-// Fase B: catálogo de sedes, todavía sin relación a Product/Activo.
+// Fase B: catálogo de sedes, todavía sin relación a Activo.
 const ORG_NAV_ITEMS: NavMainItem[] = [
   { title: "Sedes", url: "/sedes", icon: Building2Icon },
+];
+
+// Fase 2 de Activos: catálogo cerrado de tipos, solo lectura. Categorías,
+// subcategorías y el listado real de Activos llegan en fases siguientes.
+const ACTIVOS_NAV_ITEMS: NavMainItem[] = [
+  { title: "Tipos de Activo", url: "/activos/tipos", icon: TagIcon },
 ];
 
 // Sin NavUser: no hay concepto de usuario autenticado todavía (auth fuera de
@@ -70,6 +77,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={MAIN_NAV_ITEMS} label="Principal" />
+        <NavMain items={ACTIVOS_NAV_ITEMS} label="Activos" />
         <NavMain items={ORG_NAV_ITEMS} label="Organización" />
       </SidebarContent>
       <SidebarFooter>
