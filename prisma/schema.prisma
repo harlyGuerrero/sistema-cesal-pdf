@@ -113,6 +113,22 @@ enum TipoDato {
   URL
 }
 
+// Qué generó un Movimiento (Fase 9). No hay CRUD directo de Movimiento — se
+// infiere y se escribe como efecto de una acción sobre Activo (ver
+// lib/activos/movimientos.ts).
+enum TipoMovimiento {
+  ALTA
+  ASIGNACION
+  REASIGNACION
+  CAMBIO_RESPONSABLE
+  TRANSFERENCIA
+  CAMBIO_UBICACION
+  MANTENIMIENTO
+  RETORNO_MANTENIMIENTO
+  BAJA
+  REACTIVACION
+}
+
 // ---------------------------------------------------------------------------
 // Models
 // ---------------------------------------------------------------------------
@@ -301,6 +317,8 @@ model Usuario {
   email  String? @unique
   estado Boolean @default(true)
 
+  movimientos Movimiento[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -320,11 +338,64 @@ model Responsable {
 
   activos Activo[]
 
+  movimientosComoAnterior Movimiento[] @relation("MovimientoResponsableAnterior")
+  movimientosComoNuevo    Movimiento[] @relation("MovimientoResponsableNuevo")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([sedeId])
   @@map("responsables")
+}
+
+// Historial inmutable de cambios patrimoniales de un Activo (Fase 9). No
+// tiene CRUD propio — se crea como efecto de una acción (alta, asignación,
+// transferencia, cambio de estado) dentro de la misma transacción que
+// modifica el Activo. Guarda snapshot de "antes" y "después" aunque el campo
+// no haya sido la razón principal del movimiento, para no perder contexto.
+model Movimiento {
+  id       String @id @default(cuid())
+  activoId String
+  activo   Activo @relation(fields: [activoId], references: [id], onDelete: Cascade)
+
+  tipo  TipoMovimiento
+  fecha DateTime       @default(now())
+
+  usuarioId String?
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
+
+  responsableAnteriorId String?
+  responsableAnterior   Responsable? @relation("MovimientoResponsableAnterior", fields: [responsableAnteriorId], references: [id])
+  responsableNuevoId    String?
+  responsableNuevo      Responsable? @relation("MovimientoResponsableNuevo", fields: [responsableNuevoId], references: [id])
+
+  sedeAnteriorId String?
+  sedeAnterior   Sede?   @relation("MovimientoSedeAnterior", fields: [sedeAnteriorId], references: [id])
+  sedeNuevaId    String?
+  sedeNueva      Sede?   @relation("MovimientoSedeNueva", fields: [sedeNuevaId], references: [id])
+
+  unidadOperativaAnteriorId String?
+  unidadOperativaAnterior   UnidadOperativa? @relation("MovimientoUnidadAnterior", fields: [unidadOperativaAnteriorId], references: [id])
+  unidadOperativaNuevaId    String?
+  unidadOperativaNueva      UnidadOperativa? @relation("MovimientoUnidadNueva", fields: [unidadOperativaNuevaId], references: [id])
+
+  ambienteAnteriorId String?
+  ambienteAnterior   Ambiente? @relation("MovimientoAmbienteAnterior", fields: [ambienteAnteriorId], references: [id])
+  ambienteNuevoId    String?
+  ambienteNuevo      Ambiente? @relation("MovimientoAmbienteNuevo", fields: [ambienteNuevoId], references: [id])
+
+  estadoAnterior EstadoPatrimonial?
+  estadoNuevo    EstadoPatrimonial?
+
+  motivo        String?
+  observaciones String?
+
+  createdAt DateTime @default(now())
+
+  @@index([activoId])
+  @@index([tipo])
+  @@index([usuarioId])
+  @@map("movimientos")
 }
 
 // Activo patrimonial individual — antes "Product" (producto lógico
@@ -397,6 +468,7 @@ model Activo {
   importItem   ImportItem? @relation(fields: [importItemId], references: [id])
 
   especificaciones ActivoEspecificacionValor[]
+  movimientos      Movimiento[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -524,6 +596,9 @@ model Sede {
   activos            Activo[]
   responsables       Responsable[]
 
+  movimientosComoAnterior Movimiento[] @relation("MovimientoSedeAnterior")
+  movimientosComoNueva    Movimiento[] @relation("MovimientoSedeNueva")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -543,6 +618,9 @@ model UnidadOperativa {
 
   ambientes Ambiente[]
   activos   Activo[]
+
+  movimientosComoAnterior Movimiento[] @relation("MovimientoUnidadAnterior")
+  movimientosComoNueva    Movimiento[] @relation("MovimientoUnidadNueva")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -566,6 +644,9 @@ model Ambiente {
   name              String
 
   activos Activo[]
+
+  movimientosComoAnterior Movimiento[] @relation("MovimientoAmbienteAnterior")
+  movimientosComoNuevo    Movimiento[] @relation("MovimientoAmbienteNuevo")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

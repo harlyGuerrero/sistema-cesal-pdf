@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { normalizeName } from "@/lib/normalization/normalize";
 import { readEspecificaciones } from "@/lib/activos/especificaciones";
+import { buildMovimientoDeAlta, buildMovimientoDeEdicion } from "@/lib/activos/movimientos";
 import type { CondicionFisica, EstadoPatrimonial } from "@/lib/generated/prisma/client";
 
 // Fase 6 de Activos: alta/edición/eliminación de Activo, integrando la
@@ -116,12 +117,16 @@ export async function createActivoAction(formData: FormData): Promise<void> {
     }
   }
 
-  const activo = await prisma.activo.create({
-    data: {
-      ...data,
-      codigoPatrimonial,
-      especificaciones: { create: especificaciones },
-    },
+  const activo = await prisma.$transaction(async (tx) => {
+    const created = await tx.activo.create({
+      data: {
+        ...data,
+        codigoPatrimonial,
+        especificaciones: { create: especificaciones },
+      },
+    });
+    await tx.movimiento.create({ data: { activoId: created.id, ...buildMovimientoDeAlta(created) } });
+    return created;
   });
 
   revalidatePath("/activos");
@@ -139,39 +144,61 @@ export async function updateActivoAction(activoId: string, formData: FormData): 
     }
   }
 
-  await prisma.$transaction([
-    prisma.activoEspecificacionValor.deleteMany({ where: { activoId } }),
-    prisma.activo.update({
+  await prisma.$transaction(async (tx) => {
+    const anterior = await tx.activo.findUniqueOrThrow({ where: { id: activoId } });
+
+    await tx.activoEspecificacionValor.deleteMany({ where: { activoId } });
+    await tx.activo.update({
       where: { id: activoId },
       data: {
         ...data,
         codigoPatrimonial,
         especificaciones: { create: especificaciones },
       },
-    }),
-  ]);
+    });
+
+    // Fase 9: si cambió ubicación o estado patrimonial, queda un Movimiento
+    // (ver lib/activos/movimientos.ts) — no crea uno si solo cambió texto
+    // (nombre, descripción, valores económicos, etc.).
+    const movimiento = buildMovimientoDeEdicion(anterior, data);
+    if (movimiento) {
+      await tx.movimiento.create({ data: { activoId, ...movimiento } });
+    }
+  });
 
   revalidatePath(`/activos/${activoId}`);
   revalidatePath("/activos");
 }
 
-// Fase 8: asignar/desasignar un Responsable actual. No crea historial —
-// eso es Movimiento (Fase 9); esto solo cambia "quién lo tiene ahora" y el
-// estado patrimonial en consecuencia.
+// Fase 8 + 9: asignar/desasignar un Responsable actual, dejando su
+// Movimiento correspondiente en la misma transacción.
 
 export async function asignarResponsableAction(activoId: string, responsableId: string): Promise<void> {
   if (!responsableId) {
     throw new Error("Selecciona un responsable.");
   }
 
-  const activo = await prisma.activo.findUniqueOrThrow({ where: { id: activoId } });
-  if (activo.estadoPatrimonial === "BAJA") {
-    throw new Error("No se puede asignar un activo dado de baja.");
-  }
+  await prisma.$transaction(async (tx) => {
+    const activo = await tx.activo.findUniqueOrThrow({ where: { id: activoId } });
+    if (activo.estadoPatrimonial === "BAJA") {
+      throw new Error("No se puede asignar un activo dado de baja.");
+    }
 
-  await prisma.activo.update({
-    where: { id: activoId },
-    data: { responsableActualId: responsableId, estadoPatrimonial: "ASIGNADO" },
+    await tx.activo.update({
+      where: { id: activoId },
+      data: { responsableActualId: responsableId, estadoPatrimonial: "ASIGNADO" },
+    });
+
+    await tx.movimiento.create({
+      data: {
+        activoId,
+        tipo: activo.responsableActualId ? "REASIGNACION" : "ASIGNACION",
+        responsableAnteriorId: activo.responsableActualId,
+        responsableNuevoId: responsableId,
+        estadoAnterior: activo.estadoPatrimonial,
+        estadoNuevo: "ASIGNADO",
+      },
+    });
   });
 
   revalidatePath(`/activos/${activoId}`);
@@ -179,9 +206,24 @@ export async function asignarResponsableAction(activoId: string, responsableId: 
 }
 
 export async function desasignarResponsableAction(activoId: string): Promise<void> {
-  await prisma.activo.update({
-    where: { id: activoId },
-    data: { responsableActualId: null, estadoPatrimonial: "DISPONIBLE" },
+  await prisma.$transaction(async (tx) => {
+    const activo = await tx.activo.findUniqueOrThrow({ where: { id: activoId } });
+
+    await tx.activo.update({
+      where: { id: activoId },
+      data: { responsableActualId: null, estadoPatrimonial: "DISPONIBLE" },
+    });
+
+    await tx.movimiento.create({
+      data: {
+        activoId,
+        tipo: "CAMBIO_RESPONSABLE",
+        responsableAnteriorId: activo.responsableActualId,
+        responsableNuevoId: null,
+        estadoAnterior: activo.estadoPatrimonial,
+        estadoNuevo: "DISPONIBLE",
+      },
+    });
   });
 
   revalidatePath(`/activos/${activoId}`);

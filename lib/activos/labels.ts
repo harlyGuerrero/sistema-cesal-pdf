@@ -58,3 +58,17 @@ export const CONDICION_FISICA_LABELS: Record<string, string> = {
   MALO: "Malo",
   DETERIORADO: "Deteriorado",
 };
+
+// Fase 9 de Activos: historial de movimientos.
+export const TIPO_MOVIMIENTO_LABELS: Record<string, string> = {
+  ALTA: "Alta",
+  ASIGNACION: "Asignación",
+  REASIGNACION: "Reasignación",
+  CAMBIO_RESPONSABLE: "Cambio de responsable",
+  TRANSFERENCIA: "Transferencia de sede",
+  CAMBIO_UBICACION: "Cambio de ubicación",
+  MANTENIMIENTO: "Mantenimiento",
+  RETORNO_MANTENIMIENTO: "Retorno de mantenimiento",
+  BAJA: "Baja",
+  REACTIVACION: "Reactivación",
+};
