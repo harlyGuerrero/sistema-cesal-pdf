@@ -1,25 +1,30 @@
 ---
 name: prisma
-description: Convenciones de schema Prisma 7 para este proyecto — modelo Product/Import/ImportItem/ProcessingAttempt. Usar al escribir o modificar schema.prisma.
+description: Convenciones de schema Prisma 7 para este proyecto — modelo Activo/TipoActivo/Import/ImportItem/ProcessingAttempt, y el módulo patrimonial de Activos (taxonomía, ubicaciones, campos dinámicos). Usar al escribir o modificar schema.prisma.
 ---
 
 # Prisma
 
-Implementado en Fase 2. `prisma/schema.prisma` es la fuente de verdad del schema.
+Implementado en Fase 2 (pipeline PDF) y extendido en Fase 1 de Activos. `prisma/schema.prisma` es la fuente de verdad del schema.
 
 ## Modelo a respetar
 
-`Product` no tiene `importId` obligatorio. La relación hacia importaciones es `Product ← ImportItem ← Import` (ver `ARCHITECTURE.md` sección 6 y skill `import-workflow`). `Category` es una tabla propia (no un enum plano) referenciada por `categoryId` desde `Product` e `ImportItem`; el enum `CategoryCode` cierra los valores válidos y se siembra vía `prisma/seed.ts` (exactamente 6 filas, nunca `OTROS`).
+`Activo` (antes `Product`, fusionado con el módulo patrimonial — ver `ARCHITECTURE.md` sección 6) representa una unidad física individual, no un catálogo reutilizable entre compras: no se deduplica por nombre. `Activo.importItemId` es opcional y apunta hacia `ImportItem` (relación invertida respecto al viejo `Product ← ImportItem`) — varios `Activo` pueden compartir el mismo `ImportItem` de origen cuando `quantity > 1`. `TipoActivo` (antes `Category`) es una tabla propia (no un enum plano) referenciada por `tipoActivoId` desde `Activo` e `ImportItem`; el enum `TipoActivoCode` cierra los valores válidos y se siembra vía `prisma/seed.ts` (exactamente 6 filas, nunca `OTROS`).
+
+`CategoriaActivo`/`SubcategoriaActivo` son el segundo y tercer nivel de taxonomía bajo `TipoActivo` (administrable desde el sistema, profundidad fija de 2 niveles — no árbol infinito). `CampoEspecificacion` define campos dinámicos por subcategoría; `Catalogo`/`CatalogoValor` respaldan los de tipo `CATALOGO`/`SELECCION`. Ver la planificación de Activos para el detalle de fases (2-4 construyen la UI de estas tablas, todavía sin CRUD).
 
 ## Enums (definidos en schema.prisma)
 
 - `ImportStatus`: `UPLOADED`, `PROCESSING`, `READY_FOR_REVIEW`, `COMPLETED`, `FAILED`.
 - `Relevance`: `PRODUCT`, `CONSUMABLE`, `SERVICE`, `OTHER`.
-- `CategoryCode`: `EQUIPOS_INFORMATICOS`, `EQUIPOS_DE_OFICINA`, `MUEBLES_DE_OFICINA`, `BIENES_VEHICULARES`, `EQUIPOS_DE_MAQUINARIA`, `BIENES_INMUEBLES`. Cerrado, sin `OTROS`.
+- `TipoActivoCode`: `EQUIPOS_INFORMATICOS`, `EQUIPOS_DE_OFICINA`, `MUEBLES_DE_OFICINA`, `BIENES_VEHICULARES`, `EQUIPOS_DE_MAQUINARIA`, `BIENES_INMUEBLES`. Cerrado, sin `OTROS`.
 - `ImportItemStatus`: `REVIEW_REQUIRED`, `CONFIRMED`, `REJECTED`, `IGNORED` (`IGNORED` = relevance != PRODUCT, auto).
 - `ClassificationMethod`: `RULE`, `OLLAMA`, `MANUAL`.
 - `ProcessingEngine`: `DOCLING`, `OCR`, `GLM_OCR`, `GRANITE_DOCLING`, `OLLAMA`.
 - `ProcessingAttemptStatus`: `RUNNING`, `COMPLETED`, `FAILED`.
+- `EstadoPatrimonial` (situación del activo): `DISPONIBLE`, `ASIGNADO`, `MANTENIMIENTO`, `BAJA`.
+- `CondicionFisica` (estado físico observado, no confundir con `EstadoPatrimonial`): `NUEVO`, `BUENO`, `REGULAR`, `MALO`, `DETERIORADO`.
+- `TipoDato` (para `CampoEspecificacion`): `TEXTO`, `NUMERO_ENTERO`, `NUMERO_DECIMAL`, `FECHA`, `BOOLEANO`, `SELECCION`, `CATALOGO`, `URL`.
 
 ## Prisma 7: generator y driver adapter
 

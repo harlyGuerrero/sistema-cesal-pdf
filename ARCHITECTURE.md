@@ -118,7 +118,9 @@ OTHER        → no clasificable como los anteriores → se ignora salvo revisi�
 
 Solo los ítems `PRODUCT` avanzan a clasificación patrimonial.
 
-### 5.2 Categorías patrimoniales (exactamente 6, cerradas)
+### 5.2 Tipos de activo / categorías patrimoniales (exactamente 6, cerradas)
+
+Modeladas como `TipoActivo`/`TipoActivoCode` en el schema (antes `Category`/`CategoryCode` — mismo dato, tabla renombrada al fusionarse `Product` con el módulo patrimonial de Activos).
 
 ```
 EQUIPOS_INFORMATICOS
@@ -135,17 +137,18 @@ No existe categoría `OTROS`. Si un `PRODUCT` no encaja con confianza suficiente
 
 No es un schema Prisma todavía (eso es Fase de base de datos). Es el modelo conceptual que el schema deberá respetar.
 
-### Product
+### Activo (antes Product)
 
-Representa un producto **lógico**, no una línea de una factura. El mismo producto puede aparecer en múltiples importaciones (ej. se vuelve a comprar el mismo modelo de laptop).
+Desde la planificación del módulo patrimonial de Activos Fijos, `Product` se fusionó con `Activo`: no son dos entidades enlazadas, es la misma tabla. Un `Activo` representa una **unidad física individual** — no un catálogo lógico compartido entre compras. Comprar 5 laptops del mismo modelo genera 5 `Activo` distintos, cada uno con su propio código patrimonial, ubicación y responsable a asignar (ver planificación de Activos, decisión "Product se fusiona en Activo" + "1 Activo por unidad").
 
-- `Product` **no** tiene `importId` como relación obligatoria. Un producto no pertenece a una sola importación.
-- La trazabilidad hacia las importaciones es indirecta, vía tabla intermedia:
+- `Activo.importItemId` es **opcional**: puede nacer de una fila de importación confirmada, o crearse manualmente (alta directa, migración de inventario histórico).
+- Confirmar un `ImportItem` **ya no busca ni reutiliza** un `Activo` existente por nombre — siempre crea fila(s) nueva(s). Si la fila tiene `quantity > 1`, se crea un `Activo` por unidad.
+- La relación quedó invertida respecto al viejo `Product ← ImportItem`: varios `Activo` pueden apuntar al mismo `ImportItem` de origen.
 
 ```
-Product
-  ↑
-ImportItem   (fila concreta detectada en un PDF, referencia a un Product)
+Activo (0..N por fila, según quantity)
+  ↓ importItemId (opcional)
+ImportItem   (fila concreta detectada en un PDF)
   ↑
 Import       (el PDF procesado)
 ```

@@ -1,17 +1,17 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient, CategoryCode, Region } from "../lib/generated/prisma/client";
+import { PrismaClient, TipoActivoCode, Region } from "../lib/generated/prisma/client";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
-// Categorías patrimoniales cerradas (ver ARCHITECTURE.md 5.2). No agregar OTROS.
-const CATEGORIES: { code: CategoryCode; name: string }[] = [
-  { code: CategoryCode.EQUIPOS_INFORMATICOS, name: "Equipos Informáticos" },
-  { code: CategoryCode.EQUIPOS_DE_OFICINA, name: "Equipos de Oficina" },
-  { code: CategoryCode.MUEBLES_DE_OFICINA, name: "Muebles de Oficina" },
-  { code: CategoryCode.BIENES_VEHICULARES, name: "Bienes Vehiculares" },
-  { code: CategoryCode.EQUIPOS_DE_MAQUINARIA, name: "Equipos de Maquinaria" },
-  { code: CategoryCode.BIENES_INMUEBLES, name: "Bienes Inmuebles" },
+// Los 6 tipos de activo patrimonial, cerrados (ver ARCHITECTURE.md 5.2). No agregar OTROS.
+const TIPOS_ACTIVO: { code: TipoActivoCode; name: string }[] = [
+  { code: TipoActivoCode.EQUIPOS_INFORMATICOS, name: "Equipos Informáticos" },
+  { code: TipoActivoCode.EQUIPOS_DE_OFICINA, name: "Equipos de Oficina" },
+  { code: TipoActivoCode.MUEBLES_DE_OFICINA, name: "Muebles de Oficina" },
+  { code: TipoActivoCode.BIENES_VEHICULARES, name: "Bienes Vehiculares" },
+  { code: TipoActivoCode.EQUIPOS_DE_MAQUINARIA, name: "Equipos de Maquinaria" },
+  { code: TipoActivoCode.BIENES_INMUEBLES, name: "Bienes Inmuebles" },
 ];
 
 // Sedes reales de la organización (Fase B). Cuando una ciudad no tiene
@@ -30,11 +30,11 @@ const SEDES: { name: string; city: string; region: Region }[] = [
 ];
 
 async function main() {
-  for (const category of CATEGORIES) {
-    await prisma.category.upsert({
-      where: { code: category.code },
-      update: { name: category.name },
-      create: category,
+  for (const tipoActivo of TIPOS_ACTIVO) {
+    await prisma.tipoActivo.upsert({
+      where: { code: tipoActivo.code },
+      update: { name: tipoActivo.name },
+      create: tipoActivo,
     });
   }
 

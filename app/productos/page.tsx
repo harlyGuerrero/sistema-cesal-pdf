@@ -29,20 +29,20 @@ export default async function ProductsPage({
   const page = Math.max(1, Number(pageParam) || 1);
 
   const where = {
-    ...(q ? { normalizedName: { contains: q, mode: "insensitive" as const } } : {}),
-    ...(categoryId && categoryId !== "all" ? { categoryId } : {}),
+    ...(q ? { nombreNormalizado: { contains: q, mode: "insensitive" as const } } : {}),
+    ...(categoryId && categoryId !== "all" ? { tipoActivoId: categoryId } : {}),
   };
 
   const [products, total, categories] = await Promise.all([
-    prisma.product.findMany({
+    prisma.activo.findMany({
       where,
-      include: { category: true, _count: { select: { importItems: true } } },
-      orderBy: { normalizedName: "asc" },
+      include: { tipoActivo: true },
+      orderBy: { nombreNormalizado: "asc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    prisma.product.count({ where }),
-    prisma.category.findMany({ orderBy: { name: "asc" } }),
+    prisma.activo.count({ where }),
+    prisma.tipoActivo.findMany({ orderBy: { name: "asc" } }),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -85,8 +85,8 @@ export default async function ProductsPage({
         <TableHeader>
           <TableRow>
             <TableHead>Nombre</TableHead>
-            <TableHead>Categoría</TableHead>
-            <TableHead>Importaciones</TableHead>
+            <TableHead>Tipo de activo</TableHead>
+            <TableHead>Origen</TableHead>
             <TableHead>Actualizado</TableHead>
           </TableRow>
         </TableHeader>
@@ -95,11 +95,11 @@ export default async function ProductsPage({
             <TableRow key={product.id}>
               <TableCell>
                 <Link href={`/productos/${product.id}`} className="hover:underline">
-                  {product.name}
+                  {product.nombreActivo}
                 </Link>
               </TableCell>
-              <TableCell>{product.category.name}</TableCell>
-              <TableCell>{product._count.importItems}</TableCell>
+              <TableCell>{product.tipoActivo.name}</TableCell>
+              <TableCell>{product.importItemId ? "Importación" : "Manual"}</TableCell>
               <TableCell>{product.updatedAt.toLocaleDateString("es-PE")}</TableCell>
             </TableRow>
           ))}

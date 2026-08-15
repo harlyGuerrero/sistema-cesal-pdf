@@ -18,7 +18,7 @@ export default async function ImportDetailPage({
     where: { id },
     include: {
       items: {
-        include: { category: true },
+        include: { tipoActivo: true },
         orderBy: [{ sourcePage: "asc" }, { sourceTable: "asc" }, { sourceRow: "asc" }],
       },
     },
@@ -28,7 +28,7 @@ export default async function ImportDetailPage({
     notFound();
   }
 
-  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  const categories = await prisma.tipoActivo.findMany({ orderBy: { name: "asc" } });
 
   const items = importRecord.items;
   const counts = {
@@ -52,8 +52,8 @@ export default async function ImportDetailPage({
     totalPrice: item.totalPrice !== null ? Number(item.totalPrice) : null,
     relevance: item.relevance,
     status: item.status,
-    categoryId: item.categoryId,
-    category: item.category ? { id: item.category.id, name: item.category.name } : null,
+    categoryId: item.tipoActivoId,
+    category: item.tipoActivo ? { id: item.tipoActivo.id, name: item.tipoActivo.name } : null,
     categoryConfidence: item.categoryConfidence,
     relevanceConfidence: item.relevanceConfidence,
   }));

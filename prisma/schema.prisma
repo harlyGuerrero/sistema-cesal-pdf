@@ -1,9 +1,10 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 //
-// Modelo conceptual: ver ARCHITECTURE.md secciones 5 y 6.
-// Product no tiene relación obligatoria a Import: la trazabilidad es
-// Product <- ImportItem <- Import (ver skill import-workflow).
+// Modelo conceptual: ver ARCHITECTURE.md secciones 5 y 6, y la planificación
+// de Activos (Fase 1). Product/Category del pipeline de PDFs se fusionaron
+// con el módulo patrimonial: Activo (antes Product) y TipoActivo (antes
+// Category) son la misma tabla, no hay dos entidades paralelas.
 
 generator client {
   provider = "prisma-client"
@@ -19,7 +20,7 @@ datasource db {
 // ---------------------------------------------------------------------------
 
 // Categorías patrimoniales cerradas (ver ARCHITECTURE.md 5.2). No agregar OTROS.
-enum CategoryCode {
+enum TipoActivoCode {
   EQUIPOS_INFORMATICOS
   EQUIPOS_DE_OFICINA
   MUEBLES_DE_OFICINA
@@ -28,7 +29,7 @@ enum CategoryCode {
   BIENES_INMUEBLES
 }
 
-// Relevancia: distinta de la categoría patrimonial (ver skill product-classification).
+// Relevancia: distinta del tipo de activo (ver skill product-classification).
 enum Relevance {
   PRODUCT
   CONSUMABLE
@@ -53,7 +54,7 @@ enum ImportItemStatus {
   IGNORED
 }
 
-// Qué produjo la clasificación de un ImportItem (relevance y/o category).
+// Qué produjo la clasificación de un ImportItem (relevance y/o tipo de activo).
 enum ClassificationMethod {
   RULE
   OLLAMA
@@ -74,24 +75,59 @@ enum ProcessingAttemptStatus {
   FAILED
 }
 
-// Macrozona geográfica de una Sede. Set fijo, igual que CategoryCode.
+// Macrozona geográfica de una Sede. Set fijo, igual que TipoActivoCode.
 enum Region {
   COSTA
   SIERRA
   SELVA
 }
 
+// Situación patrimonial de un Activo — distinta de su condición física
+// (ver planificación de Activos §4, "no mezclar ambos conceptos").
+enum EstadoPatrimonial {
+  DISPONIBLE
+  ASIGNADO
+  MANTENIMIENTO
+  BAJA
+}
+
+// Estado físico observado del Activo. Nulo hasta que alguien lo registre.
+enum CondicionFisica {
+  NUEVO
+  BUENO
+  REGULAR
+  MALO
+  DETERIORADO
+}
+
+// Tipo de dato de un CampoEspecificacion — determina qué columna de
+// ActivoEspecificacionValor (Fase 4) se usa para guardar el valor.
+enum TipoDato {
+  TEXTO
+  NUMERO_ENTERO
+  NUMERO_DECIMAL
+  FECHA
+  BOOLEANO
+  SELECCION
+  CATALOGO
+  URL
+}
+
 // ---------------------------------------------------------------------------
 // Models
 // ---------------------------------------------------------------------------
 
-model Category {
-  id   String       @id @default(cuid())
-  code CategoryCode @unique
+// Los 6 tipos de activo patrimonial, cerrados (ver ARCHITECTURE.md 5.2 y
+// planificación de Activos §4). Antes "Category" — mismo mapeo de tabla,
+// solo cambia el nombre del modelo Prisma.
+model TipoActivo {
+  id   String         @id @default(cuid())
+  code TipoActivoCode @unique
   name String
 
-  products     Product[]
-  importItems  ImportItem[]
+  activos     Activo[]
+  importItems ImportItem[]
+  categorias  CategoriaActivo[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -99,33 +135,162 @@ model Category {
   @@map("categories")
 }
 
-// Producto lógico. No tiene importId: puede provenir de múltiples importaciones
-// a través de ImportItem (ver ARCHITECTURE.md 6).
-model Product {
-  id             String  @id @default(cuid())
-  name           String
-  normalizedName String
-  categoryId     String
-  category       Category @relation(fields: [categoryId], references: [id])
+// Nivel administrable bajo un TipoActivo (ej. "Redes y conectividad" bajo
+// Equipos Informáticos). Inspirado en categorías/subcategorías de WordPress,
+// pero con profundidad fija de 2 niveles (ver planificación de Activos §6).
+model CategoriaActivo {
+  id           String     @id @default(cuid())
+  tipoActivoId String
+  tipoActivo   TipoActivo @relation(fields: [tipoActivoId], references: [id])
+  nombre       String
+  slug         String
+  estado       Boolean    @default(true)
+  orden        Int        @default(0)
 
-  importItems ImportItem[]
+  subcategorias SubcategoriaActivo[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([normalizedName])
-  @@index([categoryId])
-  @@map("products")
+  @@unique([tipoActivoId, slug])
+  @@index([tipoActivoId])
+  @@map("categorias_activo")
+}
+
+// Segundo nivel administrable bajo una CategoriaActivo (ej. "Router" bajo
+// Redes y conectividad). Punto de anclaje de CampoEspecificacion (Fase 4).
+model SubcategoriaActivo {
+  id          String          @id @default(cuid())
+  categoriaId String
+  categoria   CategoriaActivo @relation(fields: [categoriaId], references: [id])
+  nombre      String
+  slug        String
+  estado      Boolean         @default(true)
+  orden       Int             @default(0)
+
+  campos CampoEspecificacion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([categoriaId, slug])
+  @@index([categoriaId])
+  @@map("subcategorias_activo")
+}
+
+// Catálogo genérico reutilizable (ej. MARCA, SISTEMA_OPERATIVO) — respalda
+// campos de tipo SELECCION/CATALOGO en vez de texto libre repetido.
+model Catalogo {
+  id     String @id @default(cuid())
+  codigo String @unique
+  nombre String
+
+  valores CatalogoValor[]
+  campos  CampoEspecificacion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("catalogos")
+}
+
+model CatalogoValor {
+  id         String   @id @default(cuid())
+  catalogoId String
+  catalogo   Catalogo @relation(fields: [catalogoId], references: [id])
+  valor      String
+  estado     Boolean  @default(true)
+  orden      Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([catalogoId, valor])
+  @@index([catalogoId])
+  @@map("catalogo_valores")
+}
+
+// Definición de un campo de especificación técnica por subcategoría (ej.
+// "Memoria RAM", número, unidad GB, bajo Laptop). Administrable, no
+// hardcodeado — captura el valor real ActivoEspecificacionValor llega en
+// Fase 4, junto con la UI que lo consume.
+model CampoEspecificacion {
+  id             String             @id @default(cuid())
+  subcategoriaId String
+  subcategoria   SubcategoriaActivo @relation(fields: [subcategoriaId], references: [id])
+  nombre         String
+  etiqueta       String
+  tipoDato       TipoDato
+  unidad         String?
+  catalogoId     String?
+  catalogo       Catalogo?          @relation(fields: [catalogoId], references: [id])
+  obligatorio    Boolean            @default(false)
+  estado         Boolean            @default(true)
+  orden          Int                @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([subcategoriaId])
+  @@index([catalogoId])
+  @@map("campos_especificacion")
+}
+
+// Activo patrimonial individual — antes "Product" (producto lógico
+// compartido entre importaciones). Ya no se deduplica por nombre: cada
+// unidad física es su propia fila (ver planificación de Activos, decisión
+// "Product se fusiona en Activo" + "1 Activo por unidad").
+//
+// Campos de ubicación (sedeId/unidadOperativaId/ambienteId), proveedorId y
+// responsableActualId llegan en fases posteriores (5, 6, 8) cuando esas
+// tablas existan — no se agregan vacíos de antemano.
+model Activo {
+  id                String  @id @default(cuid())
+  codigoPatrimonial String? @unique
+  nombreActivo      String
+  nombreNormalizado String
+  descripcion       String?
+
+  tipoActivoId String
+  tipoActivo   TipoActivo @relation(fields: [tipoActivoId], references: [id])
+
+  fechaAdquisicion DateTime?
+  numeroFactura    String?
+  codigoProyecto   String?
+
+  costoAdquisicion Decimal? @db.Decimal(14, 2)
+  valorContable    Decimal? @db.Decimal(14, 2)
+  valorActual      Decimal? @db.Decimal(14, 2)
+
+  estadoPatrimonial EstadoPatrimonial @default(DISPONIBLE)
+  condicionFisica   CondicionFisica?
+
+  observaciones String?
+
+  // Trazabilidad opcional hacia el pipeline de PDFs: un Activo puede nacer
+  // de una fila de importación confirmada, o crearse manualmente (migración
+  // del Excel histórico, alta directa). Varios Activos pueden apuntar al
+  // mismo ImportItem cuando su quantity > 1 (1 Activo por unidad física).
+  importItemId String?
+  importItem   ImportItem? @relation(fields: [importItemId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([nombreNormalizado])
+  @@index([tipoActivoId])
+  @@index([importItemId])
+  @@map("activos")
 }
 
 model Import {
-  id            String       @id @default(cuid())
-  fileName      String
-  fileHash      String       @unique
-  fileSize      Int
-  mimeType      String
-  status        ImportStatus @default(UPLOADED)
-  errorMessage  String?
+  id           String       @id @default(cuid())
+  fileName     String
+  fileHash     String       @unique
+  fileSize     Int
+  mimeType     String
+  status       ImportStatus @default(UPLOADED)
+  errorMessage String?
 
   createdAt   DateTime  @default(now())
   processedAt DateTime?
@@ -138,8 +303,8 @@ model Import {
   @@map("imports")
 }
 
-// Fila de producto detectada en un PDF. Puente entre lo extraído y el Product
-// lógico persistido (ver skill import-workflow).
+// Fila de producto detectada en un PDF. Puente entre lo extraído y los
+// Activo(s) patrimoniales que genera al confirmarse (ver skill import-workflow).
 model ImportItem {
   id String @id @default(cuid())
 
@@ -159,35 +324,35 @@ model ImportItem {
   totalPrice     Decimal? @db.Decimal(14, 2)
   currency       String?
 
-  // Clasificación (ver skill product-classification). Relevance y category son
-  // decisiones independientes (Fase 6 y Fase 7 del pipeline) con su propio
-  // método/confidence cada una — no un único par classificationMethod/confidence,
-  // que perdería cuál de las dos vino de Ollama y con qué confianza.
+  // Clasificación (ver skill product-classification). Relevance y tipo de
+  // activo son decisiones independientes (Fase 6 y Fase 7 del pipeline) con
+  // su propio método/confidence cada una — no un único par
+  // classificationMethod/confidence, que perdería cuál de las dos vino de
+  // Ollama y con qué confianza.
   relevance           Relevance?
   relevanceMethod     ClassificationMethod?
   relevanceConfidence Float?
-  categoryId          String?
-  category            Category?             @relation(fields: [categoryId], references: [id])
+  tipoActivoId        String?
+  tipoActivo          TipoActivo?           @relation(fields: [tipoActivoId], references: [id])
   categoryMethod      ClassificationMethod?
   categoryConfidence  Float?
 
   // Revisión (ver Fase 9).
-  status       ImportItemStatus @default(REVIEW_REQUIRED)
-  reviewNotes  String?
-  reviewedAt   DateTime?
-  reviewedBy   String?
+  status      ImportItemStatus @default(REVIEW_REQUIRED)
+  reviewNotes String?
+  reviewedAt  DateTime?
+  reviewedBy  String?
 
-  // Persistencia (ver Fase 8). Nulo hasta confirmación.
-  productId String?
-  product   Product? @relation(fields: [productId], references: [id])
+  // Activo(s) generados al confirmar (Fase 1 de Activos): 1 por unidad
+  // física, según quantity. Ya no hay un único productId — puede ser 0..N.
+  activos Activo[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([importId])
   @@index([status])
-  @@index([categoryId])
-  @@index([productId])
+  @@index([tipoActivoId])
   @@map("import_items")
 }
 
@@ -214,9 +379,10 @@ model ProcessingAttempt {
   @@map("processing_attempts")
 }
 
-// Sede física de la organización. Todavía sin relación a Product/Activo
-// (eso llega en la fase de Activos, cuando cada activo tenga una sede
-// asignada) — por ahora es solo el catálogo de ubicaciones.
+// Sede física de la organización. Todavía sin relación a Activo (eso llega
+// en la Fase 5 de Activos, cuando se reestructure a la jerarquía real
+// Zona -> Sede -> Unidad Operativa -> Ambiente) — por ahora es solo el
+// catálogo de ubicaciones, tal como quedó en la Fase B.
 model Sede {
   id     String @id @default(cuid())
   name   String @unique

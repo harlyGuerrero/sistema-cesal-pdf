@@ -5,7 +5,7 @@ import { DocumentServiceError, processDocument } from "@/lib/document-service/cl
 import { normalizeProductCandidate } from "@/lib/normalization/normalize";
 import { classifyRelevance } from "@/lib/classification/relevance";
 import { classifyCategory, HIGH_CONFIDENCE_THRESHOLD } from "@/lib/classification/category";
-import { findOrCreateProduct } from "./product-matching";
+import { buildActivoRows } from "./activo-creation";
 
 // Orquesta el flujo completo (Fase 8): Upload -> validación -> hash ->
 // duplicate check -> crear Import -> PROCESSING -> Document Service ->
@@ -67,32 +67,51 @@ export async function processUpload(file: UploadedFile): Promise<ProcessUploadRe
     const finalStatus = hasPendingReview ? "READY_FOR_REVIEW" : "COMPLETED";
     const now = new Date();
 
-    await prisma.$transaction([
-      ...(itemsToCreate.items.length > 0
-        ? [prisma.importItem.createMany({ data: itemsToCreate.items })]
-        : []),
-      ...(itemsToCreate.ollamaUsedCount > 0
-        ? [
-            prisma.processingAttempt.create({
-              data: {
-                importId: importRecord.id,
-                engine: "OLLAMA",
-                status: "COMPLETED",
-                completedAt: now,
-                metadata: { itemsClassifiedByOllama: itemsToCreate.ollamaUsedCount },
-              },
-            }),
-          ]
-        : []),
-      prisma.import.update({
+    // Los ImportItem se crean primero (need sus ids) y recién con esos ids
+    // se arman los Activo de los que quedaron auto-confirmados — un Activo
+    // referencia su ImportItem de origen, no al revés (ver activo-creation.ts).
+    await prisma.$transaction(async (tx) => {
+      const createdItems =
+        itemsToCreate.items.length > 0
+          ? await tx.importItem.createManyAndReturn({ data: itemsToCreate.items })
+          : [];
+
+      const activoRows = createdItems.flatMap((item) =>
+        item.status === "CONFIRMED" && item.tipoActivoId
+          ? buildActivoRows({
+              importItemId: item.id,
+              tipoActivoId: item.tipoActivoId,
+              nombreActivo: item.normalizedName ?? item.rawText,
+              quantity: item.quantity !== null ? Number(item.quantity) : null,
+              unitPrice: item.unitPrice !== null ? Number(item.unitPrice) : null,
+            })
+          : []
+      );
+      if (activoRows.length > 0) {
+        await tx.activo.createMany({ data: activoRows });
+      }
+
+      if (itemsToCreate.ollamaUsedCount > 0) {
+        await tx.processingAttempt.create({
+          data: {
+            importId: importRecord.id,
+            engine: "OLLAMA",
+            status: "COMPLETED",
+            completedAt: now,
+            metadata: { itemsClassifiedByOllama: itemsToCreate.ollamaUsedCount },
+          },
+        });
+      }
+
+      await tx.import.update({
         where: { id: importRecord.id },
         data: {
           status: finalStatus,
           processedAt: now,
           completedAt: finalStatus === "COMPLETED" ? now : null,
         },
-      }),
-    ]);
+      });
+    });
 
     return { outcome: "processed", importId: importRecord.id, itemCount: itemsToCreate.items.length };
   } catch (error) {
@@ -140,8 +159,8 @@ async function extractAndClassify(
     },
   });
 
-  const categories = await prisma.category.findMany();
-  const categoryIdByCode = new Map(categories.map((category) => [category.code, category.id]));
+  const tiposActivo = await prisma.tipoActivo.findMany();
+  const tipoActivoIdByCode = new Map(tiposActivo.map((tipo) => [tipo.code, tipo.id]));
 
   const items: Prisma.ImportItemCreateManyInput[] = [];
   let ollamaUsedCount = 0;
@@ -150,7 +169,7 @@ async function extractAndClassify(
     const normalized = normalizeProductCandidate(candidate);
     const relevanceResult = classifyRelevance(normalized);
 
-    let categoryId: string | null = null;
+    let tipoActivoId: string | null = null;
     let categoryMethod: "RULE" | "OLLAMA" | null = null;
     let categoryConfidence: number | null = null;
 
@@ -158,30 +177,26 @@ async function extractAndClassify(
     if (relevanceResult.relevance === "PRODUCT") {
       const categoryResult = await classifyCategory(normalized);
       if (categoryResult) {
-        categoryId = categoryIdByCode.get(categoryResult.value) ?? null;
+        tipoActivoId = tipoActivoIdByCode.get(categoryResult.value) ?? null;
         categoryMethod = categoryResult.method;
         categoryConfidence = categoryResult.confidence;
         if (categoryResult.method === "OLLAMA") ollamaUsedCount += 1;
       }
     }
 
-    let productId: string | null = null;
     let status: "IGNORED" | "CONFIRMED" | "REVIEW_REQUIRED";
 
     if (relevanceResult.relevance !== "PRODUCT") {
       status = "IGNORED";
     } else if (
-      categoryId &&
+      tipoActivoId &&
       categoryMethod === "RULE" &&
       categoryConfidence !== null &&
       categoryConfidence >= HIGH_CONFIDENCE_THRESHOLD
     ) {
+      // El Activo correspondiente se crea después, en processUpload, una vez
+      // que este ImportItem exista y tenga id (ver activo-creation.ts).
       status = "CONFIRMED";
-      productId = await findOrCreateProduct({
-        categoryId,
-        normalizedName: normalized.normalizedName ?? normalized.rawText,
-        displayName: normalized.normalizedName ?? normalized.rawText,
-      });
     } else {
       status = "REVIEW_REQUIRED";
     }
@@ -200,10 +215,9 @@ async function extractAndClassify(
       relevance: relevanceResult.relevance,
       relevanceMethod: relevanceResult.method,
       relevanceConfidence: relevanceResult.confidence,
-      categoryId,
+      tipoActivoId,
       categoryMethod,
       categoryConfidence,
-      productId,
       status,
     });
   }

@@ -31,21 +31,21 @@ const STATUS_META: Record<string, { color: string; order: number }> = {
 };
 
 export default async function DashboardPage() {
-  const [categories, productCounts, itemStatusCounts, totalProducts] = await Promise.all([
-    prisma.category.findMany(),
-    prisma.product.groupBy({ by: ["categoryId"], _count: true }),
+  const [tiposActivo, activoCounts, itemStatusCounts, totalActivos] = await Promise.all([
+    prisma.tipoActivo.findMany(),
+    prisma.activo.groupBy({ by: ["tipoActivoId"], _count: true }),
     prisma.importItem.groupBy({ by: ["status"], _count: true }),
-    prisma.product.count(),
+    prisma.activo.count(),
   ]);
 
-  const countByCategoryId = new Map(productCounts.map((row) => [row.categoryId, row._count]));
-  const categoryByCode = new Map(categories.map((category) => [category.code, category]));
+  const countByTipoActivoId = new Map(activoCounts.map((row) => [row.tipoActivoId, row._count]));
+  const tipoActivoByCode = new Map(tiposActivo.map((tipo) => [tipo.code, tipo]));
 
   const barData: CategoryBarDatum[] = CATEGORY_ORDER.map((code) => {
-    const category = categoryByCode.get(code);
+    const tipo = tipoActivoByCode.get(code);
     return {
-      name: category?.name ?? code,
-      count: category ? (countByCategoryId.get(category.id) ?? 0) : 0,
+      name: tipo?.name ?? code,
+      count: tipo ? (countByTipoActivoId.get(tipo.id) ?? 0) : 0,
     };
   });
 
@@ -71,11 +71,11 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Total de productos"
-          value={totalProducts}
+          label="Total de activos"
+          value={totalActivos}
           icon={ArchiveIcon}
           accent="chart-1"
-          hint={`${categories.length} categorías patrimoniales`}
+          hint={`${tiposActivo.length} tipos de activo`}
         />
         <StatCard
           label="Confirmados"
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Distribución de productos por categoría</CardTitle>
+            <CardTitle className="text-base font-semibold">Distribución de activos por tipo</CardTitle>
           </CardHeader>
           <CardContent>
             <CategoryBarChart data={barData} />

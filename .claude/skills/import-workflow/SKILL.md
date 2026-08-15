@@ -1,6 +1,6 @@
 ---
 name: import-workflow
-description: Estados y transiciones de Import/ImportItem, y la relación Product/ImportItem/Import. Usar al implementar el flujo de subida, procesamiento, revisión y confirmación de un PDF.
+description: Estados y transiciones de Import/ImportItem, y la relación Activo/ImportItem/Import (Activo, antes Product, fusionado con el módulo patrimonial). Usar al implementar el flujo de subida, procesamiento, revisión y confirmación de un PDF.
 ---
 
 # Import Workflow
@@ -19,9 +19,9 @@ No saltar estados (ej. no pasar de `UPLOADED` directo a `COMPLETED`). `errorMess
 
 Cada fila de producto detectada es un `ImportItem`, con su propio ciclo: extraído → clasificado → (revisado si aplica) → confirmado. `status` de `ImportItem` es independiente del `status` de su `Import` — un `Import` pasa a `READY_FOR_REVIEW` cuando todos sus `ImportItem` están clasificados, y a `COMPLETED` cuando todos están confirmados o descartados.
 
-## Relación con Product
+## Relación con Activo (antes Product)
 
-`ImportItem` referencia a `Import` (obligatorio) y a `Product` (nullable hasta `Confirmation`). Confirmar un `ImportItem` significa: vincularlo a un `Product` existente (mismo producto ya importado antes) o crear uno nuevo. `Product` nunca tiene `importId` obligatorio — no asumir que un producto pertenece a una sola importación. Ver `ARCHITECTURE.md` sección 6.
+`ImportItem` referencia a `Import` (obligatorio). La relación hacia `Activo` está invertida respecto al viejo modelo: es `Activo.importItemId` (nullable), no `ImportItem.productId`. Confirmar un `ImportItem` **crea** Activo(s) nuevos — nunca busca ni reutiliza uno existente por nombre. Si la fila tiene `quantity > 1`, se crea un `Activo` por unidad física (ver `lib/import-workflow/activo-creation.ts`). Ver `ARCHITECTURE.md` sección 6.
 
 ## Historial
 
@@ -53,11 +53,11 @@ Validado end-to-end contra servicios reales (Postgres, Document Service, Ollama)
 
 `/importaciones/[id]` (`app/importaciones/[id]/page.tsx`, Server Component) + `review-table.tsx` (Client Component) + `actions.ts` (Server Actions: `confirmItemAction`, `rejectItemAction`, `editAndConfirmItemAction`).
 
-**Regla de auto-confirmación** (la que Fase 8 dejó pendiente): se implementó en `process-upload.ts`, no en la UI — un `ImportItem` con `relevance === "PRODUCT"` se auto-confirma en el momento de creación (`status: CONFIRMED`, `productId` ya vinculado) **solo si** `categoryMethod === "RULE"` (que siempre es 0.85, sobre `HIGH_CONFIDENCE_THRESHOLD`). Un resultado `OLLAMA` **nunca** auto-confirma, sin importar su confidence — por el problema de calibración medido en Fase 7 (ver skill `ollama`). Los ítems auto-confirmados quedan con `reviewedAt: null` (nadie los revisó); los que confirma/edita/rechaza un humano desde esta pantalla sí llevan `reviewedAt`. `reviewedBy` queda `null` siempre — no hay autenticación todavía (fuera de alcance, ver CLAUDE.md).
+**Regla de auto-confirmación** (la que Fase 8 dejó pendiente): se implementó en `process-upload.ts`, no en la UI — un `ImportItem` con `relevance === "PRODUCT"` se auto-confirma en el momento de creación (`status: CONFIRMED`) **solo si** `categoryMethod === "RULE"` (que siempre es 0.85, sobre `HIGH_CONFIDENCE_THRESHOLD`); su(s) `Activo` asociado(s) se crean justo después, dentro de la misma transacción, una vez que el `ImportItem` ya tiene `id` (ver "Creación de Activo(s)" más abajo). Un resultado `OLLAMA` **nunca** auto-confirma, sin importar su confidence — por el problema de calibración medido en Fase 7 (ver skill `ollama`). Los ítems auto-confirmados quedan con `reviewedAt: null` (nadie los revisó); los que confirma/edita/rechaza un humano desde esta pantalla sí llevan `reviewedAt`. `reviewedBy` queda `null` siempre — no hay autenticación todavía (fuera de alcance, ver CLAUDE.md).
 
 **`Import.status` tras procesar**: si ningún ítem quedó en `REVIEW_REQUIRED` (todo se auto-confirmó o se ignoró), el `Import` pasa directo a `COMPLETED` en vez de `READY_FOR_REVIEW` — ver `process-upload.ts`.
 
-**Find-or-create de `Product`**: `lib/import-workflow/product-matching.ts` (`findOrCreateProduct`), por `categoryId` + `normalizedName` exactos. Compartido entre el auto-confirm de Fase 8 y las tres acciones humanas de Fase 9 — no duplicar esta lógica en otro lado.
+**Creación de Activo(s)**: `lib/import-workflow/activo-creation.ts` (`createActivosFromImportItem`/`buildActivoRows`). Ya no busca coincidencias — cada confirmación crea `Activo` nuevos, uno por unidad física según `quantity` (`quantityToUnitCount`, redondea y trata `quantity` nulo/inválido como 1). Compartido entre el auto-confirm de Fase 8 (`process-upload.ts`, que arma las filas y las inserta en bloque tras crear los `ImportItem`) y las dos acciones humanas de confirmación en Fase 9 (`confirmItemAction`/`editAndConfirmItemAction`) — no duplicar esta lógica en otro lado.
 
 **`Import.status` tras una acción humana**: `completeImportIfNoPending` (en `actions.ts`) pasa el `Import` a `COMPLETED` cuando ya no queda ningún `ImportItem` en `REVIEW_REQUIRED` — solo si estaba en `READY_FOR_REVIEW` (`updateMany` con ese filtro, idempotente, no reabre un `Import` ya `COMPLETED`/`FAILED`).
 
@@ -65,13 +65,13 @@ Validado end-to-end contra servicios reales (Postgres, Document Service, Ollama)
 
 Sin browser real disponible en esta sesión para probar la pantalla de forma interactiva (extensión Chrome no instalada) — se verificó sirviendo la página real con datos reales y leyendo el HTML resultante, y se probaron las tres Server Actions directamente contra la base de datos real (fuera del runtime de Next, ignorando el error esperado de `revalidatePath` fuera de contexto de request). No sustituye una prueba de clicks real; si algo se ve mal visualmente en el navegador, avisa.
 
-## Productos (Fase 10, implementado)
+## Productos / Activos (Fase 10 del pipeline PDF; Fase 1 de Activos)
 
-`/productos` (listado con búsqueda `?q=` sobre `normalizedName` case-insensitive + filtro `?categoryId=`, ambos vía `<form method="get">` — sin JS, compartible/bookmarkeable), `/productos/[id]` (detalle + edición + historial de `ImportItem` con link a cada `Import` + eliminación), `/productos/nuevo` (creación manual). Acciones en `app/productos/actions.ts`.
+`/productos` (listado con búsqueda `?q=` sobre `nombreNormalizado` case-insensitive + filtro `?categoryId=`, ambos vía `<form method="get">` — sin JS, compartible/bookmarkeable), `/productos/[id]` (detalle + edición + origen: `ImportItem`/`Import` si viene de una importación, o "creado manualmente" + eliminación), `/productos/nuevo` (creación manual). Acciones en `app/productos/actions.ts`. La ruta y el copy siguen diciendo "productos" a propósito — el rename de UI hacia "Activos" queda para la fase 6 de Activos (pantallas reales), no se mezcló con el cambio de modelo de Fase 1.
 
-**No duplicar productos**: `createProductAction` normaliza el nombre con `normalizeName` (Fase 5) y reutiliza `findOrCreateProduct` (Fase 9) — si ya existe un producto con el mismo `categoryId` + `normalizedName`, redirige a ese en vez de crear uno nuevo (con `?duplicate=1` para avisar en la UI). Mismo criterio para edición: `updateProductAction` recalcula `normalizedName` desde el nombre editado.
+**Ya no se deduplica**: `createProductAction` crea un `Activo` directo (`prisma.activo.create`) — dos activos con el mismo nombre son normales (dos unidades físicas distintas), no un error. Ya no existe el flujo `?duplicate=1`. Mismo criterio para edición: `updateProductAction` recalcula `nombreNormalizado` desde el nombre editado.
 
-**Eliminación controlada**: `deleteProductAction` cuenta `importItems` antes de borrar — si tiene alguno, lanza error y no borra (protege la trazabilidad `Product ← ImportItem ← Import`). La UI ni siquiera muestra el botón de eliminar habilitado si el producto tiene historial (`DeleteProductButton`, ver `hasHistory`).
+**Eliminación controlada**: `deleteProductAction` bloquea el borrado si `activo.importItemId` no es null (protege la trazabilidad `Activo → ImportItem → Import`) — ya no es un conteo (`_count.importItems`), es un solo FK opcional. La UI ni siquiera muestra el botón de eliminar habilitado si el activo tiene ese origen (`DeleteProductButton`, ver `hasHistory`).
 
 **Patrón redirect() + try/catch en cliente**: `createProductAction`/`deleteProductAction` llaman `redirect()` en el camino feliz. Cuando se invocan desde un Client Component envueltas en `try/catch` (para mostrar errores de validación), hay que dejar pasar el error de redirect sin capturarlo — se identifica por `error.digest` empezando con `"NEXT_REDIRECT"` (no por `error.message`). Ver `new-product-form.tsx` y `delete-product-button.tsx` para el patrón exacto.
 

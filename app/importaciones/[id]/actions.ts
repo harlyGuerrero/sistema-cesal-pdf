@@ -2,12 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { findOrCreateProduct } from "@/lib/import-workflow/product-matching";
+import { createActivosFromImportItem } from "@/lib/import-workflow/activo-creation";
 
 // Acciones de revisión humana (Fase 9). A diferencia de Fase 8 (auto-confirma
 // solo cuando method === "RULE"), estas siempre llevan reviewedAt — alguien
 // las ejecutó. reviewedBy queda null hasta que exista autenticación (fuera de
 // alcance, ver CLAUDE.md).
+//
+// Confirmar ya no busca ni reutiliza un Activo existente: crea uno por
+// unidad física (ver lib/import-workflow/activo-creation.ts).
 
 async function completeImportIfNoPending(importId: string): Promise<void> {
   const pending = await prisma.importItem.count({
@@ -24,19 +27,21 @@ async function completeImportIfNoPending(importId: string): Promise<void> {
 export async function confirmItemAction(itemId: string): Promise<void> {
   const item = await prisma.importItem.findUniqueOrThrow({ where: { id: itemId } });
 
-  if (!item.categoryId || !item.normalizedName) {
-    throw new Error("El ítem necesita nombre y categoría antes de poder confirmarse — usa Editar.");
+  if (!item.tipoActivoId || !item.normalizedName) {
+    throw new Error("El ítem necesita nombre y tipo de activo antes de poder confirmarse — usa Editar.");
   }
 
-  const productId = await findOrCreateProduct({
-    categoryId: item.categoryId,
-    normalizedName: item.normalizedName,
-    displayName: item.normalizedName,
+  await createActivosFromImportItem({
+    importItemId: itemId,
+    tipoActivoId: item.tipoActivoId,
+    nombreActivo: item.normalizedName,
+    quantity: item.quantity !== null ? Number(item.quantity) : null,
+    unitPrice: item.unitPrice !== null ? Number(item.unitPrice) : null,
   });
 
   await prisma.importItem.update({
     where: { id: itemId },
-    data: { status: "CONFIRMED", productId, reviewedAt: new Date() },
+    data: { status: "CONFIRMED", reviewedAt: new Date() },
   });
 
   await completeImportIfNoPending(item.importId);
@@ -57,39 +62,40 @@ export async function rejectItemAction(itemId: string, formData: FormData): Prom
 
 export async function editAndConfirmItemAction(itemId: string, formData: FormData): Promise<void> {
   const name = (formData.get("name") as string).trim();
-  const categoryId = formData.get("categoryId") as string;
+  const tipoActivoId = formData.get("categoryId") as string;
   const quantityRaw = formData.get("quantity") as string;
   const unitPriceRaw = formData.get("unitPrice") as string;
   const totalPriceRaw = formData.get("totalPrice") as string;
 
-  if (!name || !categoryId) {
-    throw new Error("Nombre y categoría son obligatorios.");
+  if (!name || !tipoActivoId) {
+    throw new Error("Nombre y tipo de activo son obligatorios.");
   }
 
   const quantity = quantityRaw ? Number(quantityRaw) : null;
   const unitPrice = unitPriceRaw ? Number(unitPriceRaw) : null;
   const totalPrice = totalPriceRaw ? Number(totalPriceRaw) : null;
 
-  const productId = await findOrCreateProduct({
-    categoryId,
-    normalizedName: name,
-    displayName: name,
-  });
-
   const item = await prisma.importItem.update({
     where: { id: itemId },
     data: {
       normalizedName: name,
-      categoryId,
+      tipoActivoId,
       categoryMethod: "MANUAL",
       categoryConfidence: 1,
       quantity,
       unitPrice,
       totalPrice,
       status: "CONFIRMED",
-      productId,
       reviewedAt: new Date(),
     },
+  });
+
+  await createActivosFromImportItem({
+    importItemId: itemId,
+    tipoActivoId,
+    nombreActivo: name,
+    quantity,
+    unitPrice,
   });
 
   await completeImportIfNoPending(item.importId);

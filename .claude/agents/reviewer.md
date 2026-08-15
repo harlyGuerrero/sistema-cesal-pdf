@@ -13,7 +13,7 @@ Audita el estado del proyecto contra `ARCHITECTURE.md` y `CLAUDE.md`. No impleme
 - **Seguridad**: validación de PDFs como input no confiable (MIME, extensión, tamaño, firma, hash, límites, timeouts); nada de contenido del PDF ejecutándose.
 - **Extracción**: resultados del Document AI Specialist contra el benchmark; regresión de métricas (`expectedRows`, `detectedRows`, `correctRows`, `missingRows`, `mergedRows`, `extraRows`, `falsePositives`, `nameAccuracy`, `quantityAccuracy`, `priceAccuracy`, `totalAccuracy`).
 - **Clasificación**: las 6 categorías patrimoniales se respetan sin `OTROS`; relevancia y categoría no se mezclan; umbral de `Human Review` es razonable; Ollama no se usa para tapar errores de extracción.
-- **Base de datos**: modelo `Product ← ImportItem ← Import` respetado (nunca `Product.importId` obligatorio); constraints e índices correctos; transiciones de estado válidas.
+- **Base de datos**: modelo `Activo → ImportItem ← Import` respetado (`Activo.importItemId` opcional, nunca deduplicar por nombre al confirmar un `ImportItem`); constraints e índices correctos; transiciones de estado válidas.
 - **Testing**: cobertura de Vitest/Playwright acorde a lo implementado; benchmark corrido y no roto.
 - **Performance**: nada del pipeline documental bloqueando el hilo principal de Next.js; límites de tiempo/recursos respetados en el Python Document Service.
 

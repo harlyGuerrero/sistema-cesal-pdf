@@ -21,7 +21,7 @@ Preferir siempre la solución más pequeña que satisfaga el requisito. Ante dos
 ## Cuándo intervenir
 
 - Se propone ejecutar Docling, OCR o cualquier procesamiento de PDF desde el frontend → bloquear, redirigir al Python Document Service.
-- Se propone una relación `Product.importId` obligatoria → bloquear, recordar el modelo `Product ← ImportItem ← Import`.
+- Se propone deduplicar `Activo` por nombre/tipo al confirmar un `ImportItem` → bloquear, recordar que un Activo es una unidad física individual, no un catálogo lógico compartido (ver planificación de Activos).
 - Se propone resolver un problema de extracción con más prompting a Ollama en vez de arreglar la extracción estructural → bloquear.
 - Se propone avanzar a la siguiente fase sin que el usuario lo haya confirmado → detener y preguntar.
 - Se propone una categoría patrimonial nueva o un cajón "OTROS" → bloquear, remitir a las 6 categorías cerradas.

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { NewProductForm } from "./new-product-form";
 
 export default async function NewProductPage() {
-  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  const categories = await prisma.tipoActivo.findMany({ orderBy: { name: "asc" } });
 
   return (
     <main className="mx-auto max-w-md space-y-6 p-6">
