@@ -74,6 +74,13 @@ enum ProcessingAttemptStatus {
   FAILED
 }
 
+// Macrozona geográfica de una Sede. Set fijo, igual que CategoryCode.
+enum Region {
+  COSTA
+  SIERRA
+  SELVA
+}
+
 // ---------------------------------------------------------------------------
 // Models
 // ---------------------------------------------------------------------------
@@ -205,4 +212,20 @@ model ProcessingAttempt {
   @@index([importId])
   @@index([engine])
   @@map("processing_attempts")
+}
+
+// Sede física de la organización. Todavía sin relación a Product/Activo
+// (eso llega en la fase de Activos, cuando cada activo tenga una sede
+// asignada) — por ahora es solo el catálogo de ubicaciones.
+model Sede {
+  id     String @id @default(cuid())
+  name   String @unique
+  city   String
+  region Region
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([region])
+  @@map("sedes")
 }

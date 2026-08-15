@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { IMPORT_STATUS_LABELS, IMPORT_STATUS_VARIANT } from "@/lib/import-workflow/labels";
+import { UploadImportDialog } from "./upload-import-dialog";
 
 const PAGE_SIZE = 20;
 
@@ -58,8 +59,11 @@ export default async function ImportsPage({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6 p-6">
-      <h1 className="text-xl font-medium">Importaciones</h1>
+    <main className="space-y-6 p-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-medium">Importaciones</h1>
+        <UploadImportDialog />
+      </div>
 
       <Table>
         <TableHeader>

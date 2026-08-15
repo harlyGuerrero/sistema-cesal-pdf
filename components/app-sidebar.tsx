@@ -1,47 +1,90 @@
 "use client";
 
 import * as React from "react";
-import { LayoutDashboardIcon, PackageIcon, FileStackIcon } from "lucide-react";
+import { useTheme } from "next-themes";
+import {
+  LayoutDashboardIcon,
+  PackageIcon,
+  FileStackIcon,
+  Building2Icon,
+  MoonIcon,
+} from "lucide-react";
 
 import { NavMain, type NavMainItem } from "@/components/nav-main";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
-// Las 3 áreas funcionales del sistema (ver ARCHITECTURE.md sección 1).
-const NAV_ITEMS: NavMainItem[] = [
+// Las 3 áreas funcionales originales (ver ARCHITECTURE.md sección 1).
+const MAIN_NAV_ITEMS: NavMainItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboardIcon },
   { title: "Productos", url: "/productos", icon: PackageIcon },
   { title: "Importaciones", url: "/importaciones", icon: FileStackIcon },
 ];
 
-// Sin TeamSwitcher/NavUser del bloque original de shadcn: no hay concepto de
-// equipos ni de usuario autenticado todavía (auth fuera de alcance, ver
-// CLAUDE.md) — un header estático evita inventar datos de un usuario que no existe.
+// Fase B: catálogo de sedes, todavía sin relación a Product/Activo.
+const ORG_NAV_ITEMS: NavMainItem[] = [
+  { title: "Sedes", url: "/sedes", icon: Building2Icon },
+];
+
+// Sin NavUser: no hay concepto de usuario autenticado todavía (auth fuera de
+// alcance de esta fase, ver CLAUDE.md) — un footer sin usuario evita inventar
+// datos de una sesión que no existe. El toggle de modo oscuro sí es real,
+// respaldado por next-themes (ver components/theme-provider.tsx).
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+  // resolvedTheme es undefined en el server (next-themes no conoce el tema
+  // hasta hidratar) — sin este guard el switch parpadearía "unchecked" en el
+  // primer render del cliente aunque el tema real ya sea dark.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  React.useEffect(() => setMounted(true), []);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="pointer-events-none">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <PackageIcon className="size-4" />
+              <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
+                C
               </div>
-              <span className="truncate font-medium">Importación de Productos</span>
+              <span className="flex items-baseline gap-1 truncate">
+                <span className="text-base font-bold text-foreground">cesal</span>
+                <span className="rounded-sm bg-good px-1 text-[10px] font-bold text-white">
+                  ONG
+                </span>
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={NAV_ITEMS} />
+        <NavMain items={MAIN_NAV_ITEMS} label="Principal" />
+        <NavMain items={ORG_NAV_ITEMS} label="Organización" />
       </SidebarContent>
+      <SidebarFooter>
+        <div className="flex items-center justify-between gap-2 rounded-lg p-2 group-data-[collapsible=icon]:hidden">
+          <Label htmlFor="dark-mode" className="flex items-center gap-2 text-sm font-normal">
+            <MoonIcon className="size-4 text-muted-foreground" />
+            Modo Oscuro
+          </Label>
+          <Switch
+            id="dark-mode"
+            checked={mounted && resolvedTheme === "dark"}
+            onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+          />
+        </div>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

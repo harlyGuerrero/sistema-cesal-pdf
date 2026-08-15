@@ -48,10 +48,12 @@ export default async function ProductsPage({
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6 p-6">
+    <main className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-medium">Productos</h1>
-        <Button render={<Link href="/productos/nuevo" />}>Nuevo producto</Button>
+        <Button render={<Link href="/productos/nuevo" />} nativeButton={false}>
+          Nuevo producto
+        </Button>
       </div>
 
       <form className="flex flex-wrap gap-2" method="get">
