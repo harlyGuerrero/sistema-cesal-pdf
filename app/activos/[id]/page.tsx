@@ -87,9 +87,14 @@ export default async function ActivoDetailPage({
     <main className="mx-auto max-w-3xl space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-medium">{activo.nombreActivo}</h1>
-        <Link href="/activos" className="text-sm text-muted-foreground hover:underline">
-          ← Volver a activos
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link href={`/activos/${activo.id}/ficha`} className="text-sm text-muted-foreground hover:underline">
+            Ver ficha técnica →
+          </Link>
+          <Link href="/activos" className="text-sm text-muted-foreground hover:underline">
+            ← Volver a activos
+          </Link>
+        </div>
       </div>
 
       <section className="space-y-3 border-t pt-4">

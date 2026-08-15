@@ -33,9 +33,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ThemeProvider>
           <TooltipProvider>
             <SidebarProvider>
-              <AppSidebar />
+              <AppSidebar className="print:hidden" />
               <SidebarInset>
-                <header className="flex h-12 shrink-0 items-center border-b px-4">
+                <header className="flex h-12 shrink-0 items-center border-b px-4 print:hidden">
                   <SidebarTrigger className="-ml-1" />
                 </header>
                 {children}

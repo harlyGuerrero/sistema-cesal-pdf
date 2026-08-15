@@ -138,3 +138,14 @@
     @apply font-sans;
   }
 }
+
+/* Fase 7 de Activos: la ficha técnica se imprime sin sidebar. El wrapper
+   exterior de Sidebar (components/ui/sidebar.tsx) no reenvía className al
+   nodo raíz -- className="print:hidden" en AppSidebar solo oculta el
+   contenedor interno y deja el gap reservado, así que se oculta por
+   data-slot en vez de pelear con el componente. */
+@media print {
+  [data-slot="sidebar"] {
+    display: none !important;
+  }
+}
