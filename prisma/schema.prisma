@@ -290,6 +290,43 @@ model Proveedor {
   @@map("proveedores")
 }
 
+// Fase 8 de Activos: quien opera el sistema — sin login todavía (fuera de
+// alcance, ver CLAUDE.md). Existe para poder referenciar "quién" desde
+// Movimiento/Auditoría (Fase 9/11) sin inventar autenticación real antes de
+// tiempo. No confundir con Responsable: un Usuario puede no ser responsable
+// de ningún activo, y viceversa.
+model Usuario {
+  id     String  @id @default(cuid())
+  nombre String
+  email  String? @unique
+  estado Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("usuarios")
+}
+
+// Persona de CESAL a la que se puede asignar un Activo. No implica acceso al
+// sistema (ver Usuario) — puede ser cualquier trabajador, tenga o no cuenta.
+model Responsable {
+  id        String  @id @default(cuid())
+  nombre    String
+  documento String?
+  cargo     String?
+  sedeId    String?
+  sede      Sede?   @relation(fields: [sedeId], references: [id])
+  estado    Boolean @default(true)
+
+  activos Activo[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sedeId])
+  @@map("responsables")
+}
+
 // Activo patrimonial individual — antes "Product" (producto lógico
 // compartido entre importaciones). Ya no se deduplica por nombre: cada
 // unidad física es su propia fila (ver planificación de Activos, decisión
@@ -333,6 +370,12 @@ model Activo {
   proveedorId String?
   proveedor   Proveedor? @relation(fields: [proveedorId], references: [id])
 
+  // Fase 8: quién tiene el activo asignado hoy. No es historial — el
+  // historial de asignaciones/transferencias vive en Movimiento (Fase 9);
+  // esto es solo "el responsable actual", como dice el nombre.
+  responsableActualId String?
+  responsableActual   Responsable? @relation(fields: [responsableActualId], references: [id])
+
   fechaAdquisicion DateTime?
   numeroFactura    String?
   codigoProyecto   String?
@@ -365,6 +408,7 @@ model Activo {
   @@index([unidadOperativaId])
   @@index([ambienteId])
   @@index([proveedorId])
+  @@index([responsableActualId])
   @@index([importItemId])
   @@map("activos")
 }
@@ -478,6 +522,7 @@ model Sede {
   unidadesOperativas UnidadOperativa[]
   ambientes          Ambiente[]
   activos            Activo[]
+  responsables       Responsable[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

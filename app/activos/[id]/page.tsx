@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { ActivoForm, type ActivoFormInitial } from "../activo-form";
 import { getActivoFormData } from "../form-data";
 import { DeleteActivoButton } from "./delete-activo-button";
+import { ResponsableSection } from "./responsable-section";
 
 function toDateInputValue(date: Date | null): string {
   return date ? date.toISOString().slice(0, 10) : "";
@@ -20,7 +21,7 @@ export default async function ActivoDetailPage({
 }) {
   const { id } = await params;
 
-  const [activo, { tiposActivo, sedes }] = await Promise.all([
+  const [activo, { tiposActivo, sedes }, responsables] = await Promise.all([
     prisma.activo.findUnique({
       where: { id },
       include: {
@@ -30,6 +31,7 @@ export default async function ActivoDetailPage({
       },
     }),
     getActivoFormData(),
+    prisma.responsable.findMany({ where: { estado: true }, orderBy: { nombre: "asc" } }),
   ]);
 
   if (!activo) {
@@ -89,6 +91,15 @@ export default async function ActivoDetailPage({
           ← Volver a activos
         </Link>
       </div>
+
+      <section className="space-y-3 border-t pt-4">
+        <h2 className="text-sm font-medium text-muted-foreground">Responsable</h2>
+        <ResponsableSection
+          activoId={activo.id}
+          responsableActualId={activo.responsableActualId}
+          responsables={responsables}
+        />
+      </section>
 
       <ActivoForm activoId={activo.id} initial={initial} tiposActivo={tiposActivo} sedes={sedes} />
 

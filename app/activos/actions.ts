@@ -155,6 +155,39 @@ export async function updateActivoAction(activoId: string, formData: FormData): 
   revalidatePath("/activos");
 }
 
+// Fase 8: asignar/desasignar un Responsable actual. No crea historial —
+// eso es Movimiento (Fase 9); esto solo cambia "quién lo tiene ahora" y el
+// estado patrimonial en consecuencia.
+
+export async function asignarResponsableAction(activoId: string, responsableId: string): Promise<void> {
+  if (!responsableId) {
+    throw new Error("Selecciona un responsable.");
+  }
+
+  const activo = await prisma.activo.findUniqueOrThrow({ where: { id: activoId } });
+  if (activo.estadoPatrimonial === "BAJA") {
+    throw new Error("No se puede asignar un activo dado de baja.");
+  }
+
+  await prisma.activo.update({
+    where: { id: activoId },
+    data: { responsableActualId: responsableId, estadoPatrimonial: "ASIGNADO" },
+  });
+
+  revalidatePath(`/activos/${activoId}`);
+  revalidatePath("/activos");
+}
+
+export async function desasignarResponsableAction(activoId: string): Promise<void> {
+  await prisma.activo.update({
+    where: { id: activoId },
+    data: { responsableActualId: null, estadoPatrimonial: "DISPONIBLE" },
+  });
+
+  revalidatePath(`/activos/${activoId}`);
+  revalidatePath("/activos");
+}
+
 export async function deleteActivoAction(activoId: string): Promise<void> {
   const activo = await prisma.activo.findUniqueOrThrow({ where: { id: activoId } });
 

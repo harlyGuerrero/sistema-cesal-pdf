@@ -11,6 +11,8 @@ import {
   FolderTreeIcon,
   ListTreeIcon,
   BookMarkedIcon,
+  UsersIcon,
+  UserCogIcon,
   MoonIcon,
 } from "lucide-react";
 
@@ -38,9 +40,12 @@ const MAIN_NAV_ITEMS: NavMainItem[] = [
   { title: "Importaciones", url: "/importaciones", icon: FileStackIcon },
 ];
 
-// Fase B: catálogo de sedes, todavía sin relación a Activo.
+// Fase B (Sedes) + Fase 8 de Activos (Responsables, personas a quien se
+// asigna un activo; Usuarios, quién opera el sistema sin login todavía).
 const ORG_NAV_ITEMS: NavMainItem[] = [
   { title: "Sedes", url: "/sedes", icon: Building2Icon },
+  { title: "Responsables", url: "/responsables", icon: UsersIcon },
+  { title: "Usuarios", url: "/usuarios", icon: UserCogIcon },
 ];
 
 // Configuración del módulo de Activos (Fases 2, 3 y 4) — administra la
