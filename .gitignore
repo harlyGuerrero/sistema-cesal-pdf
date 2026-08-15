@@ -47,3 +47,7 @@ next-env.d.ts
 # python venv (este proyecto lo mantiene fuera del repo, ver document-service/.gitignore)
 document-service/.venv
 
+# documentos adjuntos a Activos (Fase 10) -- archivos reales de usuarios,
+# nunca al repo (ver lib/documentos/storage.ts)
+/document-storage
+

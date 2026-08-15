@@ -59,6 +59,25 @@ export const CONDICION_FISICA_LABELS: Record<string, string> = {
   DETERIORADO: "Deteriorado",
 };
 
+// Fase 10 de Activos: documentos adjuntos.
+export const TIPO_DOCUMENTO_OPTIONS = [
+  { value: "FACTURA", label: "Factura" },
+  { value: "COMPROBANTE", label: "Comprobante" },
+  { value: "ACTA_ENTREGA", label: "Acta de entrega" },
+  { value: "ACTA_ASIGNACION", label: "Acta de asignación" },
+  { value: "ACTA_TRANSFERENCIA", label: "Acta de transferencia" },
+  { value: "DOCUMENTO_BAJA", label: "Documento de baja" },
+  { value: "GARANTIA", label: "Garantía" },
+  { value: "FICHA_TECNICA", label: "Ficha técnica" },
+  { value: "CERTIFICADO", label: "Certificado" },
+  { value: "FOTOGRAFIA", label: "Fotografía" },
+  { value: "OTRO", label: "Otro" },
+] as const;
+
+export const TIPO_DOCUMENTO_LABELS: Record<string, string> = Object.fromEntries(
+  TIPO_DOCUMENTO_OPTIONS.map((option) => [option.value, option.label])
+);
+
 // Fase 9 de Activos: historial de movimientos.
 export const TIPO_MOVIMIENTO_LABELS: Record<string, string> = {
   ALTA: "Alta",

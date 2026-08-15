@@ -5,6 +5,7 @@ import { ActivoForm, type ActivoFormInitial } from "../activo-form";
 import { getActivoFormData } from "../form-data";
 import { DeleteActivoButton } from "./delete-activo-button";
 import { ResponsableSection } from "./responsable-section";
+import { DocumentoList } from "./documento-list";
 
 function toDateInputValue(date: Date | null): string {
   return date ? date.toISOString().slice(0, 10) : "";
@@ -28,6 +29,8 @@ export default async function ActivoDetailPage({
         proveedor: true,
         importItem: true,
         especificaciones: { include: { campo: true, valorCatalogoValor: true } },
+        documentos: { where: { estado: true }, orderBy: { createdAt: "desc" } },
+        _count: { select: { documentos: true } },
       },
     }),
     getActivoFormData(),
@@ -108,8 +111,16 @@ export default async function ActivoDetailPage({
 
       <ActivoForm activoId={activo.id} initial={initial} tiposActivo={tiposActivo} sedes={sedes} />
 
+      <section className="space-y-3 border-t pt-4">
+        <h2 className="text-sm font-medium text-muted-foreground">Documentos ({activo.documentos.length})</h2>
+        <DocumentoList activoId={activo.id} documentos={activo.documentos} />
+      </section>
+
       <section className="border-t pt-4">
-        <DeleteActivoButton activoId={activo.id} hasHistory={activo.importItemId !== null} />
+        <DeleteActivoButton
+          activoId={activo.id}
+          hasHistory={activo.importItemId !== null || activo._count.documentos > 0}
+        />
       </section>
     </main>
   );

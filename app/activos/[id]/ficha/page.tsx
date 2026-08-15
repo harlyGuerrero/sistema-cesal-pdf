@@ -8,6 +8,7 @@ import {
 import { Section, Field } from "./field";
 import { PrintButton } from "./print-button";
 import { HistorialSection } from "./historial-section";
+import { DocumentosSection } from "./documentos-section";
 
 function formatMoney(value: { toString(): string } | null): string | null {
   if (!value) return null;
@@ -48,8 +49,8 @@ function formatEspecificacionValor(valor: {
 
 // Fase 7 de Activos: ficha técnica de solo lectura, exportable a PDF vía
 // impresión del navegador (ver print-button.tsx). Historial de movimientos
-// llega en Fase 9 (ver historial-section.tsx); Documentos todavía no existe
-// (Fase 10) — la ficha muestra lo que hay disponible hoy.
+// (Fase 9, ver historial-section.tsx) y documentos (Fase 10, ver
+// documentos-section.tsx) completan la ficha.
 export default async function FichaActivoPage({
   params,
 }: {
@@ -85,6 +86,7 @@ export default async function FichaActivoPage({
           ambienteNuevo: true,
         },
       },
+      documentos: { where: { estado: true }, orderBy: { createdAt: "desc" } },
     },
   });
 
@@ -153,6 +155,8 @@ export default async function FichaActivoPage({
           <p className="text-sm whitespace-pre-wrap">{activo.observaciones}</p>
         </section>
       )}
+
+      <DocumentosSection documentos={activo.documentos} />
 
       <HistorialSection movimientos={activo.movimientos} />
 

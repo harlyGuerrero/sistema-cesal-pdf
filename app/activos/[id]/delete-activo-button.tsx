@@ -21,7 +21,8 @@ export function DeleteActivoButton({ activoId, hasHistory }: { activoId: string;
   if (hasHistory) {
     return (
       <p className="text-sm text-muted-foreground">
-        Este activo proviene de una importación — no se puede eliminar (mantiene trazabilidad).
+        Este activo proviene de una importación o tiene documentos adjuntos — no se puede eliminar
+        (mantiene trazabilidad).
       </p>
     );
   }

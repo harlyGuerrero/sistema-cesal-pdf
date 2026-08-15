@@ -129,6 +129,20 @@ enum TipoMovimiento {
   REACTIVACION
 }
 
+enum TipoDocumento {
+  FACTURA
+  COMPROBANTE
+  ACTA_ENTREGA
+  ACTA_ASIGNACION
+  ACTA_TRANSFERENCIA
+  DOCUMENTO_BAJA
+  GARANTIA
+  FICHA_TECNICA
+  CERTIFICADO
+  FOTOGRAFIA
+  OTRO
+}
+
 // ---------------------------------------------------------------------------
 // Models
 // ---------------------------------------------------------------------------
@@ -317,7 +331,8 @@ model Usuario {
   email  String? @unique
   estado Boolean @default(true)
 
-  movimientos Movimiento[]
+  movimientos        Movimiento[]
+  documentosCargados Documento[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -398,6 +413,43 @@ model Movimiento {
   @@map("movimientos")
 }
 
+// Documento adjunto a un Activo (Fase 10). El archivo físico no vive en esta
+// tabla ni en un directorio público — se guarda fuera de git en
+// document-storage/activos/<activoId>/<uuid><extensión> (ver
+// lib/documentos/storage.ts) y se sirve mediante GET /api/documentos/[id],
+// nunca por ruta directa. `url` guarda solo el nombre de archivo generado,
+// no una URL pública ni el nombre original del usuario (ver nombreOriginal).
+model Documento {
+  id String @id @default(cuid())
+
+  activoId String
+  activo   Activo @relation(fields: [activoId], references: [id], onDelete: Cascade)
+
+  tipoDocumento  TipoDocumento
+  nombre         String
+  nombreOriginal String
+  url            String
+  mimeType       String
+  extension      String
+  tamanoBytes    Int
+  descripcion    String?
+
+  // Soft-delete: no se borra el archivo físico al "eliminar" un documento,
+  // solo se oculta de la UI — mantiene trazabilidad (ver planificación de
+  // Activos §15).
+  estado Boolean @default(true)
+
+  usuarioCargaId String?
+  usuarioCarga   Usuario? @relation(fields: [usuarioCargaId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([activoId])
+  @@index([tipoDocumento])
+  @@map("documentos")
+}
+
 // Activo patrimonial individual — antes "Product" (producto lógico
 // compartido entre importaciones). Ya no se deduplica por nombre: cada
 // unidad física es su propia fila (ver planificación de Activos, decisión
@@ -469,6 +521,7 @@ model Activo {
 
   especificaciones ActivoEspecificacionValor[]
   movimientos      Movimiento[]
+  documentos       Documento[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -231,13 +231,23 @@ export async function desasignarResponsableAction(activoId: string): Promise<voi
 }
 
 export async function deleteActivoAction(activoId: string): Promise<void> {
-  const activo = await prisma.activo.findUniqueOrThrow({ where: { id: activoId } });
+  const activo = await prisma.activo.findUniqueOrThrow({
+    where: { id: activoId },
+    include: { _count: { select: { documentos: true } } },
+  });
 
   // Eliminación controlada: un activo que viene de una importación no se
   // borra — rompería la trazabilidad Activo -> ImportItem -> Import (mismo
   // criterio que app/productos/actions.ts, Fase 1).
   if (activo.importItemId) {
     throw new Error("No se puede eliminar: proviene de una importación (mantiene trazabilidad).");
+  }
+
+  // Documento tiene onDelete: Cascade sobre activoId — sin este guard, borrar
+  // el Activo borra la fila Documento pero deja el archivo físico huérfano
+  // en document-storage/ (Fase 10), inalcanzable para siempre.
+  if (activo._count.documentos > 0) {
+    throw new Error("No se puede eliminar: tiene documentos adjuntos.");
   }
 
   await prisma.activo.delete({ where: { id: activoId } });
