@@ -202,6 +202,8 @@ model CatalogoValor {
   estado     Boolean  @default(true)
   orden      Int      @default(0)
 
+  especificaciones ActivoEspecificacionValor[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -212,8 +214,8 @@ model CatalogoValor {
 
 // Definición de un campo de especificación técnica por subcategoría (ej.
 // "Memoria RAM", número, unidad GB, bajo Laptop). Administrable, no
-// hardcodeado — captura el valor real ActivoEspecificacionValor llega en
-// Fase 4, junto con la UI que lo consume.
+// hardcodeado — el valor real que captura cada Activo vive en
+// ActivoEspecificacionValor.
 model CampoEspecificacion {
   id             String             @id @default(cuid())
   subcategoriaId String
@@ -228,12 +230,44 @@ model CampoEspecificacion {
   estado         Boolean            @default(true)
   orden          Int                @default(0)
 
+  valores ActivoEspecificacionValor[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([subcategoriaId, nombre])
   @@index([subcategoriaId])
   @@index([catalogoId])
   @@map("campos_especificacion")
+}
+
+// Valor concreto de un CampoEspecificacion para un Activo puntual (Fase 4).
+// Columnas tipadas en vez de un único `valor: string` — permite ordenar y
+// filtrar por el tipo real sin castear en cada query (ver planificación de
+// Activos §6). Solo la columna que corresponde al tipoDato del campo se
+// llena; el resto queda null. Todavía sin consumidor real: el formulario que
+// las escribe llega en Fase 6, junto con el alta/edición de Activo.
+model ActivoEspecificacionValor {
+  id       String              @id @default(cuid())
+  activoId String
+  activo   Activo              @relation(fields: [activoId], references: [id], onDelete: Cascade)
+  campoId  String
+  campo    CampoEspecificacion @relation(fields: [campoId], references: [id])
+
+  valorTexto           String?
+  valorNumero          Decimal?       @db.Decimal(18, 4)
+  valorFecha           DateTime?
+  valorBooleano        Boolean?
+  valorCatalogoValorId String?
+  valorCatalogoValor   CatalogoValor? @relation(fields: [valorCatalogoValorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([activoId, campoId])
+  @@index([campoId])
+  @@index([valorCatalogoValorId])
+  @@map("activo_especificacion_valores")
 }
 
 // Activo patrimonial individual — antes "Product" (producto lógico
@@ -273,6 +307,8 @@ model Activo {
   // mismo ImportItem cuando su quantity > 1 (1 Activo por unidad física).
   importItemId String?
   importItem   ImportItem? @relation(fields: [importItemId], references: [id])
+
+  especificaciones ActivoEspecificacionValor[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

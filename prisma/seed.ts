@@ -182,6 +182,46 @@ async function main() {
       }
     }
   }
+
+  // Catálogo de ejemplo (Fase 4 de Activos). Lista ilustrativa del encargo
+  // original, no una lista de marcas confirmada por CESAL -- se completa al
+  // migrar el inventario real.
+  const marcaCatalogo = await prisma.catalogo.upsert({
+    where: { codigo: "MARCA" },
+    update: {},
+    create: { codigo: "MARCA", nombre: "Marca" },
+  });
+  for (const valor of ["Lenovo", "HP", "Dell"]) {
+    await prisma.catalogoValor.upsert({
+      where: { catalogoId_valor: { catalogoId: marcaCatalogo.id, valor } },
+      update: {},
+      create: { catalogoId: marcaCatalogo.id, valor },
+    });
+  }
+
+  // Campos de ejemplo bajo Laptop, para demostrar el flujo completo de
+  // campos dinámicos -- no se siembran los campos de las otras ~90
+  // subcategorías, eso queda para cuando se construya el formulario real
+  // de Activo (Fase 6) y se valide con CESAL qué campos usar en cada una.
+  const laptop = await prisma.subcategoriaActivo.findFirstOrThrow({ where: { slug: "laptop" } });
+  const CAMPOS_LAPTOP: {
+    nombre: string;
+    etiqueta: string;
+    tipoDato: "TEXTO" | "NUMERO_ENTERO" | "CATALOGO";
+    unidad?: string;
+    catalogoId?: string;
+  }[] = [
+    { nombre: "Marca", etiqueta: "Marca", tipoDato: "CATALOGO", catalogoId: marcaCatalogo.id },
+    { nombre: "N° de serie", etiqueta: "N° de serie", tipoDato: "TEXTO" },
+    { nombre: "Memoria RAM", etiqueta: "Memoria RAM", tipoDato: "NUMERO_ENTERO", unidad: "GB" },
+  ];
+  for (const campo of CAMPOS_LAPTOP) {
+    await prisma.campoEspecificacion.upsert({
+      where: { subcategoriaId_nombre: { subcategoriaId: laptop.id, nombre: campo.nombre } },
+      update: {},
+      create: { subcategoriaId: laptop.id, ...campo },
+    });
+  }
 }
 
 main()

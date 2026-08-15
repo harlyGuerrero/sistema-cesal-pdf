@@ -9,6 +9,8 @@ import {
   Building2Icon,
   TagIcon,
   FolderTreeIcon,
+  ListTreeIcon,
+  BookMarkedIcon,
   MoonIcon,
 } from "lucide-react";
 
@@ -38,11 +40,14 @@ const ORG_NAV_ITEMS: NavMainItem[] = [
   { title: "Sedes", url: "/sedes", icon: Building2Icon },
 ];
 
-// Fase 2 (tipos, solo lectura) + Fase 3 (categorías/subcategorías,
-// administrable) de Activos. El listado real de Activos llega en Fase 6.
+// Fase 2 (tipos, solo lectura) + Fase 3 (categorías/subcategorías) + Fase 4
+// (campos dinámicos y catálogos) de Activos. El listado real de Activos
+// llega en Fase 6.
 const ACTIVOS_NAV_ITEMS: NavMainItem[] = [
   { title: "Tipos de Activo", url: "/activos/tipos", icon: TagIcon },
   { title: "Categorías", url: "/activos/categorias", icon: FolderTreeIcon },
+  { title: "Campos", url: "/activos/campos", icon: ListTreeIcon },
+  { title: "Catálogos", url: "/activos/catalogos", icon: BookMarkedIcon },
 ];
 
 // Sin NavUser: no hay concepto de usuario autenticado todavía (auth fuera de
