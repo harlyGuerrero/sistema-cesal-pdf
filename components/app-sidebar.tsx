@@ -20,7 +20,7 @@ import {
   FileBarChart2Icon,
   MoonIcon,
   LogOutIcon,
-  ChevronsUpDownIcon,
+  MoreVerticalIcon,
 } from "lucide-react";
 
 import { NavMain, type NavMainItem } from "@/components/nav-main";
@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { logoutAction } from "@/app/login/actions";
 import { ROL_USUARIO_LABELS } from "@/lib/usuarios/labels";
 import type { SessionUsuario } from "@/lib/auth/session";
@@ -146,17 +147,22 @@ export function AppSidebar({
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <SidebarMenuButton size="lg">
-                    <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase">
-                      {usuario.nombre.slice(0, 2)}
-                    </div>
+                  <SidebarMenuButton
+                    size="lg"
+                    className="rounded-xl border border-sidebar-border bg-card shadow-sm hover:bg-card data-active:bg-card group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none"
+                  >
+                    <Avatar className="size-8 shrink-0 rounded-full">
+                      <AvatarFallback className="rounded-full bg-muted text-xs font-semibold uppercase">
+                        {usuario.nombre.slice(0, 2)}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="flex min-w-0 flex-col text-left leading-tight">
-                      <span className="truncate text-sm font-medium">{usuario.nombre}</span>
-                      <span className="truncate text-xs text-muted-foreground">
+                      <span className="truncate text-sm font-semibold">{usuario.nombre}</span>
+                      <span className="truncate text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
                         {ROL_USUARIO_LABELS[usuario.rol]}
                       </span>
                     </div>
-                    <ChevronsUpDownIcon className="ml-auto size-4 text-muted-foreground" />
+                    <MoreVerticalIcon className="ml-auto size-4 shrink-0 text-muted-foreground" />
                   </SidebarMenuButton>
                 }
               />
