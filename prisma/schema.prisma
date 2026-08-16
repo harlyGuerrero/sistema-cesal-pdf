@@ -373,6 +373,7 @@ model Usuario {
 model Responsable {
   id        String  @id @default(cuid())
   nombre    String
+  email     String  @unique
   documento String?
   cargo     String?
   sedeId    String?

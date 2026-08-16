@@ -19,6 +19,7 @@ const SIN_SEDE = "__ninguna__";
 export function ResponsableEditForm({
   responsableId,
   nombre,
+  email,
   cargo,
   documento,
   sedeId,
@@ -26,6 +27,7 @@ export function ResponsableEditForm({
 }: {
   responsableId: string;
   nombre: string;
+  email: string;
   cargo: string;
   documento: string;
   sedeId: string;
@@ -53,6 +55,10 @@ export function ResponsableEditForm({
       <div className="space-y-1">
         <Label htmlFor="nombre">Nombre</Label>
         <Input id="nombre" name="nombre" defaultValue={nombre} required />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="email">Correo</Label>
+        <Input id="email" name="email" type="email" defaultValue={email} required />
       </div>
       <div className="space-y-1">
         <Label htmlFor="cargo">Cargo</Label>

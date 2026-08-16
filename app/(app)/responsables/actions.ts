@@ -11,6 +11,7 @@ import { requireSessionUsuario } from "@/lib/auth/session";
 
 function readResponsableInput(formData: FormData) {
   const nombre = (formData.get("nombre") as string).trim();
+  const email = (formData.get("email") as string | null)?.trim().toLowerCase() || "";
   const documento = (formData.get("documento") as string | null)?.trim() || null;
   const cargo = (formData.get("cargo") as string | null)?.trim() || null;
   const sedeId = (formData.get("sedeId") as string | null) || null;
@@ -18,13 +19,24 @@ function readResponsableInput(formData: FormData) {
   if (!nombre) {
     throw new Error("El nombre es obligatorio.");
   }
+  if (!email || !email.includes("@")) {
+    throw new Error("El correo es obligatorio y debe ser válido.");
+  }
 
-  return { nombre, documento, cargo, sedeId };
+  return { nombre, email, documento, cargo, sedeId };
+}
+
+async function assertEmailDisponible(email: string, exceptId?: string): Promise<void> {
+  const existing = await prisma.responsable.findUnique({ where: { email } });
+  if (existing && existing.id !== exceptId) {
+    throw new Error(`Ya existe un responsable con el correo "${email}".`);
+  }
 }
 
 export async function createResponsableAction(formData: FormData): Promise<void> {
   const actor = await requireSessionUsuario();
   const data = readResponsableInput(formData);
+  await assertEmailDisponible(data.email);
 
   await prisma.$transaction(async (tx) => {
     const responsable = await tx.responsable.create({ data });
@@ -47,6 +59,7 @@ export async function createResponsableAction(formData: FormData): Promise<void>
 export async function updateResponsableAction(responsableId: string, formData: FormData): Promise<void> {
   const actor = await requireSessionUsuario();
   const data = readResponsableInput(formData);
+  await assertEmailDisponible(data.email, responsableId);
 
   await prisma.$transaction(async (tx) => {
     await tx.responsable.update({ where: { id: responsableId }, data });

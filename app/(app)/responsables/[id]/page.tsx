@@ -45,6 +45,7 @@ export default async function ResponsableDetailPage({
         <ResponsableEditForm
           responsableId={responsable.id}
           nombre={responsable.nombre}
+          email={responsable.email}
           cargo={responsable.cargo ?? ""}
           documento={responsable.documento ?? ""}
           sedeId={responsable.sedeId ?? ""}

@@ -16,6 +16,7 @@ import { asignarResponsableAction, desasignarResponsableAction } from "../action
 export interface ResponsableOption {
   id: string;
   nombre: string;
+  email: string;
 }
 
 // Fase 8 de Activos: asignar cambia responsableActualId + estadoPatrimonial
@@ -68,7 +69,7 @@ export function ResponsableSection({
           <SelectContent>
             {responsables.map((responsable) => (
               <SelectItem key={responsable.id} value={responsable.id}>
-                {responsable.nombre}
+                {responsable.nombre} — {responsable.email}
               </SelectItem>
             ))}
           </SelectContent>

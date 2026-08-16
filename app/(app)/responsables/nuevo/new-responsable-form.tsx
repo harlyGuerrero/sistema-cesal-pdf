@@ -47,6 +47,10 @@ export function NewResponsableForm({ sedes }: { sedes: { id: string; name: strin
         <Input id="nombre" name="nombre" required />
       </div>
       <div className="space-y-1">
+        <Label htmlFor="email">Correo</Label>
+        <Input id="email" name="email" type="email" required />
+      </div>
+      <div className="space-y-1">
         <Label htmlFor="cargo">Cargo (opcional)</Label>
         <Input id="cargo" name="cargo" />
       </div>

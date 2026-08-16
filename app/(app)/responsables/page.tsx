@@ -30,6 +30,7 @@ export default async function ResponsablesPage() {
         <TableHeader>
           <TableRow>
             <TableHead>Nombre</TableHead>
+            <TableHead>Correo</TableHead>
             <TableHead>Cargo</TableHead>
             <TableHead>Sede</TableHead>
             <TableHead>Activos asignados</TableHead>
@@ -44,6 +45,7 @@ export default async function ResponsablesPage() {
                   {responsable.nombre}
                 </Link>
               </TableCell>
+              <TableCell className="text-sm text-muted-foreground">{responsable.email}</TableCell>
               <TableCell>{responsable.cargo ?? "—"}</TableCell>
               <TableCell>{responsable.sede?.name ?? "—"}</TableCell>
               <TableCell>{responsable._count.activos}</TableCell>
@@ -56,7 +58,7 @@ export default async function ResponsablesPage() {
           ))}
           {responsables.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground">
+              <TableCell colSpan={6} className="text-center text-muted-foreground">
                 Sin responsables todavía.
               </TableCell>
             </TableRow>
