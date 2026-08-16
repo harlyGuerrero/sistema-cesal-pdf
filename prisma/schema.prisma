@@ -352,7 +352,8 @@ model Proveedor {
 // seed, para no dejar una contraseña fija escrita en el repo.
 model Usuario {
   id           String     @id @default(cuid())
-  nombre       String
+  nombres      String
+  apellidos    String     @default("")
   email        String     @unique
   passwordHash String
   rol          RolUsuario @default(ADMIN)
@@ -372,7 +373,8 @@ model Usuario {
 // sistema (ver Usuario) — puede ser cualquier trabajador, tenga o no cuenta.
 model Responsable {
   id        String  @id @default(cuid())
-  nombre    String
+  nombres   String
+  apellidos String  @default("")
   email     String  @unique
   documento String?
   cargo     String?

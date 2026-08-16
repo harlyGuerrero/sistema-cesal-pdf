@@ -1,25 +1,15 @@
 import Link from "next/link";
-import { describirMovimiento } from "@/lib/activos/movimientos";
+import { describirMovimiento, type MovimientoDetalleRow } from "@/lib/activos/movimientos";
 import { TIPO_MOVIMIENTO_LABELS } from "@/lib/activos/labels";
 import { MOVIMIENTO_META } from "@/lib/activos/movimiento-meta";
 import type { TipoMovimiento } from "@/lib/generated/prisma/client";
 
-export interface MovimientoFeedRow {
+export interface MovimientoFeedRow extends MovimientoDetalleRow {
   id: string;
   tipo: TipoMovimiento;
   fecha: Date;
   motivo: string | null;
   activo: { id: string; nombreActivo: string };
-  responsableAnterior: { nombre: string } | null;
-  responsableNuevo: { nombre: string } | null;
-  sedeAnterior: { name: string } | null;
-  sedeNueva: { name: string } | null;
-  unidadOperativaAnterior: { name: string } | null;
-  unidadOperativaNueva: { name: string } | null;
-  ambienteAnterior: { name: string } | null;
-  ambienteNuevo: { name: string } | null;
-  estadoAnterior: string | null;
-  estadoNuevo: string | null;
 }
 
 export function MovimientosFeed({ movimientos }: { movimientos: MovimientoFeedRow[] }) {

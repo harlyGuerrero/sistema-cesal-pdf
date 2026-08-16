@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/auth/password";
 import { requireSuperAdmin } from "@/lib/auth/session";
 import { registrarAuditoria } from "@/lib/auditoria/registrar";
+import { nombreCompleto } from "@/lib/nombre-completo";
 import type { RolUsuario } from "@/lib/generated/prisma/client";
 
 // Fase 13: Usuario ahora es una cuenta real (email + contraseña + rol) — ver
@@ -37,13 +38,14 @@ async function assertQuedaUnSuperAdminActivo(
 export async function createUsuarioAction(formData: FormData): Promise<void> {
   const actor = await requireSuperAdmin();
 
-  const nombre = (formData.get("nombre") as string).trim();
+  const nombres = (formData.get("nombres") as string).trim();
+  const apellidos = (formData.get("apellidos") as string).trim();
   const email = (formData.get("email") as string).trim().toLowerCase();
   const password = formData.get("password") as string;
   const rol = readRol(formData);
 
-  if (!nombre || !email) {
-    throw new Error("Nombre y email son obligatorios.");
+  if (!nombres || !apellidos || !email) {
+    throw new Error("Nombres, apellidos y email son obligatorios.");
   }
   if (!password || password.length < 8) {
     throw new Error("La contraseña debe tener al menos 8 caracteres.");
@@ -57,9 +59,15 @@ export async function createUsuarioAction(formData: FormData): Promise<void> {
   const passwordHash = await hashPassword(password);
 
   const usuario = await prisma.$transaction(async (tx) => {
-    const created = await tx.usuario.create({ data: { nombre, email, passwordHash, rol } });
+    const created = await tx.usuario.create({ data: { nombres, apellidos, email, passwordHash, rol } });
     await registrarAuditoria(
-      { accion: "CREAR", entidad: "Usuario", entidadId: created.id, detalle: { nombre, email, rol }, usuarioId: actor.id },
+      {
+        accion: "CREAR",
+        entidad: "Usuario",
+        entidadId: created.id,
+        detalle: { nombre: nombreCompleto(created), email, rol },
+        usuarioId: actor.id,
+      },
       tx
     );
     return created;
@@ -75,7 +83,8 @@ export async function updateUsuarioAction(usuarioId: string, formData: FormData)
 
   const current = await prisma.usuario.findUniqueOrThrow({ where: { id: usuarioId } });
 
-  const nombre = (formData.get("nombre") as string).trim();
+  const nombres = (formData.get("nombres") as string).trim();
+  const apellidos = (formData.get("apellidos") as string).trim();
   const email = (formData.get("email") as string).trim().toLowerCase();
   const password = (formData.get("password") as string | null) || "";
   const rolRaw = formData.get("rol") as string | null;
@@ -91,8 +100,8 @@ export async function updateUsuarioAction(usuarioId: string, formData: FormData)
   const rol: RolUsuario = esUsuarioActual ? current.rol : readRol(formData);
   const estado = esUsuarioActual ? current.estado : estadoRaw === "true";
 
-  if (!nombre || !email) {
-    throw new Error("Nombre y email son obligatorios.");
+  if (!nombres || !apellidos || !email) {
+    throw new Error("Nombres, apellidos y email son obligatorios.");
   }
   if (password && password.length < 8) {
     throw new Error("La contraseña debe tener al menos 8 caracteres.");
@@ -109,7 +118,8 @@ export async function updateUsuarioAction(usuarioId: string, formData: FormData)
     await tx.usuario.update({
       where: { id: usuarioId },
       data: {
-        nombre,
+        nombres,
+        apellidos,
         email,
         rol,
         estado,
@@ -117,7 +127,13 @@ export async function updateUsuarioAction(usuarioId: string, formData: FormData)
       },
     });
     await registrarAuditoria(
-      { accion: "ACTUALIZAR", entidad: "Usuario", entidadId: usuarioId, detalle: { nombre, email, rol, estado }, usuarioId: actor.id },
+      {
+        accion: "ACTUALIZAR",
+        entidad: "Usuario",
+        entidadId: usuarioId,
+        detalle: { nombre: nombreCompleto({ nombres, apellidos }), email, rol, estado },
+        usuarioId: actor.id,
+      },
       tx
     );
   });
@@ -140,7 +156,13 @@ export async function deleteUsuarioAction(usuarioId: string): Promise<void> {
 
     await tx.usuario.delete({ where: { id: usuarioId } });
     await registrarAuditoria(
-      { accion: "ELIMINAR", entidad: "Usuario", entidadId: usuarioId, detalle: { nombre: usuario.nombre, email: usuario.email }, usuarioId: actor.id },
+      {
+        accion: "ELIMINAR",
+        entidad: "Usuario",
+        entidadId: usuarioId,
+        detalle: { nombre: nombreCompleto(usuario), email: usuario.email },
+        usuarioId: actor.id,
+      },
       tx
     );
   });

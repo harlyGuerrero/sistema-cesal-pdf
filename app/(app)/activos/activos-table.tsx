@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ESTADO_PATRIMONIAL_COLOR_VAR, ESTADO_PATRIMONIAL_LABELS } from "@/lib/activos/labels";
 import { TIPO_ACTIVO_META } from "@/lib/activos/tipo-activo-meta";
+import { nombreCompleto } from "@/lib/nombre-completo";
 import type { EstadoPatrimonial, TipoActivoCode } from "@/lib/generated/prisma/client";
 import { ActivoRowActions } from "./activo-row-actions";
 
@@ -15,7 +16,7 @@ export interface ActivoTableRow {
   sede: { name: string } | null;
   unidadOperativa: { name: string } | null;
   subcategoria: { nombre: string } | null;
-  responsableActual: { nombre: string; email: string } | null;
+  responsableActual: { nombres: string; apellidos: string; email: string } | null;
 }
 
 const COLUMN_COUNT = 8;
@@ -78,7 +79,7 @@ export function ActivosTable({
               <TableCell className="text-sm">
                 {activo.responsableActual ? (
                   <>
-                    <p>{activo.responsableActual.nombre}</p>
+                    <p>{nombreCompleto(activo.responsableActual)}</p>
                     <p className="truncate text-xs text-muted-foreground">{activo.responsableActual.email}</p>
                   </>
                 ) : (

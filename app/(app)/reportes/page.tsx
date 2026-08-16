@@ -14,6 +14,7 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ESTADO_PATRIMONIAL_COLOR_VAR, ESTADO_PATRIMONIAL_LABELS, TIPO_ACTIVO_CODE_ORDER } from "@/lib/activos/labels";
 import { TIPO_ACTIVO_META } from "@/lib/activos/tipo-activo-meta";
+import { nombreCompleto } from "@/lib/nombre-completo";
 import type { EstadoPatrimonial, Prisma } from "@/lib/generated/prisma/client";
 import { ReportesFilters } from "./reportes-filters";
 
@@ -267,7 +268,9 @@ export default async function ReportesPage({
                         .filter(Boolean)
                         .join(" › ") || "—"}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{activo.responsableActual?.nombre ?? "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {activo.responsableActual ? nombreCompleto(activo.responsableActual) : "—"}
+                    </TableCell>
                     <TableCell className="pr-6">
                       <span
                         className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"

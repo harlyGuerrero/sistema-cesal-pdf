@@ -11,11 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { nombreCompleto } from "@/lib/nombre-completo";
 import { asignarResponsableAction, desasignarResponsableAction } from "../actions";
 
 export interface ResponsableOption {
   id: string;
-  nombre: string;
+  nombres: string;
+  apellidos: string;
   email: string;
 }
 
@@ -69,7 +71,7 @@ export function ResponsableSection({
           <SelectContent>
             {responsables.map((responsable) => (
               <SelectItem key={responsable.id} value={responsable.id}>
-                {responsable.nombre} — {responsable.email}
+                {nombreCompleto(responsable)} — {responsable.email}
               </SelectItem>
             ))}
           </SelectContent>

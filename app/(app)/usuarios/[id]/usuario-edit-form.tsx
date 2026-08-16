@@ -20,14 +20,16 @@ import { updateUsuarioAction } from "../actions";
 
 export function UsuarioEditForm({
   usuarioId,
-  nombre,
+  nombres,
+  apellidos,
   email,
   rol,
   estado,
   esUsuarioActual,
 }: {
   usuarioId: string;
-  nombre: string;
+  nombres: string;
+  apellidos: string;
   email: string;
   rol: string;
   estado: boolean;
@@ -60,8 +62,12 @@ export function UsuarioEditForm({
       className="flex flex-wrap items-end gap-3"
     >
       <div className="space-y-1">
-        <Label htmlFor="nombre">Nombre</Label>
-        <Input id="nombre" name="nombre" defaultValue={nombre} required className="w-56" />
+        <Label htmlFor="nombres">Nombres</Label>
+        <Input id="nombres" name="nombres" defaultValue={nombres} required className="w-44" />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="apellidos">Apellidos</Label>
+        <Input id="apellidos" name="apellidos" defaultValue={apellidos} required className="w-44" />
       </div>
       <div className="space-y-1">
         <Label htmlFor="email">Email</Label>

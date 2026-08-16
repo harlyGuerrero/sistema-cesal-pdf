@@ -5,25 +5,27 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { registrarAuditoria } from "@/lib/auditoria/registrar";
 import { requireSessionUsuario } from "@/lib/auth/session";
+import { nombreCompleto } from "@/lib/nombre-completo";
 
 // Fase 8 de Activos: Responsable es la persona a la que se puede asignar un
 // Activo — no implica acceso al sistema (ver Usuario).
 
 function readResponsableInput(formData: FormData) {
-  const nombre = (formData.get("nombre") as string).trim();
+  const nombres = (formData.get("nombres") as string).trim();
+  const apellidos = (formData.get("apellidos") as string).trim();
   const email = (formData.get("email") as string | null)?.trim().toLowerCase() || "";
   const documento = (formData.get("documento") as string | null)?.trim() || null;
   const cargo = (formData.get("cargo") as string | null)?.trim() || null;
   const sedeId = (formData.get("sedeId") as string | null) || null;
 
-  if (!nombre) {
-    throw new Error("El nombre es obligatorio.");
+  if (!nombres || !apellidos) {
+    throw new Error("Nombres y apellidos son obligatorios.");
   }
   if (!email || !email.includes("@")) {
     throw new Error("El correo es obligatorio y debe ser válido.");
   }
 
-  return { nombre, email, documento, cargo, sedeId };
+  return { nombres, apellidos, email, documento, cargo, sedeId };
 }
 
 async function assertEmailDisponible(email: string, exceptId?: string): Promise<void> {
@@ -46,7 +48,7 @@ export async function createResponsableAction(formData: FormData): Promise<void>
         entidad: "Responsable",
         entidadId: responsable.id,
         detalle: {
-          nombre: responsable.nombre,
+          nombre: nombreCompleto(responsable),
           email: responsable.email,
           cargo: responsable.cargo,
           documento: responsable.documento,
@@ -79,7 +81,7 @@ export async function updateResponsableAction(responsableId: string, formData: F
         entidad: "Responsable",
         entidadId: responsableId,
         detalle: {
-          nombre: updated.nombre,
+          nombre: nombreCompleto(updated),
           email: updated.email,
           cargo: updated.cargo,
           documento: updated.documento,
@@ -116,7 +118,7 @@ export async function deleteResponsableAction(responsableId: string): Promise<vo
         entidad: "Responsable",
         entidadId: responsableId,
         detalle: {
-          nombre: responsable.nombre,
+          nombre: nombreCompleto(responsable),
           email: responsable.email,
           cargo: responsable.cargo,
           sede: responsable.sede?.name ?? null,

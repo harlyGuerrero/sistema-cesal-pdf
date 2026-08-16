@@ -5,6 +5,7 @@ import { requireSuperAdmin } from "@/lib/auth/session";
 import { FormPageHeader } from "@/components/form-page-header";
 import { FormSection } from "@/components/form-section";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
+import { nombreCompleto } from "@/lib/nombre-completo";
 import { UsuarioEditForm } from "./usuario-edit-form";
 import { DeleteUsuarioButton } from "./delete-usuario-button";
 
@@ -26,12 +27,12 @@ export default async function UsuarioDetailPage({
 
   return (
     <>
-      <PageBreadcrumb items={[{ label: usuario.nombre }]} />
+      <PageBreadcrumb items={[{ label: nombreCompleto(usuario) }]} />
       <main className="p-6">
         <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border bg-card shadow-sm">
           <FormPageHeader
             icon={UserCogIcon}
-            title={usuario.nombre}
+            title={nombreCompleto(usuario)}
             description={usuario.email}
           />
 
@@ -39,7 +40,8 @@ export default async function UsuarioDetailPage({
             <FormSection icon={UserCogIcon} title="Datos de la cuenta" color="var(--color-chart-5)">
               <UsuarioEditForm
                 usuarioId={usuario.id}
-                nombre={usuario.nombre}
+                nombres={usuario.nombres}
+                apellidos={usuario.apellidos}
                 email={usuario.email}
                 rol={usuario.rol}
                 estado={usuario.estado}

@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { inicialesPersona, nombreCompleto } from "@/lib/nombre-completo";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { ResponsablesFilters } from "./responsables-filters";
 import { ResponsableRowActions } from "./responsable-row-actions";
@@ -37,7 +38,8 @@ export default async function ResponsablesPage({
     ...(q
       ? {
           OR: [
-            { nombre: { contains: q, mode: "insensitive" } },
+            { nombres: { contains: q, mode: "insensitive" } },
+            { apellidos: { contains: q, mode: "insensitive" } },
             { email: { contains: q, mode: "insensitive" } },
           ],
         }
@@ -51,7 +53,7 @@ export default async function ResponsablesPage({
       prisma.responsable.findMany({
         where,
         include: { sede: true, _count: { select: { activos: true } } },
-        orderBy: { nombre: "asc" },
+        orderBy: [{ nombres: "asc" }, { apellidos: "asc" }],
         skip: (page - 1) * PAGE_SIZE,
         take: PAGE_SIZE,
       }),
@@ -142,11 +144,11 @@ export default async function ResponsablesPage({
                     <div className="flex items-center gap-2.5">
                       <Avatar className="size-8 shrink-0 rounded-full">
                         <AvatarFallback className="rounded-full bg-primary/10 text-xs font-semibold text-primary uppercase">
-                          {responsable.nombre.slice(0, 2)}
+                          {inicialesPersona(responsable)}
                         </AvatarFallback>
                       </Avatar>
                       <Link href={`/responsables/${responsable.id}`} className="truncate text-sm hover:underline">
-                        {responsable.nombre}
+                        {nombreCompleto(responsable)}
                       </Link>
                     </div>
                   </TableCell>
@@ -174,7 +176,7 @@ export default async function ResponsablesPage({
                     </span>
                   </TableCell>
                   <TableCell className="pr-6 text-right">
-                    <ResponsableRowActions responsableId={responsable.id} nombre={responsable.nombre} />
+                    <ResponsableRowActions responsableId={responsable.id} nombre={nombreCompleto(responsable)} />
                   </TableCell>
                 </TableRow>
               ))}

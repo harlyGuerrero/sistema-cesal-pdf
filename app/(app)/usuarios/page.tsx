@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ROL_USUARIO_LABELS, ROL_USUARIO_META } from "@/lib/usuarios/labels";
+import { inicialesPersona, nombreCompleto } from "@/lib/nombre-completo";
 import type { Prisma, RolUsuario } from "@/lib/generated/prisma/client";
 import { UsuariosFilters } from "./usuarios-filters";
 import { UsuarioRowActions } from "./usuario-row-actions";
@@ -38,7 +39,8 @@ export default async function UsuariosPage({
     ...(q
       ? {
           OR: [
-            { nombre: { contains: q, mode: "insensitive" } },
+            { nombres: { contains: q, mode: "insensitive" } },
+            { apellidos: { contains: q, mode: "insensitive" } },
             { email: { contains: q, mode: "insensitive" } },
           ],
         }
@@ -50,7 +52,7 @@ export default async function UsuariosPage({
   const [usuarios, total, totalGlobal, countsPorRol, activosGlobal] = await Promise.all([
     prisma.usuario.findMany({
       where,
-      orderBy: { nombre: "asc" },
+      orderBy: [{ nombres: "asc" }, { apellidos: "asc" }],
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
@@ -148,11 +150,11 @@ export default async function UsuariosPage({
                               color: rolMeta.color,
                             }}
                           >
-                            {usuario.nombre.slice(0, 2)}
+                            {inicialesPersona(usuario)}
                           </AvatarFallback>
                         </Avatar>
                         <Link href={`/usuarios/${usuario.id}`} className="truncate text-sm hover:underline">
-                          {usuario.nombre}
+                          {nombreCompleto(usuario)}
                         </Link>
                       </div>
                     </TableCell>
@@ -186,7 +188,7 @@ export default async function UsuariosPage({
                     <TableCell className="pr-6 text-right">
                       <UsuarioRowActions
                         usuarioId={usuario.id}
-                        nombre={usuario.nombre}
+                        nombre={nombreCompleto(usuario)}
                         esUsuarioActual={actor.id === usuario.id}
                       />
                     </TableCell>

@@ -7,6 +7,7 @@ import {
 } from "@/lib/activos/labels";
 import { PrintButton } from "@/components/print-button";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
+import { nombreCompleto } from "@/lib/nombre-completo";
 import { Section, Field } from "./field";
 import { HistorialSection } from "./historial-section";
 import { DocumentosSection } from "./documentos-section";
@@ -127,7 +128,7 @@ export default async function FichaActivoPage({
           label="Condición física"
           value={activo.condicionFisica ? CONDICION_FISICA_LABELS[activo.condicionFisica] : null}
         />
-        <Field label="Responsable actual" value={activo.responsableActual?.nombre} />
+        <Field label="Responsable actual" value={activo.responsableActual ? nombreCompleto(activo.responsableActual) : null} />
         <Field label="Descripción" value={activo.descripcion} span2 />
       </Section>
 

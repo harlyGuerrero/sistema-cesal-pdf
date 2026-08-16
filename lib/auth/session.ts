@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/db";
+import { nombreCompleto } from "@/lib/nombre-completo";
 import type { RolUsuario } from "@/lib/generated/prisma/client";
 
 // Fase 13: nombre de cookie compartido entre este archivo (server
@@ -96,7 +97,7 @@ export async function getSessionUsuario(): Promise<SessionUsuario | null> {
   const usuario = await prisma.usuario.findUnique({ where: { id: payload.sub } });
   if (!usuario || !usuario.estado) return null;
 
-  return { id: usuario.id, nombre: usuario.nombre, email: usuario.email, rol: usuario.rol };
+  return { id: usuario.id, nombre: nombreCompleto(usuario), email: usuario.email, rol: usuario.rol };
 }
 
 // Defensa en profundidad para server actions sensibles: proxy.ts ya protege

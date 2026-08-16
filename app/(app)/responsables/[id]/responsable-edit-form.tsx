@@ -18,7 +18,8 @@ const SIN_SEDE = "__ninguna__";
 
 export function ResponsableEditForm({
   responsableId,
-  nombre,
+  nombres,
+  apellidos,
   email,
   cargo,
   documento,
@@ -26,7 +27,8 @@ export function ResponsableEditForm({
   sedes,
 }: {
   responsableId: string;
-  nombre: string;
+  nombres: string;
+  apellidos: string;
   email: string;
   cargo: string;
   documento: string;
@@ -53,8 +55,12 @@ export function ResponsableEditForm({
       className="grid grid-cols-1 gap-3 sm:grid-cols-2"
     >
       <div className="space-y-1">
-        <Label htmlFor="nombre">Nombre</Label>
-        <Input id="nombre" name="nombre" defaultValue={nombre} required />
+        <Label htmlFor="nombres">Nombres</Label>
+        <Input id="nombres" name="nombres" defaultValue={nombres} required />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor="apellidos">Apellidos</Label>
+        <Input id="apellidos" name="apellidos" defaultValue={apellidos} required />
       </div>
       <div className="space-y-1">
         <Label htmlFor="email">Correo</Label>

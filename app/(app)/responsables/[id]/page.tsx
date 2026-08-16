@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { FormPageHeader } from "@/components/form-page-header";
 import { FormSection } from "@/components/form-section";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
+import { nombreCompleto } from "@/lib/nombre-completo";
 import {
   Table,
   TableBody,
@@ -37,12 +38,12 @@ export default async function ResponsableDetailPage({
 
   return (
     <>
-      <PageBreadcrumb items={[{ label: responsable.nombre }]} />
+      <PageBreadcrumb items={[{ label: nombreCompleto(responsable) }]} />
       <main className="p-6">
       <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border bg-card shadow-sm">
         <FormPageHeader
           icon={UsersIcon}
-          title={responsable.nombre}
+          title={nombreCompleto(responsable)}
           description={responsable.email}
         />
 
@@ -50,7 +51,8 @@ export default async function ResponsableDetailPage({
           <FormSection icon={IdCardIcon} title="Datos del responsable" color="var(--color-chart-2)">
             <ResponsableEditForm
               responsableId={responsable.id}
-              nombre={responsable.nombre}
+              nombres={responsable.nombres}
+              apellidos={responsable.apellidos}
               email={responsable.email}
               cargo={responsable.cargo ?? ""}
               documento={responsable.documento ?? ""}

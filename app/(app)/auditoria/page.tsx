@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { TIPO_ACCION_AUDITORIA_LABELS, TIPO_ACCION_AUDITORIA_META } from "@/lib/auditoria/labels";
 import { describirDetalleAuditoria, resumenDetalleCrudo } from "@/lib/auditoria/describir-detalle";
+import { inicialesPersona, nombreCompleto } from "@/lib/nombre-completo";
 import type { Prisma, TipoAccionAuditoria } from "@/lib/generated/prisma/client";
 import { AuditoriaFilters } from "./auditoria-filters";
 
@@ -42,7 +43,16 @@ export default async function AuditoriaPage({
   const page = Math.max(1, Number(pageParam) || 1);
 
   const filtros: Prisma.AuditoriaLogWhereInput[] = [];
-  if (q) filtros.push({ usuario: { nombre: { contains: q, mode: "insensitive" } } });
+  if (q) {
+    filtros.push({
+      usuario: {
+        OR: [
+          { nombres: { contains: q, mode: "insensitive" } },
+          { apellidos: { contains: q, mode: "insensitive" } },
+        ],
+      },
+    });
+  }
   if (entidad && entidad !== "all") filtros.push({ entidad });
   if (accion && accion !== "all") filtros.push({ accion: accion as TipoAccionAuditoria });
   if (fechaDesde) filtros.push({ fecha: { gte: new Date(`${fechaDesde}T00:00:00`) } });
@@ -176,10 +186,10 @@ export default async function AuditoriaPage({
                         <div className="flex items-center gap-2">
                           <Avatar className="size-6 shrink-0 rounded-full">
                             <AvatarFallback className="rounded-full bg-muted text-[10px] font-semibold uppercase">
-                              {log.usuario.nombre.slice(0, 2)}
+                              {inicialesPersona(log.usuario)}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="truncate text-sm">{log.usuario.nombre}</span>
+                          <span className="truncate text-sm">{nombreCompleto(log.usuario)}</span>
                         </div>
                       ) : (
                         <span className="text-sm text-muted-foreground">—</span>

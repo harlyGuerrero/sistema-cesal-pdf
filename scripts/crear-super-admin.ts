@@ -3,6 +3,7 @@ import { createInterface } from "node:readline";
 import { stdin, stdout } from "node:process";
 import { prisma } from "../lib/db";
 import { hashPassword } from "../lib/auth/password";
+import { nombreCompleto } from "../lib/nombre-completo";
 
 // Fase 13: no hay seed con contraseña fija a propósito (ver
 // prisma/schema.prisma, comentario en Usuario) — el primer SUPER_ADMIN se
@@ -25,12 +26,13 @@ async function main() {
   const it = rl[Symbol.asyncIterator]();
 
   try {
-    const nombre = (await ask(it, "Nombre: ")).trim();
+    const nombres = (await ask(it, "Nombres: ")).trim();
+    const apellidos = (await ask(it, "Apellidos: ")).trim();
     const email = (await ask(it, "Email: ")).trim().toLowerCase();
     const password = await ask(it, "Contraseña (mínimo 8 caracteres): ");
 
-    if (!nombre || !email) {
-      throw new Error("Nombre y email son obligatorios.");
+    if (!nombres || !apellidos || !email) {
+      throw new Error("Nombres, apellidos y email son obligatorios.");
     }
     if (password.length < 8) {
       throw new Error("La contraseña debe tener al menos 8 caracteres.");
@@ -43,10 +45,10 @@ async function main() {
 
     const passwordHash = await hashPassword(password);
     const usuario = await prisma.usuario.create({
-      data: { nombre, email, passwordHash, rol: "SUPER_ADMIN" },
+      data: { nombres, apellidos, email, passwordHash, rol: "SUPER_ADMIN" },
     });
 
-    console.log(`\nSuper Administrador creado: ${usuario.nombre} <${usuario.email}>.`);
+    console.log(`\nSuper Administrador creado: ${nombreCompleto(usuario)} <${usuario.email}>.`);
   } finally {
     rl.close();
     await prisma.$disconnect();

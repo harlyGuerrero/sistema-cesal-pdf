@@ -2,6 +2,7 @@ import { HistoryIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TIPO_MOVIMIENTO_LABELS } from "@/lib/activos/labels";
 import { describirMovimiento, type MovimientoDetalleRow } from "@/lib/activos/movimientos";
+import { nombreCompleto } from "@/lib/nombre-completo";
 import { Section } from "./field";
 
 export interface MovimientoRow extends MovimientoDetalleRow {
@@ -9,7 +10,7 @@ export interface MovimientoRow extends MovimientoDetalleRow {
   tipo: string;
   fecha: Date;
   motivo: string | null;
-  usuario: { nombre: string } | null;
+  usuario: { nombres: string; apellidos: string } | null;
 }
 
 // Fase 9 de Activos, restilizada en Fase 26: historial inmutable, ordenado
@@ -43,7 +44,7 @@ export function HistorialSection({ movimientos }: { movimientos: MovimientoRow[]
               </span>
               <span className="text-xs text-muted-foreground">
                 {movimiento.fecha.toLocaleString("es-PE")}
-                {movimiento.usuario && ` · ${movimiento.usuario.nombre}`}
+                {movimiento.usuario && ` · ${nombreCompleto(movimiento.usuario)}`}
               </span>
             </div>
             {detalle.length > 0 && (

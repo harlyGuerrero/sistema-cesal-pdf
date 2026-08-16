@@ -6,6 +6,7 @@ import type {
   TipoMovimiento,
 } from "@/lib/generated/prisma/client";
 import { ESTADO_PATRIMONIAL_LABELS } from "@/lib/activos/labels";
+import { nombreCompleto } from "@/lib/nombre-completo";
 
 type UbicacionSnapshot = Pick<Activo, "sedeId" | "unidadOperativaId" | "ambienteId" | "estadoPatrimonial">;
 
@@ -77,8 +78,8 @@ export function movimientoTipoAAccionAuditoria(tipo: TipoMovimiento | null): Tip
 }
 
 export interface MovimientoDetalleRow {
-  responsableAnterior: { nombre: string } | null;
-  responsableNuevo: { nombre: string } | null;
+  responsableAnterior: { nombres: string; apellidos: string } | null;
+  responsableNuevo: { nombres: string; apellidos: string } | null;
   sedeAnterior: { name: string } | null;
   sedeNueva: { name: string } | null;
   unidadOperativaAnterior: { name: string } | null;
@@ -100,7 +101,11 @@ function cambio(label: string, antes: string | null, despues: string | null): st
 // (historial-section.tsx) y por la vista global de movimientos (/movimientos).
 export function describirMovimiento(movimiento: MovimientoDetalleRow): string[] {
   return [
-    cambio("Responsable", movimiento.responsableAnterior?.nombre ?? null, movimiento.responsableNuevo?.nombre ?? null),
+    cambio(
+      "Responsable",
+      movimiento.responsableAnterior ? nombreCompleto(movimiento.responsableAnterior) : null,
+      movimiento.responsableNuevo ? nombreCompleto(movimiento.responsableNuevo) : null
+    ),
     cambio("Sede", movimiento.sedeAnterior?.name ?? null, movimiento.sedeNueva?.name ?? null),
     cambio(
       "Unidad operativa",
@@ -141,7 +146,10 @@ function diff(antes: string | null, despues: string | null): CampoDiff | null {
 // separado en vez de una sola línea.
 export function cambiosDeMovimiento(movimiento: MovimientoDetalleRow): MovimientoCambios {
   return {
-    responsable: diff(movimiento.responsableAnterior?.nombre ?? null, movimiento.responsableNuevo?.nombre ?? null),
+    responsable: diff(
+      movimiento.responsableAnterior ? nombreCompleto(movimiento.responsableAnterior) : null,
+      movimiento.responsableNuevo ? nombreCompleto(movimiento.responsableNuevo) : null
+    ),
     sede: diff(movimiento.sedeAnterior?.name ?? null, movimiento.sedeNueva?.name ?? null),
     unidadOperativa: diff(
       movimiento.unidadOperativaAnterior?.name ?? null,

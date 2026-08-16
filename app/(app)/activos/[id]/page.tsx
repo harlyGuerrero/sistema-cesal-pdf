@@ -39,7 +39,10 @@ export default async function ActivoDetailPage({
       },
     }),
     getActivoFormData(),
-    prisma.responsable.findMany({ where: { estado: true }, orderBy: { nombre: "asc" } }),
+    prisma.responsable.findMany({
+      where: { estado: true },
+      orderBy: [{ nombres: "asc" }, { apellidos: "asc" }],
+    }),
   ]);
 
   if (!activo) {

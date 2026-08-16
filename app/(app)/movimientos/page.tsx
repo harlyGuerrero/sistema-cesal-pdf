@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { ROL_USUARIO_LABELS } from "@/lib/usuarios/labels";
 import { TIPO_MOVIMIENTO_OPTIONS } from "@/lib/activos/labels";
+import { inicialesPersona, nombreCompleto } from "@/lib/nombre-completo";
 import type { Prisma, TipoMovimiento } from "@/lib/generated/prisma/client";
 import { MovimientoBadge } from "../movimiento-badge";
 import { MovimientoDetalleCell } from "./movimiento-detalle";
@@ -234,11 +235,11 @@ export default async function MovimientosPage({
                         <div className="flex items-center gap-2">
                           <Avatar className="size-7 shrink-0 rounded-full">
                             <AvatarFallback className="rounded-full bg-muted text-[10px] font-semibold uppercase">
-                              {movimiento.usuario.nombre.slice(0, 2)}
+                              {inicialesPersona(movimiento.usuario)}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="text-sm">{movimiento.usuario.nombre}</p>
+                            <p className="text-sm">{nombreCompleto(movimiento.usuario)}</p>
                             <p className="text-xs text-muted-foreground">
                               {ROL_USUARIO_LABELS[movimiento.usuario.rol]}
                             </p>

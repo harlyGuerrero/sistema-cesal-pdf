@@ -44,9 +44,15 @@ export function NewUsuarioForm() {
       }}
       className="space-y-4"
     >
-      <div className="space-y-1">
-        <Label htmlFor="nombre">Nombre</Label>
-        <Input id="nombre" name="nombre" required />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label htmlFor="nombres">Nombres</Label>
+          <Input id="nombres" name="nombres" required />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="apellidos">Apellidos</Label>
+          <Input id="apellidos" name="apellidos" required />
+        </div>
       </div>
       <div className="space-y-1">
         <Label htmlFor="email">Email</Label>

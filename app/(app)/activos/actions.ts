@@ -13,6 +13,7 @@ import {
 } from "@/lib/activos/movimientos";
 import { registrarAuditoria } from "@/lib/auditoria/registrar";
 import { requireSessionUsuario } from "@/lib/auth/session";
+import { nombreCompleto } from "@/lib/nombre-completo";
 import type { CondicionFisica, EstadoPatrimonial } from "@/lib/generated/prisma/client";
 
 // Fase 6 de Activos: alta/edición/eliminación de Activo, integrando la
@@ -243,7 +244,7 @@ export async function asignarResponsableAction(activoId: string, responsableId: 
         detalle: {
           nombreActivo: activo.nombreActivo,
           codigoPatrimonial: activo.codigoPatrimonial,
-          responsable: responsable.nombre,
+          responsable: nombreCompleto(responsable),
         },
         usuarioId: actor.id,
       },
@@ -288,7 +289,7 @@ export async function desasignarResponsableAction(activoId: string): Promise<voi
           motivo: "desasignar_responsable",
           nombreActivo: activo.nombreActivo,
           codigoPatrimonial: activo.codigoPatrimonial,
-          responsableAnterior: responsableAnterior?.nombre ?? null,
+          responsableAnterior: responsableAnterior ? nombreCompleto(responsableAnterior) : null,
         },
         usuarioId: actor.id,
       },
