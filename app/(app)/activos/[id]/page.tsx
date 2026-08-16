@@ -109,12 +109,12 @@ export default async function ActivoDetailPage({
         />
       </section>
 
-      <ActivoForm activoId={activo.id} initial={initial} tiposActivo={tiposActivo} sedes={sedes} />
-
       <section className="space-y-3 border-t pt-4">
         <h2 className="text-sm font-medium text-muted-foreground">Documentos ({activo.documentos.length})</h2>
         <DocumentoList activoId={activo.id} documentos={activo.documentos} />
       </section>
+
+      <ActivoForm activoId={activo.id} initial={initial} tiposActivo={tiposActivo} sedes={sedes} />
 
       <section className="border-t pt-4">
         <DeleteActivoButton
