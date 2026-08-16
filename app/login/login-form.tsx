@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { loginAction } from "./actions";
 
 // Diseño acordado con el usuario (referencia visual entregada en el chat):
@@ -118,11 +119,10 @@ export function LoginForm({ from }: { from?: string }) {
             <Field>
               <FieldLabel htmlFor="password">Contraseña</FieldLabel>
               <div className="relative">
-                <LockIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
+                <LockIcon className="pointer-events-none absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   autoComplete="current-password"
                   required
                   className="h-11 rounded-xl pl-9"

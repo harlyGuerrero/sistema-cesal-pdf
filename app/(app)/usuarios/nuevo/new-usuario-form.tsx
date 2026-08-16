@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Select,
   SelectContent,
@@ -53,7 +54,7 @@ export function NewUsuarioForm() {
       </div>
       <div className="space-y-1">
         <Label htmlFor="password">Contraseña</Label>
-        <Input id="password" name="password" type="password" minLength={8} required />
+        <PasswordInput id="password" name="password" minLength={8} required />
         <p className="text-xs text-muted-foreground">Mínimo 8 caracteres.</p>
       </div>
       <div className="space-y-1">

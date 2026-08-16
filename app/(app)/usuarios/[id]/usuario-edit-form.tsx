@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -68,7 +69,7 @@ export function UsuarioEditForm({
       </div>
       <div className="space-y-1">
         <Label htmlFor="password">Nueva contraseña</Label>
-        <Input id="password" name="password" type="password" minLength={8} placeholder="Sin cambios" className="w-56" />
+        <PasswordInput id="password" name="password" minLength={8} placeholder="Sin cambios" className="w-56" />
       </div>
 
       {esUsuarioActual ? (
