@@ -15,6 +15,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { IMPORT_STATUS_LABELS, IMPORT_STATUS_META } from "@/lib/import-workflow/labels";
+import { NumeroFacturaEditor } from "./numero-factura-editor";
 import { ReviewTable, type ReviewItem } from "./review-table";
 
 export default async function ImportDetailPage({
@@ -106,6 +107,7 @@ export default async function ImportDetailPage({
               <CalendarIcon className="size-3.5" />
               Subido el {importRecord.createdAt.toLocaleString("es-PE")}
             </div>
+            <NumeroFacturaEditor importId={importRecord.id} numeroFactura={importRecord.numeroFactura} />
           </div>
         </CardContent>
       </Card>

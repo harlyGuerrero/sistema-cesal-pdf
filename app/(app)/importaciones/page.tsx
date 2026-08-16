@@ -7,6 +7,7 @@ import {
   FileTextIcon,
   InfoIcon,
   PackageIcon,
+  ReceiptTextIcon,
   ShieldIcon,
   UploadCloudIcon,
   type LucideIcon,
@@ -191,7 +192,18 @@ export default async function ImportsPage({
                           <p className="max-w-56 truncate text-sm font-medium" title={importRecord.fileName}>
                             {importRecord.fileName}
                           </p>
-                          <p className="text-xs text-muted-foreground">{formatFileSize(importRecord.fileSize)}</p>
+                          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                            {formatFileSize(importRecord.fileSize)}
+                            {importRecord.numeroFactura && (
+                              <>
+                                <span aria-hidden>·</span>
+                                <ReceiptTextIcon className="size-3 shrink-0" />
+                                <span className="max-w-28 truncate" title={importRecord.numeroFactura}>
+                                  {importRecord.numeroFactura}
+                                </span>
+                              </>
+                            )}
+                          </p>
                         </div>
                       </div>
                     </TableCell>

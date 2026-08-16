@@ -609,13 +609,14 @@ model CodigoPatrimonialContador {
 }
 
 model Import {
-  id           String       @id @default(cuid())
-  fileName     String
-  fileHash     String       @unique
-  fileSize     Int
-  mimeType     String
-  status       ImportStatus @default(UPLOADED)
-  errorMessage String?
+  id            String       @id @default(cuid())
+  fileName      String
+  fileHash      String       @unique
+  fileSize      Int
+  mimeType      String
+  numeroFactura String?
+  status        ImportStatus @default(UPLOADED)
+  errorMessage  String?
 
   createdAt   DateTime  @default(now())
   processedAt DateTime?

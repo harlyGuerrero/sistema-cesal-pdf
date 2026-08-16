@@ -30,6 +30,7 @@ export async function buildActivoRows(
     nombreActivo: string;
     quantity: number | null;
     unitPrice: number | null;
+    numeroFactura?: string | null;
   }
 ): Promise<Prisma.ActivoCreateManyInput[]> {
   const nombreNormalizado = normalizeName(params.nombreActivo) ?? params.nombreActivo;
@@ -48,6 +49,7 @@ export async function buildActivoRows(
     nombreNormalizado,
     codigoPatrimonial,
     costoAdquisicion: params.unitPrice ?? undefined,
+    numeroFactura: params.numeroFactura ?? undefined,
     importItemId: params.importItemId,
   }));
 }
@@ -58,6 +60,7 @@ export async function createActivosFromImportItem(params: {
   nombreActivo: string;
   quantity: number | null;
   unitPrice: number | null;
+  numeroFactura?: string | null;
 }): Promise<number> {
   return prisma.$transaction(async (tx) => {
     const rows = await buildActivoRows(tx, params);

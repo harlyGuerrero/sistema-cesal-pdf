@@ -104,6 +104,10 @@ export function UploadImportDialog() {
             <Label htmlFor="file">Archivo PDF</Label>
             <Input id="file" name="file" type="file" accept="application/pdf,.pdf" required />
           </div>
+          <div className="space-y-1">
+            <Label htmlFor="numeroFactura">N° de factura (opcional)</Label>
+            <Input id="numeroFactura" name="numeroFactura" placeholder="Ej. F001-00123" />
+          </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>

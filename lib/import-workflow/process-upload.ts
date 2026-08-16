@@ -27,6 +27,7 @@ export interface UploadedFile {
   buffer: Buffer;
   filename: string;
   mimeType: string;
+  numeroFactura?: string | null;
 }
 
 export type ProcessUploadResult =
@@ -52,6 +53,7 @@ export async function processUpload(file: UploadedFile): Promise<ProcessUploadRe
       fileHash,
       fileSize: file.buffer.length,
       mimeType: file.mimeType,
+      numeroFactura: file.numeroFactura ?? null,
       status: "PROCESSING",
     },
   });
@@ -85,6 +87,7 @@ export async function processUpload(file: UploadedFile): Promise<ProcessUploadRe
           nombreActivo: item.normalizedName ?? item.rawText,
           quantity: item.quantity !== null ? Number(item.quantity) : null,
           unitPrice: item.unitPrice !== null ? Number(item.unitPrice) : null,
+          numeroFactura: importRecord.numeroFactura,
         });
         activoRows.push(...rows);
       }
