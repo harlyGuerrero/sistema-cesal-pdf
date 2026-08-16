@@ -10,9 +10,7 @@ export default async function NewResponsablePage() {
 
   return (
     <>
-      <PageBreadcrumb
-        items={[{ label: "Responsables", href: "/responsables" }, { label: "Nuevo responsable" }]}
-      />
+      <PageBreadcrumb items={[{ label: "Nuevo responsable" }]} />
       <main className="p-6">
         <div className="mx-auto max-w-xl overflow-hidden rounded-2xl border bg-card shadow-sm">
           <FormPageHeader

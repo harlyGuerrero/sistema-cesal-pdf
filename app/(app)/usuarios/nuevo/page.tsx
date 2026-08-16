@@ -9,7 +9,7 @@ export default async function NewUsuarioPage() {
   await requireSuperAdmin();
   return (
     <>
-      <PageBreadcrumb items={[{ label: "Usuarios", href: "/usuarios" }, { label: "Nuevo usuario" }]} />
+      <PageBreadcrumb items={[{ label: "Nuevo usuario" }]} />
       <main className="p-6">
         <div className="mx-auto max-w-xl overflow-hidden rounded-2xl border bg-card shadow-sm">
           <FormPageHeader

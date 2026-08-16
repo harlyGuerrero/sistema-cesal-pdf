@@ -35,7 +35,7 @@ export default async function SedeDetailPage({
 
   return (
     <>
-      <PageBreadcrumb items={[{ label: "Sedes", href: "/sedes" }, { label: sede.name }]} />
+      <PageBreadcrumb items={[{ label: sede.name }]} />
       <main className="p-6">
       <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border bg-card shadow-sm">
         <FormPageHeader

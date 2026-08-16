@@ -9,7 +9,7 @@ export default async function NewActivoPage() {
 
   return (
     <>
-      <PageBreadcrumb items={[{ label: "Activos", href: "/activos" }, { label: "Nuevo activo" }]} />
+      <PageBreadcrumb items={[{ label: "Nuevo activo" }]} />
       <main className="p-6">
         <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border bg-card shadow-sm">
           <FormPageHeader

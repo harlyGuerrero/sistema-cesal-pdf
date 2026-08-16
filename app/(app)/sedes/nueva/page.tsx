@@ -7,7 +7,7 @@ import { NewSedeForm } from "./new-sede-form";
 export default function NewSedePage() {
   return (
     <>
-      <PageBreadcrumb items={[{ label: "Sedes", href: "/sedes" }, { label: "Nueva sede" }]} />
+      <PageBreadcrumb items={[{ label: "Nueva sede" }]} />
       <main className="p-6">
         <div className="mx-auto max-w-xl overflow-hidden rounded-2xl border bg-card shadow-sm">
           <FormPageHeader

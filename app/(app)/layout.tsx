@@ -4,6 +4,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { BreadcrumbProvider } from "@/components/breadcrumb-context";
 import { BreadcrumbSlot } from "@/components/breadcrumb-slot";
 import { getSessionUsuario } from "@/lib/auth/session";
+import { Separator } from "@/components/ui/separator";
 
 // Fase 13: layout de las pantallas autenticadas (todo salvo /login, que
 // vive fuera de este route group a propósito — ver app/layout.tsx). proxy.ts
@@ -25,8 +26,9 @@ export default async function AuthenticatedLayout({ children }: LayoutProps<"/">
           la transparencia: la barra fija con el breadcrumb no es "el main". */}
       <SidebarInset className="bg-transparent">
         <BreadcrumbProvider>
-          <header className="flex h-12 shrink-0 items-center gap-2 border-b bg-background px-4 print:hidden">
+          <header className="flex h-12 shrink-0 items-center gap-3 border-b bg-background px-4 print:hidden">
             <SidebarTrigger className="-ml-1" />
+            <div className="h-4 w-px bg-border" aria-hidden="true" />
             <BreadcrumbSlot />
           </header>
           {children}

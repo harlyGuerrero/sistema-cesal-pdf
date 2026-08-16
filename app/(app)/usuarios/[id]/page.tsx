@@ -26,7 +26,7 @@ export default async function UsuarioDetailPage({
 
   return (
     <>
-      <PageBreadcrumb items={[{ label: "Usuarios", href: "/usuarios" }, { label: usuario.nombre }]} />
+      <PageBreadcrumb items={[{ label: usuario.nombre }]} />
       <main className="p-6">
         <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border bg-card shadow-sm">
           <FormPageHeader

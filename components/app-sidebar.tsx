@@ -5,26 +5,10 @@ import { useTransition } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import {
-  LayoutDashboardIcon,
-  PackageIcon,
-  FileStackIcon,
-  Building2Icon,
-  TagIcon,
-  FolderTreeIcon,
-  ListTreeIcon,
-  BookMarkedIcon,
-  UsersIcon,
-  UserCogIcon,
-  ScrollTextIcon,
-  HistoryIcon,
-  FileBarChart2Icon,
-  MoonIcon,
-  LogOutIcon,
-  MoreVerticalIcon,
-} from "lucide-react";
+import { MoonIcon, LogOutIcon, MoreVerticalIcon } from "lucide-react";
 
-import { NavMain, resolveActiveUrl, type NavMainItem } from "@/components/nav-main";
+import { NavMain, resolveActiveUrl } from "@/components/nav-main";
+import { MAIN_NAV_ITEMS, ACTIVOS_CONFIG_NAV_ITEMS, ORG_NAV_ITEMS } from "@/lib/nav-items";
 import {
   Sidebar,
   SidebarContent,
@@ -50,39 +34,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { logoutAction } from "@/app/login/actions";
 import { ROL_USUARIO_LABELS } from "@/lib/usuarios/labels";
 import type { SessionUsuario } from "@/lib/auth/session";
-
-// Las 3 áreas funcionales originales (ver ARCHITECTURE.md sección 1) —
-// "Productos" pasó a ser "Activos" en Fase 6: Product se fusionó con Activo
-// desde Fase 1, y esta es la pantalla real (antes solo existía /productos,
-// una versión mínima heredada del pipeline de PDFs). Fase 12 agrega
-// Reportes.
-const MAIN_NAV_ITEMS: NavMainItem[] = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboardIcon },
-  { title: "Activos", url: "/activos", icon: PackageIcon },
-  { title: "Importaciones", url: "/importaciones", icon: FileStackIcon },
-  { title: "Reportes", url: "/reportes", icon: FileBarChart2Icon },
-];
-
-// Fase B (Sedes) + Fase 8 de Activos (Responsables, personas a quien se
-// asigna un activo) + Fase 9/12 (Movimientos, vista global del historial
-// por Activo) + Fase 11 (Auditoría, log de solo lectura de mutaciones del
-// sistema). "Usuarios" se filtra abajo: Fase 13 lo reserva a SUPER_ADMIN.
-const ORG_NAV_ITEMS: NavMainItem[] = [
-  { title: "Sedes", url: "/sedes", icon: Building2Icon },
-  { title: "Responsables", url: "/responsables", icon: UsersIcon },
-  { title: "Usuarios", url: "/usuarios", icon: UserCogIcon },
-  { title: "Movimientos", url: "/movimientos", icon: HistoryIcon },
-  { title: "Auditoría", url: "/auditoria", icon: ScrollTextIcon },
-];
-
-// Configuración del módulo de Activos (Fases 2, 3 y 4) — administra la
-// taxonomía y los catálogos que consume el formulario de /activos/nuevo.
-const ACTIVOS_CONFIG_NAV_ITEMS: NavMainItem[] = [
-  { title: "Tipos de Activo", url: "/activos/tipos", icon: TagIcon },
-  { title: "Categorías", url: "/activos/categorias", icon: FolderTreeIcon },
-  { title: "Campos", url: "/activos/campos", icon: ListTreeIcon },
-  { title: "Catálogos", url: "/activos/catalogos", icon: BookMarkedIcon },
-];
 
 export function AppSidebar({
   usuario,

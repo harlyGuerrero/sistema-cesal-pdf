@@ -5,7 +5,6 @@ import {
   CONDICION_FISICA_LABELS,
   ESTADO_PATRIMONIAL_LABELS,
 } from "@/lib/activos/labels";
-import { TIPO_ACTIVO_META } from "@/lib/activos/tipo-activo-meta";
 import { PrintButton } from "@/components/print-button";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { Section, Field } from "./field";
@@ -96,13 +95,10 @@ export default async function FichaActivoPage({
     notFound();
   }
 
-  const { icon: TipoActivoIcon, color: tipoActivoColor } = TIPO_ACTIVO_META[activo.tipoActivo.code];
-
   return (
     <>
       <PageBreadcrumb
         items={[
-          { label: "Activos", href: "/activos" },
           { label: activo.nombreActivo, href: `/activos/${activo.id}` },
           { label: "Ficha técnica" },
         ]}
