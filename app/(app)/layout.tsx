@@ -18,9 +18,14 @@ export default async function AuthenticatedLayout({ children }: LayoutProps<"/">
   return (
     <SidebarProvider>
       <AppSidebar className="print:hidden" usuario={usuario} />
-      <SidebarInset>
+      {/* bg-transparent: deja ver el fondo con glow de CESAL definido en
+          body (globals.css) a través del <main> de cada página — SidebarInset
+          trae bg-background sólido por defecto, que lo tapaba entero. El
+          header sí se queda opaco (bg-background explícito) para no heredar
+          la transparencia: la barra fija con el breadcrumb no es "el main". */}
+      <SidebarInset className="bg-transparent">
         <BreadcrumbProvider>
-          <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4 print:hidden">
+          <header className="flex h-12 shrink-0 items-center gap-2 border-b bg-background px-4 print:hidden">
             <SidebarTrigger className="-ml-1" />
             <BreadcrumbSlot />
           </header>

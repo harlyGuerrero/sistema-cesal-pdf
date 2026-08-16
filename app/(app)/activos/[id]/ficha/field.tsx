@@ -53,7 +53,7 @@ export function Field({
   span2?: boolean;
 }) {
   return (
-    <div className={cn("space-y-0.5 border-b border-dashed pb-2", span2 && "col-span-2")}>
+    <div className={cn("space-y-0.5 border-b border-dashed pb-2 last:border-b-0 last:pb-0", span2 && "col-span-2")}>
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-sm font-medium">{value ?? <span className="font-normal text-muted-foreground">—</span>}</p>
     </div>
