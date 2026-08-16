@@ -53,7 +53,7 @@ export function EditableRow({
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border bg-card">
       <div className="flex items-center justify-between gap-2 px-3 py-1.5">
         {editing ? (
           <form onSubmit={handleSave} className="flex flex-1 items-center gap-1.5">

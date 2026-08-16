@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -82,19 +83,21 @@ export default async function CamposPage({
       </form>
 
       {subcategoria && (
-        <div className="max-w-2xl space-y-3">
-          <div>
-            <h2 className="text-sm font-medium text-muted-foreground">
+        <Card className="max-w-2xl">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               {subcategoria.categoria.tipoActivo.name} › {subcategoria.categoria.nombre} ›{" "}
               <span className="text-foreground">{subcategoria.nombre}</span>
-            </h2>
-          </div>
-          <CampoList
-            subcategoriaId={subcategoria.id}
-            campos={subcategoria.campos}
-            catalogos={catalogos}
-          />
-        </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CampoList
+              subcategoriaId={subcategoria.id}
+              campos={subcategoria.campos}
+              catalogos={catalogos}
+            />
+          </CardContent>
+        </Card>
       )}
 
       {!subcategoria && subcategoriaId && (

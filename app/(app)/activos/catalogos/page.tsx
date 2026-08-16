@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { Card, CardContent } from "@/components/ui/card";
 import { CatalogoSection } from "./catalogo-section";
 import { NewCatalogoForm } from "./new-catalogo-form";
 
@@ -25,18 +26,22 @@ export default async function CatalogosPage() {
         </p>
       </div>
 
-      <div className="max-w-2xl space-y-2">
-        {catalogos.map((catalogo) => (
-          <CatalogoSection key={catalogo.id} catalogo={catalogo} />
-        ))}
-        {catalogos.length === 0 && (
-          <p className="text-sm text-muted-foreground">Sin catálogos todavía.</p>
-        )}
-      </div>
+      <Card className="max-w-2xl">
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            {catalogos.map((catalogo) => (
+              <CatalogoSection key={catalogo.id} catalogo={catalogo} />
+            ))}
+            {catalogos.length === 0 && (
+              <p className="text-sm text-muted-foreground">Sin catálogos todavía.</p>
+            )}
+          </div>
 
-      <div className="max-w-2xl border-t pt-4">
-        <NewCatalogoForm />
-      </div>
+          <div className="border-t pt-4">
+            <NewCatalogoForm />
+          </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }

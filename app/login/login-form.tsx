@@ -28,7 +28,7 @@ export function LoginForm({ from }: { from?: string }) {
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <Card className="overflow-hidden rounded-3xl p-0 shadow-xl">
+    <Card className="overflow-hidden rounded-3xl ring-0 p-0 shadow-xl">
       <CardContent className="grid p-0 md:grid-cols-2">
         <div className="relative hidden flex-col justify-between overflow-hidden p-8 text-white md:flex">
           <Image
@@ -124,6 +124,7 @@ export function LoginForm({ from }: { from?: string }) {
                   id="password"
                   name="password"
                   autoComplete="current-password"
+                  placeholder="Ingrese su contraseña..."
                   required
                   className="h-11 rounded-xl pl-9"
                 />

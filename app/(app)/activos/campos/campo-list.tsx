@@ -47,7 +47,7 @@ export function CampoList({
     <div className="space-y-3">
       <div className="space-y-2">
         {campos.map((campo) => (
-          <div key={campo.id} className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
+          <div key={campo.id} className="flex items-center justify-between gap-3 rounded-md border bg-card px-3 py-2">
             <div className="flex flex-1 flex-wrap items-center gap-2 text-sm">
               <span className="font-medium">{campo.nombre}</span>
               <span className="text-muted-foreground">{campo.etiqueta}</span>
