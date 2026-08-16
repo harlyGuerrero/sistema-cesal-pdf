@@ -76,17 +76,18 @@ export async function processUpload(file: UploadedFile): Promise<ProcessUploadRe
           ? await tx.importItem.createManyAndReturn({ data: itemsToCreate.items })
           : [];
 
-      const activoRows = createdItems.flatMap((item) =>
-        item.status === "CONFIRMED" && item.tipoActivoId
-          ? buildActivoRows({
-              importItemId: item.id,
-              tipoActivoId: item.tipoActivoId,
-              nombreActivo: item.normalizedName ?? item.rawText,
-              quantity: item.quantity !== null ? Number(item.quantity) : null,
-              unitPrice: item.unitPrice !== null ? Number(item.unitPrice) : null,
-            })
-          : []
-      );
+      const activoRows: Prisma.ActivoCreateManyInput[] = [];
+      for (const item of createdItems) {
+        if (item.status !== "CONFIRMED" || !item.tipoActivoId) continue;
+        const rows = await buildActivoRows(tx, {
+          importItemId: item.id,
+          tipoActivoId: item.tipoActivoId,
+          nombreActivo: item.normalizedName ?? item.rawText,
+          quantity: item.quantity !== null ? Number(item.quantity) : null,
+          unitPrice: item.unitPrice !== null ? Number(item.unitPrice) : null,
+        });
+        activoRows.push(...rows);
+      }
       if (activoRows.length > 0) {
         await tx.activo.createMany({ data: activoRows });
       }

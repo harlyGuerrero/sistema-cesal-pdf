@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { normalizeName } from "@/lib/normalization/normalize";
+import { generarCodigosPatrimoniales } from "@/lib/activos/codigo-patrimonial";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
 // Cantidad fraccionaria, cero o ausente -> 1 unidad física. No hay forma de
@@ -15,20 +16,37 @@ export function quantityToUnitCount(quantity: number | null): number {
 // Activo patrimonial necesita su propio código, ubicación y responsable.
 // quantity > 1 desdobla la fila en N activos independientes (ver
 // planificación de Activos, decisión "Product se fusiona en Activo").
-export function buildActivoRows(params: {
-  importItemId: string;
-  tipoActivoId: string;
-  nombreActivo: string;
-  quantity: number | null;
-  unitPrice: number | null;
-}): Prisma.ActivoCreateManyInput[] {
+//
+// Recibe `tx` (no el cliente global) porque generarCodigosPatrimoniales
+// reserva el correlativo con una sentencia atómica que debe correr en la
+// misma transacción que el createMany subsiguiente — así, si el createMany
+// falla, la reserva de números se revierte con el resto en vez de dejar un
+// hueco fantasma en el contador (ver lib/activos/codigo-patrimonial.ts).
+export async function buildActivoRows(
+  tx: Prisma.TransactionClient,
+  params: {
+    importItemId: string;
+    tipoActivoId: string;
+    nombreActivo: string;
+    quantity: number | null;
+    unitPrice: number | null;
+  }
+): Promise<Prisma.ActivoCreateManyInput[]> {
   const nombreNormalizado = normalizeName(params.nombreActivo) ?? params.nombreActivo;
   const unidades = quantityToUnitCount(params.quantity);
 
-  return Array.from({ length: unidades }, () => ({
+  const tipoActivo = await tx.tipoActivo.findUniqueOrThrow({ where: { id: params.tipoActivoId } });
+  const codigos = await generarCodigosPatrimoniales(tx, {
+    tipoActivoCode: tipoActivo.code,
+    nombreActivo: params.nombreActivo,
+    cantidad: unidades,
+  });
+
+  return codigos.map((codigoPatrimonial) => ({
     tipoActivoId: params.tipoActivoId,
     nombreActivo: params.nombreActivo,
     nombreNormalizado,
+    codigoPatrimonial,
     costoAdquisicion: params.unitPrice ?? undefined,
     importItemId: params.importItemId,
   }));
@@ -41,6 +59,9 @@ export async function createActivosFromImportItem(params: {
   quantity: number | null;
   unitPrice: number | null;
 }): Promise<number> {
-  const { count } = await prisma.activo.createMany({ data: buildActivoRows(params) });
-  return count;
+  return prisma.$transaction(async (tx) => {
+    const rows = await buildActivoRows(tx, params);
+    const { count } = await tx.activo.createMany({ data: rows });
+    return count;
+  });
 }

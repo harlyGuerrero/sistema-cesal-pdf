@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { normalizeName } from "@/lib/normalization/normalize";
 import { readEspecificaciones } from "@/lib/activos/especificaciones";
+import { generarCodigoPatrimonial } from "@/lib/activos/codigo-patrimonial";
 import {
   buildMovimientoDeAlta,
   buildMovimientoDeEdicion,
@@ -116,15 +117,13 @@ export async function createActivoAction(formData: FormData): Promise<void> {
   const actor = await requireSessionUsuario();
   const { especificaciones, ...data } = await readActivoInput(formData);
 
-  const codigoPatrimonial = (formData.get("codigoPatrimonial") as string | null)?.trim() || null;
-  if (codigoPatrimonial) {
-    const existing = await prisma.activo.findUnique({ where: { codigoPatrimonial } });
-    if (existing) {
-      throw new Error(`Ya existe un activo con el código patrimonial "${codigoPatrimonial}".`);
-    }
-  }
-
   const activo = await prisma.$transaction(async (tx) => {
+    const tipoActivo = await tx.tipoActivo.findUniqueOrThrow({ where: { id: data.tipoActivoId } });
+    const codigoPatrimonial = await generarCodigoPatrimonial(tx, {
+      tipoActivoCode: tipoActivo.code,
+      nombreActivo: data.nombreActivo,
+    });
+
     const created = await tx.activo.create({
       data: {
         ...data,
@@ -152,17 +151,14 @@ export async function createActivoAction(formData: FormData): Promise<void> {
   redirect(`/activos/${activo.id}`);
 }
 
+// codigoPatrimonial nunca se toca acá: es fijo desde que se genera al crear
+// el Activo (ver createActivoAction / createActivosFromImportItem) — queda
+// impreso en una etiqueta física, así que editarlo después rompería esa
+// referencia. readActivoInput no lo lee del formulario porque el campo ya
+// no existe en activo-form.tsx (se muestra de solo lectura).
 export async function updateActivoAction(activoId: string, formData: FormData): Promise<void> {
   const actor = await requireSessionUsuario();
   const { especificaciones, ...data } = await readActivoInput(formData);
-
-  const codigoPatrimonial = (formData.get("codigoPatrimonial") as string | null)?.trim() || null;
-  if (codigoPatrimonial) {
-    const existing = await prisma.activo.findUnique({ where: { codigoPatrimonial } });
-    if (existing && existing.id !== activoId) {
-      throw new Error(`Ya existe un activo con el código patrimonial "${codigoPatrimonial}".`);
-    }
-  }
 
   await prisma.$transaction(async (tx) => {
     const anterior = await tx.activo.findUniqueOrThrow({ where: { id: activoId } });
@@ -172,7 +168,6 @@ export async function updateActivoAction(activoId: string, formData: FormData): 
       where: { id: activoId },
       data: {
         ...data,
-        codigoPatrimonial,
         especificaciones: { create: especificaciones },
       },
     });

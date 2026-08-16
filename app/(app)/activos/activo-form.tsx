@@ -179,8 +179,16 @@ export function ActivoForm({
             </Select>
           </div>
           <div className="space-y-1">
-            <Label htmlFor="codigoPatrimonial">Código patrimonial (opcional)</Label>
-            <Input id="codigoPatrimonial" name="codigoPatrimonial" defaultValue={initial?.codigoPatrimonial} />
+            <Label>Código patrimonial</Label>
+            {activoId ? (
+              <p className="flex h-8 items-center rounded-lg border border-input bg-muted/40 px-2.5 text-sm font-medium tabular-nums">
+                {initial?.codigoPatrimonial || "—"}
+              </p>
+            ) : (
+              <p className="flex h-8 items-center px-2.5 text-sm text-muted-foreground">
+                Se genera automáticamente al guardar
+              </p>
+            )}
           </div>
           <div className="space-y-1 sm:col-span-2">
             <Label htmlFor="descripcion">Descripción (opcional)</Label>

@@ -511,7 +511,7 @@ model AuditoriaLog {
 // agrega vacío de antemano.
 model Activo {
   id                String  @id @default(cuid())
-  codigoPatrimonial String? @unique
+  codigoPatrimonial String @unique
   nombreActivo      String
   nombreNormalizado String
   descripcion       String?
@@ -588,6 +588,21 @@ model Activo {
   @@index([responsableActualId])
   @@index([importItemId])
   @@map("activos")
+}
+
+// Fase 16: correlativo atómico para generar codigoPatrimonial (ver
+// lib/activos/codigo-patrimonial.ts) — un contador por (tipoActivoCode,
+// anio), no por abreviatura de nombre: dos productos con la misma
+// abreviatura (ej. "Monitor"/"Mouse" -> "MO") comparten el mismo contador
+// de su categoría, no colisionan pero tampoco reinician la cuenta entre sí.
+model CodigoPatrimonialContador {
+  id             String         @id @default(cuid())
+  tipoActivoCode TipoActivoCode
+  anio           Int
+  ultimo         Int            @default(0)
+
+  @@unique([tipoActivoCode, anio])
+  @@map("codigo_patrimonial_contadores")
 }
 
 model Import {
