@@ -97,6 +97,21 @@ export const TIPO_MOVIMIENTO_OPTIONS = Object.entries(TIPO_MOVIMIENTO_LABELS).ma
   ([value, label]) => ({ value, label })
 );
 
+// Fase 15: etiqueta corta para el chip de color de MovimientoBadge — más
+// compacta que TIPO_MOVIMIENTO_LABELS (ej. "Transferencia de sede" → "SEDE").
+export const TIPO_MOVIMIENTO_TAG_LABELS: Record<string, string> = {
+  ALTA: "Alta",
+  ASIGNACION: "Asignación",
+  REASIGNACION: "Reasignación",
+  CAMBIO_RESPONSABLE: "Responsable",
+  TRANSFERENCIA: "Sede",
+  CAMBIO_UBICACION: "Ubicación",
+  MANTENIMIENTO: "Mantenimiento",
+  RETORNO_MANTENIMIENTO: "Reintegración",
+  BAJA: "Baja",
+  REACTIVACION: "Reactivación",
+};
+
 // Orden canónico de las 6 categorías patrimoniales (ver ARCHITECTURE.md 5.2).
 // Compartido entre el Dashboard y el reporte de inventario (Fase 12) para no
 // repetir el mismo orden fijo en dos lugares.

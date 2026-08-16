@@ -1,13 +1,7 @@
 import Link from "next/link";
-import {
-  ArrowDownIcon,
-  ArrowRightIcon,
-  ArrowUpIcon,
-  WrenchIcon,
-  type LucideIcon,
-} from "lucide-react";
 import { describirMovimiento } from "@/lib/activos/movimientos";
 import { TIPO_MOVIMIENTO_LABELS } from "@/lib/activos/labels";
+import { MOVIMIENTO_META } from "@/lib/activos/movimiento-meta";
 import type { TipoMovimiento } from "@/lib/generated/prisma/client";
 
 export interface MovimientoFeedRow {
@@ -28,27 +22,11 @@ export interface MovimientoFeedRow {
   estadoNuevo: string | null;
 }
 
-// Sentido de cada TipoMovimiento para el ícono/color del feed — mismo
-// criterio de "bueno/neutral/atención/crítico" que el resto del sistema
-// (skill dataviz: colores de estado fijos, nunca por serie).
-const MOVIMIENTO_ICON_META: Record<TipoMovimiento, { icon: LucideIcon; color: string }> = {
-  ALTA: { icon: ArrowUpIcon, color: "var(--color-good)" },
-  ASIGNACION: { icon: ArrowUpIcon, color: "var(--color-good)" },
-  REASIGNACION: { icon: ArrowRightIcon, color: "var(--color-chart-1)" },
-  CAMBIO_RESPONSABLE: { icon: ArrowRightIcon, color: "var(--color-chart-1)" },
-  TRANSFERENCIA: { icon: ArrowRightIcon, color: "var(--color-chart-1)" },
-  CAMBIO_UBICACION: { icon: ArrowRightIcon, color: "var(--color-chart-1)" },
-  MANTENIMIENTO: { icon: WrenchIcon, color: "var(--color-warning)" },
-  RETORNO_MANTENIMIENTO: { icon: ArrowUpIcon, color: "var(--color-good)" },
-  BAJA: { icon: ArrowDownIcon, color: "var(--color-critical)" },
-  REACTIVACION: { icon: ArrowUpIcon, color: "var(--color-good)" },
-};
-
 export function MovimientosFeed({ movimientos }: { movimientos: MovimientoFeedRow[] }) {
   return (
     <ul className="space-y-4">
       {movimientos.map((movimiento) => {
-        const { icon: Icon, color } = MOVIMIENTO_ICON_META[movimiento.tipo];
+        const { icon: Icon, color } = MOVIMIENTO_META[movimiento.tipo];
         const detalle = movimiento.motivo ?? describirMovimiento(movimiento)[0] ?? null;
         return (
           <li key={movimiento.id} className="flex items-start gap-3">

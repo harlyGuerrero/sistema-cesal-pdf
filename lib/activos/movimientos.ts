@@ -116,6 +116,59 @@ export function describirMovimiento(movimiento: MovimientoDetalleRow): string[] 
   ].filter((linea): linea is string => linea !== null);
 }
 
+export interface CampoDiff {
+  antes: string | null;
+  despues: string | null;
+}
+
+export interface MovimientoCambios {
+  responsable: CampoDiff | null;
+  sede: CampoDiff | null;
+  unidadOperativa: CampoDiff | null;
+  ambiente: CampoDiff | null;
+  estado: CampoDiff | null;
+}
+
+function diff(antes: string | null, despues: string | null): CampoDiff | null {
+  if (antes === despues) return null;
+  if (antes === null && despues === null) return null;
+  return { antes, despues };
+}
+
+// Fase 15: misma comparación antes/después que describirMovimiento, pero sin
+// aplanar a texto — para el detalle visual de /movimientos (tarjetas De/A +
+// chip de color por transición de estado), que necesita cada campo por
+// separado en vez de una sola línea.
+export function cambiosDeMovimiento(movimiento: MovimientoDetalleRow): MovimientoCambios {
+  return {
+    responsable: diff(movimiento.responsableAnterior?.nombre ?? null, movimiento.responsableNuevo?.nombre ?? null),
+    sede: diff(movimiento.sedeAnterior?.name ?? null, movimiento.sedeNueva?.name ?? null),
+    unidadOperativa: diff(
+      movimiento.unidadOperativaAnterior?.name ?? null,
+      movimiento.unidadOperativaNueva?.name ?? null
+    ),
+    ambiente: diff(movimiento.ambienteAnterior?.name ?? null, movimiento.ambienteNuevo?.name ?? null),
+    estado: diff(movimiento.estadoAnterior, movimiento.estadoNuevo),
+  };
+}
+
+export type TonoTransicionEstado = "good" | "warning" | "critical" | "neutral";
+
+// Fase 15: qué tan "bueno" es un cambio de estadoPatrimonial, para colorear
+// el chip de Estado en /movimientos con los mismos 4 colores de estado fijos
+// que ya usa el resto del sistema (skill dataviz) — nunca uno nuevo por
+// transición. Perder el responsable (Asignado → Disponible) se trata como
+// alerta leve, no como algo malo: el activo queda ocioso, no dañado.
+export function tonoTransicionEstado(antes: string | null, despues: string | null): TonoTransicionEstado {
+  if (despues === "BAJA") return "critical";
+  if (antes === "BAJA") return "good";
+  if (despues === "MANTENIMIENTO") return "warning";
+  if (antes === "MANTENIMIENTO") return "good";
+  if (despues === "ASIGNADO") return "good";
+  if (antes === "ASIGNADO" && despues === "DISPONIBLE") return "warning";
+  return "neutral";
+}
+
 export function buildMovimientoDeAlta(activo: {
   sedeId: string | null;
   unidadOperativaId: string | null;
