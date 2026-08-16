@@ -59,7 +59,7 @@ export default async function CamposPage({
 
       <form method="get" className="flex flex-wrap gap-2">
         <Select name="subcategoriaId" defaultValue={subcategoriaId}>
-          <SelectTrigger className="w-96">
+          <SelectTrigger className="w-96 bg-white">
             <SelectValue placeholder="Selecciona una subcategoría" />
           </SelectTrigger>
           <SelectContent>
