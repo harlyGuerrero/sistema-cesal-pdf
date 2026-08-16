@@ -1,13 +1,44 @@
-// Fase 7 de Activos: bloques de presentación de la ficha técnica —
-// puramente de layout, sin lógica de negocio (esa vive en page.tsx).
+import type { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function Section({ title, children }: { title: string; children: React.ReactNode }) {
+// Fase 26 de Activos: bloques de presentación de la ficha técnica —
+// tarjeta con banda de color + ícono por sección (mismo lenguaje visual que
+// FormSection en los formularios) y líneas punteadas entre campos. Puramente
+// de layout, sin lógica de negocio (esa vive en page.tsx). El color es
+// decorativo/de identidad entre secciones, no codifica datos.
+export function Section({
+  title,
+  icon: Icon,
+  color,
+  children,
+  bodyClassName,
+}: {
+  title: string;
+  icon: LucideIcon;
+  color: string;
+  children: React.ReactNode;
+  bodyClassName?: string;
+}) {
   return (
-    <section className="space-y-2 break-inside-avoid">
-      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{title}</h2>
-      <div className="grid grid-cols-2 gap-x-6 gap-y-2 rounded-md border p-4 print:rounded-none print:border-0 print:p-0">
-        {children}
+    <section
+      className="overflow-hidden rounded-xl border break-inside-avoid"
+      style={{ borderColor: `color-mix(in oklch, ${color} 25%, var(--border))` }}
+    >
+      <div
+        className="flex items-center gap-2 px-4 py-2.5"
+        style={{ backgroundColor: `color-mix(in oklch, ${color} 8%, transparent)` }}
+      >
+        <span
+          className="flex size-6 shrink-0 items-center justify-center rounded-md"
+          style={{ backgroundColor: `color-mix(in oklch, ${color} 18%, transparent)`, color }}
+        >
+          <Icon className="size-3.5" />
+        </span>
+        <h2 className="text-xs font-semibold tracking-wide uppercase" style={{ color }}>
+          {title}
+        </h2>
       </div>
+      <div className={cn("p-4", bodyClassName ?? "grid grid-cols-2 gap-x-6 gap-y-3")}>{children}</div>
     </section>
   );
 }
@@ -22,9 +53,9 @@ export function Field({
   span2?: boolean;
 }) {
   return (
-    <div className={span2 ? "col-span-2" : undefined}>
+    <div className={cn("space-y-0.5 border-b border-dashed pb-2", span2 && "col-span-2")}>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm">{value ?? <span className="text-muted-foreground">—</span>}</p>
+      <p className="text-sm font-medium">{value ?? <span className="font-normal text-muted-foreground">—</span>}</p>
     </div>
   );
 }

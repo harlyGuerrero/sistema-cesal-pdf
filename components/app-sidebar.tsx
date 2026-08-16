@@ -189,6 +189,7 @@ export function AppSidebar({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   disabled={isPending}
+                  className={"text-red-600"}
                   onClick={() => startTransition(() => logoutAction())}
                 >
                   <LogOutIcon />

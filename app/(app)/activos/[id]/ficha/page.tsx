@@ -1,11 +1,13 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { IdCardIcon, MapPinIcon, ShieldCheckIcon, ShoppingCartIcon, SlidersHorizontalIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
 import {
   CONDICION_FISICA_LABELS,
   ESTADO_PATRIMONIAL_LABELS,
 } from "@/lib/activos/labels";
+import { TIPO_ACTIVO_META } from "@/lib/activos/tipo-activo-meta";
 import { PrintButton } from "@/components/print-button";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { Section, Field } from "./field";
 import { HistorialSection } from "./historial-section";
 import { DocumentosSection } from "./documentos-section";
@@ -94,25 +96,35 @@ export default async function FichaActivoPage({
     notFound();
   }
 
-  return (
-    <main className="mx-auto max-w-3xl space-y-6 p-6 print:max-w-none print:space-y-4 print:p-8">
-      <div className="flex items-center justify-between print:hidden">
-        <Link href={`/activos/${activo.id}`} className="text-sm text-muted-foreground hover:underline">
-          ← Volver al activo
-        </Link>
-        <PrintButton />
-      </div>
+  const { icon: TipoActivoIcon, color: tipoActivoColor } = TIPO_ACTIVO_META[activo.tipoActivo.code];
 
-      <header className="space-y-1 border-b pb-4">
-        <p className="text-xs tracking-wide text-muted-foreground uppercase">Ficha técnica</p>
-        <h1 className="text-2xl font-semibold">{activo.nombreActivo}</h1>
-        <p className="text-sm text-muted-foreground">
-          {activo.tipoActivo.name}
-          {activo.subcategoria && ` · ${activo.subcategoria.categoria.nombre} › ${activo.subcategoria.nombre}`}
-        </p>
+  return (
+    <>
+      <PageBreadcrumb
+        items={[
+          { label: "Activos", href: "/activos" },
+          { label: activo.nombreActivo, href: `/activos/${activo.id}` },
+          { label: "Ficha técnica" },
+        ]}
+      />
+      <main className="mx-auto max-w-3xl space-y-6 p-6 print:max-w-none print:space-y-4 print:p-8">
+      <header className="flex items-start justify-between gap-4 border-b pb-4">
+        <div className="space-y-1">
+          <p className="text-xs tracking-wide text-muted-foreground uppercase">Ficha técnica</p>
+          <h1 className="text-2xl font-bold">{activo.nombreActivo}</h1>
+          <p className="text-sm text-muted-foreground">
+            {activo.tipoActivo.name}
+            {activo.subcategoria && ` · ${activo.subcategoria.categoria.nombre} › ${activo.subcategoria.nombre}`}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          <div className="print:hidden">
+            <PrintButton />
+          </div>
+        </div>
       </header>
 
-      <Section title="Identificación">
+      <Section title="Identificación" icon={IdCardIcon} color="var(--primary)">
         <Field label="Código patrimonial" value={activo.codigoPatrimonial} />
         <Field label="Estado patrimonial" value={ESTADO_PATRIMONIAL_LABELS[activo.estadoPatrimonial]} />
         <Field
@@ -123,13 +135,13 @@ export default async function FichaActivoPage({
         <Field label="Descripción" value={activo.descripcion} span2 />
       </Section>
 
-      <Section title="Ubicación">
+      <Section title="Ubicación" icon={MapPinIcon} color="var(--color-good)">
         <Field label="Sede" value={activo.sede?.name} />
         <Field label="Unidad operativa" value={activo.unidadOperativa?.name} />
         <Field label="Ambiente" value={activo.ambiente?.name} />
       </Section>
 
-      <Section title="Adquisición">
+      <Section title="Adquisición" icon={ShoppingCartIcon} color="var(--color-chart-2)">
         <Field label="Fecha de adquisición" value={formatDate(activo.fechaAdquisicion)} />
         <Field label="Proveedor" value={activo.proveedor?.razonSocial} />
         <Field label="N° de factura" value={activo.numeroFactura} />
@@ -140,7 +152,11 @@ export default async function FichaActivoPage({
       </Section>
 
       {activo.especificaciones.length > 0 && (
-        <Section title={`Especificaciones de ${activo.subcategoria?.nombre ?? ""}`}>
+        <Section
+          title={`Especificaciones de ${activo.subcategoria?.nombre ?? ""}`}
+          icon={SlidersHorizontalIcon}
+          color="var(--color-chart-4)"
+        >
           {activo.especificaciones.map((valor) => (
             <Field key={valor.id} label={valor.campo.etiqueta} value={formatEspecificacionValor(valor)} />
           ))}
@@ -160,9 +176,13 @@ export default async function FichaActivoPage({
 
       <HistorialSection movimientos={activo.movimientos} />
 
-      <footer className="border-t pt-3 text-xs text-muted-foreground">
+      <footer className="flex items-center gap-2 border-t pt-3 text-xs text-muted-foreground">
+        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <ShieldCheckIcon className="size-3" />
+        </span>
         Generado el {new Date().toLocaleDateString("es-PE")} — CESAL, sistema de gestión patrimonial.
       </footer>
-    </main>
+      </main>
+    </>
   );
 }

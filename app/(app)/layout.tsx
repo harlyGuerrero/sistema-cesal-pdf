@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { BreadcrumbProvider } from "@/components/breadcrumb-context";
+import { BreadcrumbSlot } from "@/components/breadcrumb-slot";
 import { getSessionUsuario } from "@/lib/auth/session";
 
 // Fase 13: layout de las pantallas autenticadas (todo salvo /login, que
@@ -17,10 +19,13 @@ export default async function AuthenticatedLayout({ children }: LayoutProps<"/">
     <SidebarProvider>
       <AppSidebar className="print:hidden" usuario={usuario} />
       <SidebarInset>
-        <header className="flex h-12 shrink-0 items-center border-b px-4 print:hidden">
-          <SidebarTrigger className="-ml-1" />
-        </header>
-        {children}
+        <BreadcrumbProvider>
+          <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4 print:hidden">
+            <SidebarTrigger className="-ml-1" />
+            <BreadcrumbSlot />
+          </header>
+          {children}
+        </BreadcrumbProvider>
       </SidebarInset>
     </SidebarProvider>
   );

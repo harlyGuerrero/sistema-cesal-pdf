@@ -43,6 +43,16 @@ export const ESTADO_PATRIMONIAL_LABELS: Record<string, string> = {
   BAJA: "Baja",
 };
 
+// Fase 19: color fijo por estadoPatrimonial (para el badge de /activos) —
+// mismo mapeo good/primary/warning/critical que ya usa el Dashboard para sus
+// StatCard de Disponibles/Asignados/Mantenimiento/Baja.
+export const ESTADO_PATRIMONIAL_COLOR_VAR: Record<string, string> = {
+  DISPONIBLE: "var(--color-good)",
+  ASIGNADO: "var(--primary)",
+  MANTENIMIENTO: "var(--color-warning)",
+  BAJA: "var(--color-critical)",
+};
+
 export const CONDICION_FISICA_OPTIONS = [
   { value: "NUEVO", label: "Nuevo" },
   { value: "BUENO", label: "Bueno" },

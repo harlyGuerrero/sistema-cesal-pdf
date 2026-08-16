@@ -3,6 +3,15 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import {
+  IdCardIcon,
+  MapPinIcon,
+  NotebookPenIcon,
+  SaveIcon,
+  ShieldIcon,
+  ShoppingCartIcon,
+  SlidersHorizontalIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FormSection } from "@/components/form-section";
 import { CONDICION_FISICA_OPTIONS, ESTADO_PATRIMONIAL_OPTIONS } from "@/lib/activos/labels";
 import { CampoEspecificacionInput, type CampoEspecificacionOption } from "./campo-especificacion-input";
 import { createActivoAction, updateActivoAction } from "./actions";
@@ -59,6 +69,7 @@ export interface ActivoFormInitial {
 }
 
 const SIN_SELECCION = "__ninguno__";
+const MAX_TEXTAREA = 255;
 
 function isNextRedirectError(error: unknown): boolean {
   return (
@@ -79,6 +90,69 @@ function flattenSubcategorias(tiposActivo: TipoActivoTree[]) {
         categoriaNombre: categoria.nombre,
       }))
     )
+  );
+}
+
+// Textarea con contador de caracteres (Descripción/Observaciones) — dirección
+// visual de Fase 18, ver components/form-section.tsx.
+function TextareaConContador({
+  id,
+  name,
+  defaultValue,
+  rows,
+  placeholder,
+}: {
+  id: string;
+  name: string;
+  defaultValue?: string;
+  rows: number;
+  placeholder?: string;
+}) {
+  const [length, setLength] = useState(defaultValue?.length ?? 0);
+  return (
+    <div className="relative">
+      <Textarea
+        id={id}
+        name={name}
+        rows={rows}
+        maxLength={MAX_TEXTAREA}
+        defaultValue={defaultValue}
+        placeholder={placeholder}
+        onChange={(event) => setLength(event.target.value.length)}
+        className="pb-6"
+      />
+      <span className="pointer-events-none absolute right-2.5 bottom-2 text-xs text-muted-foreground">
+        {length}/{MAX_TEXTAREA}
+      </span>
+    </div>
+  );
+}
+
+// Input de montos con prefijo "S/." — dirección visual de Fase 18.
+function CurrencyInput({
+  id,
+  name,
+  defaultValue,
+}: {
+  id: string;
+  name: string;
+  defaultValue?: string;
+}) {
+  return (
+    <div className="relative">
+      <span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm text-muted-foreground">
+        S/.
+      </span>
+      <Input
+        id={id}
+        name={name}
+        type="number"
+        step="0.01"
+        min="0"
+        defaultValue={defaultValue}
+        className="pl-8"
+      />
+    </div>
   );
 }
 
@@ -142,11 +216,10 @@ export function ActivoForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground">Identificación</h2>
+    <form onSubmit={handleSubmit} className="space-y-5 p-6">
+      <FormSection icon={IdCardIcon} title="Identificación" color="var(--primary)">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="space-y-1 sm:col-span-2">
+          <div className="space-y-1">
             <Label htmlFor="nombreActivo">Nombre</Label>
             <Input
               id="nombreActivo"
@@ -156,7 +229,7 @@ export function ActivoForm({
               required
             />
           </div>
-          <div className="space-y-1 sm:col-span-2">
+          <div className="space-y-1">
             <Label htmlFor="subcategoriaId">Subcategoría</Label>
             <Select name="subcategoriaId" value={subcategoriaId} onValueChange={(v) => setSubcategoriaId(v ?? "")}>
               <SelectTrigger id="subcategoriaId" className="w-full">
@@ -185,23 +258,26 @@ export function ActivoForm({
                 {initial?.codigoPatrimonial || "—"}
               </p>
             ) : (
-              <p className="flex h-8 items-center px-2.5 text-sm text-muted-foreground">
+              <p className="flex h-8 items-center rounded-lg border border-dashed border-input px-2.5 text-sm text-muted-foreground">
                 Se genera automáticamente al guardar
               </p>
             )}
           </div>
-          <div className="space-y-1 sm:col-span-2">
+          <div className="space-y-1">
             <Label htmlFor="descripcion">Descripción (opcional)</Label>
-            <Textarea id="descripcion" name="descripcion" rows={2} defaultValue={initial?.descripcion} />
+            <TextareaConContador
+              id="descripcion"
+              name="descripcion"
+              rows={2}
+              defaultValue={initial?.descripcion}
+              placeholder="Agrega una descripción del activo..."
+            />
           </div>
         </div>
-      </section>
+      </FormSection>
 
       {subcategoriaSeleccionada && subcategoriaSeleccionada.campos.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-sm font-medium text-muted-foreground">
-            Especificaciones de {subcategoriaSeleccionada.nombre}
-          </h2>
+        <FormSection icon={SlidersHorizontalIcon} title={`Especificaciones de ${subcategoriaSeleccionada.nombre}`} color="var(--color-chart-2)">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {subcategoriaSeleccionada.campos.map((campo) => (
               <CampoEspecificacionInput
@@ -211,11 +287,10 @@ export function ActivoForm({
               />
             ))}
           </div>
-        </section>
+        </FormSection>
       )}
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground">Ubicación</h2>
+      <FormSection icon={MapPinIcon} title="Ubicación" color="var(--color-good)">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="space-y-1">
             <Label htmlFor="sedeId">Sede</Label>
@@ -277,10 +352,9 @@ export function ActivoForm({
             </Select>
           </div>
         </div>
-      </section>
+      </FormSection>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground">Adquisición</h2>
+      <FormSection icon={ShoppingCartIcon} title="Adquisición" color="var(--color-chart-5)">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="space-y-1">
             <Label htmlFor="fechaAdquisicion">Fecha de adquisición</Label>
@@ -310,42 +384,20 @@ export function ActivoForm({
           </div>
           <div className="space-y-1">
             <Label htmlFor="costoAdquisicion">Costo de adquisición</Label>
-            <Input
-              id="costoAdquisicion"
-              name="costoAdquisicion"
-              type="number"
-              step="0.01"
-              min="0"
-              defaultValue={initial?.costoAdquisicion}
-            />
+            <CurrencyInput id="costoAdquisicion" name="costoAdquisicion" defaultValue={initial?.costoAdquisicion} />
           </div>
           <div className="space-y-1">
             <Label htmlFor="valorContable">Valor contable</Label>
-            <Input
-              id="valorContable"
-              name="valorContable"
-              type="number"
-              step="0.01"
-              min="0"
-              defaultValue={initial?.valorContable}
-            />
+            <CurrencyInput id="valorContable" name="valorContable" defaultValue={initial?.valorContable} />
           </div>
           <div className="space-y-1">
             <Label htmlFor="valorActual">Valor actual</Label>
-            <Input
-              id="valorActual"
-              name="valorActual"
-              type="number"
-              step="0.01"
-              min="0"
-              defaultValue={initial?.valorActual}
-            />
+            <CurrencyInput id="valorActual" name="valorActual" defaultValue={initial?.valorActual} />
           </div>
         </div>
-      </section>
+      </FormSection>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground">Estado</h2>
+      <FormSection icon={ShieldIcon} title="Estado" color="var(--color-warning)">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="estadoPatrimonial">Estado patrimonial</Label>
@@ -379,17 +431,25 @@ export function ActivoForm({
             </Select>
           </div>
         </div>
-      </section>
+      </FormSection>
 
-      <section className="space-y-1">
-        <Label htmlFor="observaciones">Observaciones (opcional)</Label>
-        <Textarea id="observaciones" name="observaciones" rows={3} defaultValue={initial?.observaciones} />
-      </section>
+      <FormSection icon={NotebookPenIcon} title="Observaciones" color="var(--color-neutral)">
+        <TextareaConContador
+          id="observaciones"
+          name="observaciones"
+          rows={3}
+          defaultValue={initial?.observaciones}
+          placeholder="Ingrese observaciones adicionales sobre el activo..."
+        />
+      </FormSection>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button type="submit" disabled={isPending}>
-        {activoId ? "Guardar" : "Crear activo"}
-      </Button>
+      <div className="flex justify-center items-center">
+        <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+          <SaveIcon />
+          {activoId ? "Guardar" : "Crear activo"}
+        </Button>
+      </div>
     </form>
   );
 }

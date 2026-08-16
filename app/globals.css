@@ -167,6 +167,20 @@
    contenedor interno y deja el gap reservado, así que se oculta por
    data-slot en vez de pelear con el componente. */
 @media print {
+  /* Decisión explícita: la ficha técnica (y cualquier otra pantalla que se
+     imprima, ej. /reportes) sale sin fondos de color al imprimir/exportar a
+     PDF -- solo blanco, bordes y texto. !important en un stylesheet gana
+     sobre un style inline sin !important (los backgroundColor dinámicos de
+     Section/TIPO_ACTIVO_META incluidos), así que no depende de la opción
+     "Gráficos de fondo" del diálogo de impresión del navegador. Los chips de
+     ícono usan fondo tintado + ícono de color (no blanco sobre relleno
+     sólido) para seguir siendo visibles con el fondo forzado a blanco. */
+  * {
+    background-color: white !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+
   [data-slot="sidebar"] {
     display: none !important;
   }

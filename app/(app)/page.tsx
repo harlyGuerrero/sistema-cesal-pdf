@@ -1,27 +1,10 @@
 import Link from "next/link";
-import {
-  ArchiveIcon,
-  CheckCircle2Icon,
-  PencilIcon,
-  FileTextIcon,
-  Trash2Icon,
-  UserIcon,
-  WrenchIcon,
-} from "lucide-react";
+import { ArchiveIcon, CheckCircle2Icon, Trash2Icon, UserIcon, WrenchIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ESTADO_PATRIMONIAL_LABELS, TIPO_ACTIVO_CODE_ORDER } from "@/lib/activos/labels";
+import { TIPO_ACTIVO_CODE_ORDER } from "@/lib/activos/labels";
 import type { Region } from "@/lib/generated/prisma/client";
+import { ActivosTable } from "./activos/activos-table";
 import { CategoryBarChart, type CategoryBarDatum } from "./category-bar-chart";
 import { DonutChart, type DonutDatum } from "./donut-chart";
 import { MovimientosFeed } from "./movimientos-feed";
@@ -79,7 +62,13 @@ export default async function DashboardPage() {
     prisma.activo.findMany({
       orderBy: { updatedAt: "desc" },
       take: RECENT_ACTIVOS_TAKE,
-      include: { tipoActivo: true, sede: true, responsableActual: true },
+      include: {
+        tipoActivo: true,
+        sede: true,
+        unidadOperativa: true,
+        subcategoria: true,
+        responsableActual: true,
+      },
     }),
   ]);
 
@@ -203,67 +192,8 @@ export default async function DashboardPage() {
             Ver todos
           </Link>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Tipo de activo</TableHead>
-                <TableHead>Sede</TableHead>
-                <TableHead>Responsable</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {activosRecientes.map((activo) => (
-                <TableRow key={activo.id}>
-                  <TableCell className="text-sm text-muted-foreground">{activo.codigoPatrimonial ?? "—"}</TableCell>
-                  <TableCell>
-                    <Link href={`/activos/${activo.id}`} className="hover:underline">
-                      {activo.nombreActivo}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{activo.tipoActivo.name}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{activo.sede?.name ?? "—"}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {activo.responsableActual?.nombre ?? "—"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{ESTADO_PATRIMONIAL_LABELS[activo.estadoPatrimonial]}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        render={<Link href={`/activos/${activo.id}`} aria-label="Ver o editar" />}
-                        nativeButton={false}
-                      >
-                        <PencilIcon />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        render={<Link href={`/activos/${activo.id}/ficha`} aria-label="Ficha técnica" />}
-                        nativeButton={false}
-                      >
-                        <FileTextIcon />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {activosRecientes.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
-                    Sin activos todavía.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+        <CardContent className="overflow-x-auto px-0">
+          <ActivosTable activos={activosRecientes} emptyMessage="Sin activos todavía." />
         </CardContent>
       </Card>
     </main>

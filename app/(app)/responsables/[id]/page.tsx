@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { IdCardIcon, PackageIcon, UsersIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
+import { FormPageHeader } from "@/components/form-page-header";
+import { FormSection } from "@/components/form-section";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import {
   Table,
   TableBody,
@@ -32,63 +36,67 @@ export default async function ResponsableDetailPage({
   }
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-medium">{responsable.nombre}</h1>
-        <Link href="/responsables" className="text-sm text-muted-foreground hover:underline">
-          ← Volver a responsables
-        </Link>
-      </div>
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground">Editar</h2>
-        <ResponsableEditForm
-          responsableId={responsable.id}
-          nombre={responsable.nombre}
-          email={responsable.email}
-          cargo={responsable.cargo ?? ""}
-          documento={responsable.documento ?? ""}
-          sedeId={responsable.sedeId ?? ""}
-          sedes={sedes}
+    <>
+      <PageBreadcrumb
+        items={[{ label: "Responsables", href: "/responsables" }, { label: responsable.nombre }]}
+      />
+      <main className="p-6">
+      <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border bg-card shadow-sm">
+        <FormPageHeader
+          icon={UsersIcon}
+          title={responsable.nombre}
+          description={responsable.email}
         />
-      </section>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground">
-          Activos asignados ({responsable.activos.length})
-        </h2>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Código patrimonial</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {responsable.activos.map((activo) => (
-              <TableRow key={activo.id}>
-                <TableCell>
-                  <Link href={`/activos/${activo.id}`} className="hover:underline">
-                    {activo.nombreActivo}
-                  </Link>
-                </TableCell>
-                <TableCell>{activo.codigoPatrimonial ?? "—"}</TableCell>
-              </TableRow>
-            ))}
-            {responsable.activos.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={2} className="text-center text-muted-foreground">
-                  Sin activos asignados.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </section>
+        <div className="space-y-5 p-6">
+          <FormSection icon={IdCardIcon} title="Datos del responsable" color="var(--color-chart-2)">
+            <ResponsableEditForm
+              responsableId={responsable.id}
+              nombre={responsable.nombre}
+              email={responsable.email}
+              cargo={responsable.cargo ?? ""}
+              documento={responsable.documento ?? ""}
+              sedeId={responsable.sedeId ?? ""}
+              sedes={sedes}
+            />
+          </FormSection>
 
-      <section className="border-t pt-4">
-        <DeleteResponsableButton responsableId={responsable.id} hasActivos={responsable.activos.length > 0} />
-      </section>
-    </main>
+          <FormSection icon={PackageIcon} title={`Activos asignados (${responsable.activos.length})`} color="var(--primary)">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Código patrimonial</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {responsable.activos.map((activo) => (
+                  <TableRow key={activo.id}>
+                    <TableCell>
+                      <Link href={`/activos/${activo.id}`} className="hover:underline">
+                        {activo.nombreActivo}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{activo.codigoPatrimonial ?? "—"}</TableCell>
+                  </TableRow>
+                ))}
+                {responsable.activos.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={2} className="text-center text-muted-foreground">
+                      Sin activos asignados.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </FormSection>
+        </div>
+
+        <div className="border-t p-6">
+          <DeleteResponsableButton responsableId={responsable.id} hasActivos={responsable.activos.length > 0} />
+        </div>
+      </div>
+      </main>
+    </>
   );
 }

@@ -1,7 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { UserCogIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/auth/session";
+import { FormPageHeader } from "@/components/form-page-header";
+import { FormSection } from "@/components/form-section";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { UsuarioEditForm } from "./usuario-edit-form";
 import { DeleteUsuarioButton } from "./delete-usuario-button";
 
@@ -22,31 +25,36 @@ export default async function UsuarioDetailPage({
   const esUsuarioActual = actor.id === usuario.id;
 
   return (
-    <main className="mx-auto max-w-2xl space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-medium">{usuario.nombre}</h1>
-        <Link href="/usuarios" className="text-sm text-muted-foreground hover:underline">
-          ← Volver a usuarios
-        </Link>
-      </div>
+    <>
+      <PageBreadcrumb items={[{ label: "Usuarios", href: "/usuarios" }, { label: usuario.nombre }]} />
+      <main className="p-6">
+        <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border bg-card shadow-sm">
+          <FormPageHeader
+            icon={UserCogIcon}
+            title={usuario.nombre}
+            description={usuario.email}
+          />
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-muted-foreground">Editar</h2>
-        <UsuarioEditForm
-          usuarioId={usuario.id}
-          nombre={usuario.nombre}
-          email={usuario.email}
-          rol={usuario.rol}
-          estado={usuario.estado}
-          esUsuarioActual={esUsuarioActual}
-        />
-      </section>
+          <div className="p-6">
+            <FormSection icon={UserCogIcon} title="Datos de la cuenta" color="var(--color-chart-5)">
+              <UsuarioEditForm
+                usuarioId={usuario.id}
+                nombre={usuario.nombre}
+                email={usuario.email}
+                rol={usuario.rol}
+                estado={usuario.estado}
+                esUsuarioActual={esUsuarioActual}
+              />
+            </FormSection>
+          </div>
 
-      {!esUsuarioActual && (
-        <section className="border-t pt-4">
-          <DeleteUsuarioButton usuarioId={usuario.id} />
-        </section>
-      )}
-    </main>
+          {!esUsuarioActual && (
+            <div className="border-t p-6">
+              <DeleteUsuarioButton usuarioId={usuario.id} />
+            </div>
+          )}
+        </div>
+      </main>
+    </>
   );
 }

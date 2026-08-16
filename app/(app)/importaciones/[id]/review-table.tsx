@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { PackageIcon, type LucideIcon } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -10,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,7 +32,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { IMPORT_ITEM_STATUS_LABELS, IMPORT_ITEM_STATUS_VARIANT } from "@/lib/import-workflow/labels";
+import { IMPORT_ITEM_STATUS_LABELS, IMPORT_ITEM_STATUS_META } from "@/lib/import-workflow/labels";
+import { TIPO_ACTIVO_META } from "@/lib/activos/tipo-activo-meta";
+import type { TipoActivoCode } from "@/lib/generated/prisma/client";
 import { confirmItemAction, editAndConfirmItemAction, rejectItemAction } from "./actions";
 
 export interface ReviewItem {
@@ -44,9 +47,35 @@ export interface ReviewItem {
   relevance: string | null;
   status: string;
   categoryId: string | null;
-  category: { id: string; name: string } | null;
+  category: { id: string; name: string; code: TipoActivoCode } | null;
   categoryConfidence: number | null;
   relevanceConfidence: number | null;
+}
+
+function formatCurrency(value: number): string {
+  return `S/ ${value.toLocaleString("es-PE", { minimumFractionDigits: 2 })}`;
+}
+
+// Umbral estructural real (HIGH_CONFIDENCE_THRESHOLD, ver skill
+// product-classification) — no un corte de color arbitrario: 0.8 es el punto
+// en el que una clasificación por reglas se auto-confirma sin pasar por acá.
+function confidenceColor(value: number): string {
+  if (value >= 0.8) return "var(--color-good)";
+  if (value >= 0.5) return "var(--color-warning)";
+  return "var(--color-critical)";
+}
+
+function ConfidenceBar({ value }: { value: number }) {
+  const pct = Math.round(value * 100);
+  const color = confidenceColor(value);
+  return (
+    <div className="flex items-center gap-2">
+      <span className="w-9 shrink-0 text-sm tabular-nums">{pct}%</span>
+      <div className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
+      </div>
+    </div>
+  );
 }
 
 export interface ReviewCategory {
@@ -73,11 +102,15 @@ export function ReviewTable({
   const visibleItems = filter === "ALL" ? items : items.filter((item) => item.status === filter);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <Tabs value={filter} onValueChange={(value) => setFilter(value as typeof filter)}>
-        <TabsList>
+        <TabsList variant="line">
           {FILTERS.map((f) => (
-            <TabsTrigger key={f.value} value={f.value}>
+            <TabsTrigger
+              key={f.value}
+              value={f.value}
+              className="data-active:text-primary data-active:after:bg-primary"
+            >
               {f.label}
               {f.value !== "ALL" && (
                 <span className="ml-1 text-muted-foreground">
@@ -89,31 +122,35 @@ export function ReviewTable({
         </TabsList>
       </Tabs>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Producto</TableHead>
-            <TableHead>Cantidad</TableHead>
-            <TableHead>Precio</TableHead>
-            <TableHead>Categoría</TableHead>
-            <TableHead>Confianza</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {visibleItems.map((item) => (
-            <ReviewRow key={item.id} item={item} categories={categories} />
-          ))}
-          {visibleItems.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={7} className="text-center text-muted-foreground">
-                No hay productos en esta vista.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <Card>
+        <CardContent className="overflow-x-auto px-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-6">Producto</TableHead>
+                <TableHead>Cantidad</TableHead>
+                <TableHead>Precio</TableHead>
+                <TableHead>Categoría</TableHead>
+                <TableHead>Confianza</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="pr-6">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {visibleItems.map((item) => (
+                <ReviewRow key={item.id} item={item} categories={categories} />
+              ))}
+              {visibleItems.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    No hay productos en esta vista.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -128,22 +165,44 @@ function ReviewRow({ item, categories }: { item: ReviewItem; categories: ReviewC
   const [rejectOpen, setRejectOpen] = useState(false);
 
   const confidence = item.categoryConfidence ?? item.relevanceConfidence;
+  const meta = item.category ? TIPO_ACTIVO_META[item.category.code] : null;
+  const Icon: LucideIcon = meta?.icon ?? PackageIcon;
+  const color = meta?.color ?? "var(--color-neutral)";
+  const statusMeta = IMPORT_ITEM_STATUS_META[item.status] ?? IMPORT_ITEM_STATUS_META.REVIEW_REQUIRED;
+  const StatusIcon = statusMeta.icon;
 
   return (
     <TableRow>
-      <TableCell className="max-w-64 truncate" title={item.rawText}>
-        {item.normalizedName ?? item.rawText}
+      <TableCell className="max-w-64 pl-6">
+        <div className="flex items-center gap-2.5">
+          <span
+            className="flex size-8 shrink-0 items-center justify-center rounded-lg"
+            style={{ backgroundColor: `color-mix(in oklch, ${color} 15%, transparent)`, color }}
+          >
+            <Icon className="size-4" />
+          </span>
+          <span className="truncate" title={item.rawText}>
+            {item.normalizedName ?? item.rawText}
+          </span>
+        </div>
       </TableCell>
       <TableCell>{item.quantity ?? "—"}</TableCell>
-      <TableCell>{item.unitPrice != null ? item.unitPrice.toFixed(2) : "—"}</TableCell>
+      <TableCell>{item.unitPrice != null ? formatCurrency(item.unitPrice) : "—"}</TableCell>
       <TableCell>{item.category?.name ?? "—"}</TableCell>
-      <TableCell>{confidence != null ? `${Math.round(confidence * 100)}%` : "—"}</TableCell>
+      <TableCell>{confidence != null ? <ConfidenceBar value={confidence} /> : "—"}</TableCell>
       <TableCell>
-        <Badge variant={IMPORT_ITEM_STATUS_VARIANT[item.status] ?? "outline"}>
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+          style={{
+            backgroundColor: `color-mix(in oklch, ${statusMeta.color} 15%, transparent)`,
+            color: statusMeta.color,
+          }}
+        >
+          <StatusIcon className="size-3" />
           {IMPORT_ITEM_STATUS_LABELS[item.status] ?? item.status}
-        </Badge>
+        </span>
       </TableCell>
-      <TableCell>
+      <TableCell className="pr-6">
         {item.status !== "REVIEW_REQUIRED" ? (
           <span className="text-xs text-muted-foreground">—</span>
         ) : (

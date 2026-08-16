@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FileTextIcon, PackageIcon, UserIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
+import { Button } from "@/components/ui/button";
+import { FormPageHeader } from "@/components/form-page-header";
+import { FormSection } from "@/components/form-section";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { ActivoForm, type ActivoFormInitial } from "../activo-form";
 import { getActivoFormData } from "../form-data";
 import { DeleteActivoButton } from "./delete-activo-button";
@@ -87,41 +92,51 @@ export default async function ActivoDetailPage({
   };
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-medium">{activo.nombreActivo}</h1>
-        <div className="flex items-center gap-4">
-          <Link href={`/activos/${activo.id}/ficha`} className="text-sm text-muted-foreground hover:underline">
-            Ver ficha técnica →
-          </Link>
-          <Link href="/activos" className="text-sm text-muted-foreground hover:underline">
-            ← Volver a activos
-          </Link>
+    <>
+      <PageBreadcrumb items={[{ label: "Activos", href: "/activos" }, { label: activo.nombreActivo }]} />
+      <main className="p-6">
+        <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border bg-card shadow-sm">
+          <FormPageHeader
+            icon={PackageIcon}
+            title={activo.nombreActivo}
+            description={`Código patrimonial: ${activo.codigoPatrimonial}`}
+            actions={
+              <Button
+                size="sm"
+                variant="outline"
+                render={<Link href={`/activos/${activo.id}/ficha`} />}
+                nativeButton={false}
+              >
+                <FileTextIcon />
+                Ver ficha técnica
+              </Button>
+            }
+          />
+
+          <div className="space-y-5 p-6 pb-0">
+            <FormSection icon={UserIcon} title="Responsable" color="var(--color-chart-2)">
+              <ResponsableSection
+                activoId={activo.id}
+                responsableActualId={activo.responsableActualId}
+                responsables={responsables}
+              />
+            </FormSection>
+
+            <FormSection icon={FileTextIcon} title={`Documentos (${activo.documentos.length})`} color="var(--color-chart-3)">
+              <DocumentoList activoId={activo.id} documentos={activo.documentos} />
+            </FormSection>
+          </div>
+
+          <ActivoForm activoId={activo.id} initial={initial} tiposActivo={tiposActivo} sedes={sedes} />
+
+          <div className="border-t p-6">
+            <DeleteActivoButton
+              activoId={activo.id}
+              hasHistory={activo.importItemId !== null || activo._count.documentos > 0}
+            />
+          </div>
         </div>
-      </div>
-
-      <section className="space-y-3 border-t pt-4">
-        <h2 className="text-sm font-medium text-muted-foreground">Responsable</h2>
-        <ResponsableSection
-          activoId={activo.id}
-          responsableActualId={activo.responsableActualId}
-          responsables={responsables}
-        />
-      </section>
-
-      <section className="space-y-3 border-t pt-4">
-        <h2 className="text-sm font-medium text-muted-foreground">Documentos ({activo.documentos.length})</h2>
-        <DocumentoList activoId={activo.id} documentos={activo.documentos} />
-      </section>
-
-      <ActivoForm activoId={activo.id} initial={initial} tiposActivo={tiposActivo} sedes={sedes} />
-
-      <section className="border-t pt-4">
-        <DeleteActivoButton
-          activoId={activo.id}
-          hasHistory={activo.importItemId !== null || activo._count.documentos > 0}
-        />
-      </section>
-    </main>
+      </main>
+    </>
   );
 }
