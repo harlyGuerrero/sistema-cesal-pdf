@@ -6,7 +6,69 @@ import { Select as SelectPrimitive } from "@base-ui/react/select"
 import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
-const Select = SelectPrimitive.Root
+// Base UI's <Select.Value> only shows a selected item's label if the Root
+// gets an `items` list — otherwise it falls back to rendering the raw
+// `value` (in this app, almost always a database id), which is the bug:
+// every select in the app showed the id instead of the label once you
+// picked something. Walking the JSX children to build that `items` list
+// here means every existing <Select><SelectItem value=".."> call site gets
+// fixed for free, without having to touch each one individually.
+//
+// Identifying a SelectItem by `child.type === SelectItem` looks obvious but
+// is wrong: when the JSX is authored in a Server Component (any page.tsx
+// without "use client" — most of the filter/select forms in this app) and
+// crosses into this Client Component as `children`, React represents that
+// element's `type` as a `react.lazy` reference (RSC's client-reference
+// wire format), never the bare `SelectItem` function — so the `===` check
+// silently fails for every server-authored select and only ever matched
+// the purely client-side ones (confirmed with a real browser: broken on
+// app/(app)/activos/campos/page.tsx, a Server Component; fine on
+// activo-form.tsx, "use client"). `value` is a plain data prop that
+// survives that serialization untouched, and only SelectItem ever receives
+// one in this codebase, so matching on that instead works regardless of
+// which side of the RSC boundary the JSX was written on.
+//
+// Caveat: this still walks the JSX tree as written, before any component
+// renders — so it can only "see" a SelectItem if it's reachable through
+// some element's own `children` prop. A helper component that builds
+// SelectItems from a prop OTHER than `children` (e.g. a custom
+// `<OptionGroup categorias={...} />` used as a child of SelectContent) is
+// invisible to this walk and its items fall back to showing the raw value
+// again. Always nest SelectItem/SelectGroup directly (or through
+// .map()/.flatMap(), which is fine) instead of wrapping them in a helper
+// component — see git history on app/(app)/activos/campos/page.tsx for the
+// bug this caused.
+function extractSelectItems(children: React.ReactNode): { value: unknown; label: React.ReactNode }[] {
+  const items: { value: unknown; label: React.ReactNode }[] = []
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) return
+    const props = child.props as { value?: unknown; children?: React.ReactNode } | undefined
+    if (props && "value" in props) {
+      items.push({ value: props.value, label: props.children })
+      return
+    }
+    if (props?.children) {
+      items.push(...extractSelectItems(props.children))
+    }
+  })
+  return items
+}
+
+function Select<Value = unknown, Multiple extends boolean | undefined = false>({
+  children,
+  items,
+  ...props
+}: SelectPrimitive.Root.Props<Value, Multiple>) {
+  const derivedItems = React.useMemo(
+    () => items ?? extractSelectItems(children),
+    [items, children]
+  )
+  return (
+    <SelectPrimitive.Root items={derivedItems} {...props}>
+      {children}
+    </SelectPrimitive.Root>
+  )
+}
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (

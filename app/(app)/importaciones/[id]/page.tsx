@@ -59,7 +59,7 @@ export default async function ImportDetailPage({
   }));
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6 p-6">
+    <main className="space-y-6 p-6">
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-3">
           <h1 className="text-xl font-medium">{importRecord.fileName}</h1>

@@ -63,7 +63,16 @@ export default async function CamposPage({
           </SelectTrigger>
           <SelectContent>
             {tiposActivo.map((tipo) => (
-              <SelectContentGroup key={tipo.id} label={tipo.name} categorias={tipo.categorias} />
+              <SelectGroup key={tipo.id}>
+                <SelectLabel>{tipo.name}</SelectLabel>
+                {tipo.categorias.flatMap((categoria) =>
+                  categoria.subcategorias.map((subcategoria) => (
+                    <SelectItem key={subcategoria.id} value={subcategoria.id}>
+                      {categoria.nombre} › {subcategoria.nombre}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectGroup>
             ))}
           </SelectContent>
         </Select>
@@ -92,26 +101,5 @@ export default async function CamposPage({
         <p className="text-sm text-destructive">No se encontró esa subcategoría.</p>
       )}
     </main>
-  );
-}
-
-function SelectContentGroup({
-  label,
-  categorias,
-}: {
-  label: string;
-  categorias: { id: string; nombre: string; subcategorias: { id: string; nombre: string }[] }[];
-}) {
-  return (
-    <SelectGroup>
-      <SelectLabel>{label}</SelectLabel>
-      {categorias.flatMap((categoria) =>
-        categoria.subcategorias.map((subcategoria) => (
-          <SelectItem key={subcategoria.id} value={subcategoria.id}>
-            {categoria.nombre} › {subcategoria.nombre}
-          </SelectItem>
-        ))
-      )}
-    </SelectGroup>
   );
 }
