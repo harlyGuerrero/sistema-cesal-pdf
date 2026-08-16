@@ -18,6 +18,7 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-chart-6: var(--chart-6);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -71,11 +72,18 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: #2a78d6;
+  /* Paleta categórica (skill dataviz, references/palette.md, slots 1-6) —
+     validada con scripts/validate_palette.js para 6 series simultáneas
+     (las 6 categorías patrimoniales cerradas, ver ARCHITECTURE.md 5.2).
+     Antes chart-2..5 eran grises lisos (indistinguibles en una torta de
+     más de una serie) — nunca se habían usado para una gráfica categórica
+     de verdad hasta el dashboard de Activos por tipo. */
   --chart-1: #2a78d6;
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #008300;
   /* Paleta de estado (skill dataviz, references/palette.md) — fija, no se
      tematiza: los mismos 4 valores en claro y oscuro. */
   --status-good: #0ca30c;
@@ -113,10 +121,11 @@
   --input: oklch(1 0 0 / 15%);
   --ring: #3987e5;
   --chart-1: #3987e5;
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-6: #008300;
   --sidebar: #1a1a19;
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: #3987e5;

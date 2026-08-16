@@ -27,7 +27,7 @@ function ChartTooltip({
   return (
     <div className="rounded-lg border border-border bg-popover px-3 py-2 text-sm shadow-md">
       <p className="font-medium text-popover-foreground">{datum.name}</p>
-      <p className="text-muted-foreground">{datum.count.toLocaleString("es-PE")} productos</p>
+      <p className="text-muted-foreground">{datum.count.toLocaleString("es-PE")} activos</p>
     </div>
   );
 }

@@ -70,14 +70,11 @@ export function NavMain({
                 tooltip={item.title}
                 render={<Link href={item.url} />}
                 className={cn(
-                  "relative rounded-xl py-5 transition-colors",
+                  "relative rounded-xl py-5 transition-colors text-gray-600 font-semibold dark:text-blue-50",
                   isActive &&
-                    "bg-card font-semibold text-primary shadow-sm hover:bg-card hover:text-primary data-active:bg-card data-active:text-primary"
+                    "bg-card font-semibold text-primary shadow-sm hover:bg-card dark:text-blue-700 border-l-5 border-l-blue-700 hover:text-primary data-active:bg-card data-active:text-primary"
                 )}
               >
-                {isActive && (
-                  <span className="absolute top-1/2 left-0 h-4/5 w-1 -translate-y-1/2 rounded-full bg-primary" />
-                )}
                 <item.icon className={isActive ? "text-primary" : undefined} />
                 <span>{item.title}</span>
               </SidebarMenuButton>

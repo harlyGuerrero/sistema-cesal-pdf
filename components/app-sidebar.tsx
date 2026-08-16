@@ -113,22 +113,28 @@ export function AppSidebar({
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem>
+          <SidebarMenuItem className="pt-3">
             <SidebarMenuButton size="lg" className="pointer-events-none">
               <Image
                 src="/logo-mobile.svg"
                 alt="CESAL"
                 width={32}
                 height={32}
-                className="size-8 shrink-0"
+                className="
+                hidden h-10 w-10 rounded-full object-contain
+                group-data-[collapsible=icon]:block"
+                
               />
               <Image
                 src="/logo-desktop.svg"
                 alt="CESAL"
                 width={132}
                 height={36}
-                className="h-5 w-auto group-data-[collapsible=icon]:hidden"
+                className="
+                h-12 w-full object-contain
+                group-data-[collapsible=icon]:hidden"
               />
+              
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -140,8 +146,8 @@ export function AppSidebar({
       </SidebarContent>
       <SidebarFooter>
         <div className="flex items-center justify-between gap-2 rounded-lg p-2 group-data-[collapsible=icon]:hidden">
-          <Label htmlFor="dark-mode" className="flex items-center gap-2 text-sm font-normal">
-            <MoonIcon className="size-4 text-muted-foreground" />
+          <Label htmlFor="dark-mode" className="flex items-center gap-2 text-sm text-gray-600 font-semibold dark:text-blue-50">
+            <MoonIcon className="size-4 text-muted-foreground dark:text-green-600" />
             Modo Oscuro
           </Label>
           <Switch

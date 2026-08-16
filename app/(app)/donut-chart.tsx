@@ -2,7 +2,7 @@
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
-export interface StatusDatum {
+export interface DonutDatum {
   key: string;
   label: string;
   value: number;
@@ -14,24 +14,24 @@ function ChartTooltip({
   payload,
 }: {
   active?: boolean;
-  payload?: { payload: StatusDatum }[];
+  payload?: { payload: DonutDatum }[];
 }) {
   if (!active || !payload?.length) return null;
   const datum = payload[0].payload;
   return (
     <div className="rounded-lg border border-border bg-popover px-3 py-2 text-sm shadow-md">
       <p className="font-medium text-popover-foreground">{datum.label}</p>
-      <p className="text-muted-foreground">{datum.value.toLocaleString("es-PE")} ítems</p>
+      <p className="text-muted-foreground">{datum.value.toLocaleString("es-PE")} activos</p>
     </div>
   );
 }
 
-export function StatusDonutChart({
+export function DonutChart({
   data,
   total,
   centerLabel,
 }: {
-  data: StatusDatum[];
+  data: DonutDatum[];
   total: number;
   centerLabel: string;
 }) {
