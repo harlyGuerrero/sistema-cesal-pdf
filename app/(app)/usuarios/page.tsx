@@ -96,7 +96,7 @@ export default async function UsuariosPage({
           label="Super administradores"
           value={countByRol.get("SUPER_ADMIN") ?? 0}
           icon={ShieldIcon}
-          color="var(--color-warning)"
+          color="var(--primary)"
           hint={porcentaje(countByRol.get("SUPER_ADMIN") ?? 0)}
         />
         <StatCard

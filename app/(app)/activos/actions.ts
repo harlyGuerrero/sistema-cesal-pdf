@@ -130,6 +130,7 @@ export async function createActivoAction(formData: FormData): Promise<void> {
         codigoPatrimonial,
         especificaciones: { create: especificaciones },
       },
+      include: { tipoActivo: true, sede: true },
     });
     await tx.movimiento.create({
       data: { activoId: created.id, usuarioId: actor.id, ...buildMovimientoDeAlta(created) },
@@ -139,7 +140,12 @@ export async function createActivoAction(formData: FormData): Promise<void> {
         accion: "DAR_DE_ALTA",
         entidad: "Activo",
         entidadId: created.id,
-        detalle: { nombreActivo: created.nombreActivo },
+        detalle: {
+          nombreActivo: created.nombreActivo,
+          codigoPatrimonial: created.codigoPatrimonial,
+          tipo: created.tipoActivo.name,
+          sede: created.sede?.name ?? null,
+        },
         usuarioId: actor.id,
       },
       tx
@@ -186,7 +192,7 @@ export async function updateActivoAction(activoId: string, formData: FormData): 
         accion: movimientoTipoAAccionAuditoria(movimiento?.tipo ?? null),
         entidad: "Activo",
         entidadId: activoId,
-        detalle: { nombreActivo: data.nombreActivo },
+        detalle: { nombreActivo: data.nombreActivo, codigoPatrimonial: anterior.codigoPatrimonial },
         usuarioId: actor.id,
       },
       tx
@@ -211,6 +217,7 @@ export async function asignarResponsableAction(activoId: string, responsableId: 
     if (activo.estadoPatrimonial === "BAJA") {
       throw new Error("No se puede asignar un activo dado de baja.");
     }
+    const responsable = await tx.responsable.findUniqueOrThrow({ where: { id: responsableId } });
 
     await tx.activo.update({
       where: { id: activoId },
@@ -229,7 +236,17 @@ export async function asignarResponsableAction(activoId: string, responsableId: 
       },
     });
     await registrarAuditoria(
-      { accion: "ASIGNAR", entidad: "Activo", entidadId: activoId, detalle: { responsableId }, usuarioId: actor.id },
+      {
+        accion: "ASIGNAR",
+        entidad: "Activo",
+        entidadId: activoId,
+        detalle: {
+          nombreActivo: activo.nombreActivo,
+          codigoPatrimonial: activo.codigoPatrimonial,
+          responsable: responsable.nombre,
+        },
+        usuarioId: actor.id,
+      },
       tx
     );
   });
@@ -242,6 +259,9 @@ export async function desasignarResponsableAction(activoId: string): Promise<voi
   const actor = await requireSessionUsuario();
   await prisma.$transaction(async (tx) => {
     const activo = await tx.activo.findUniqueOrThrow({ where: { id: activoId } });
+    const responsableAnterior = activo.responsableActualId
+      ? await tx.responsable.findUnique({ where: { id: activo.responsableActualId } })
+      : null;
 
     await tx.activo.update({
       where: { id: activoId },
@@ -264,7 +284,12 @@ export async function desasignarResponsableAction(activoId: string): Promise<voi
         accion: "ACTUALIZAR",
         entidad: "Activo",
         entidadId: activoId,
-        detalle: { motivo: "desasignar_responsable" },
+        detalle: {
+          motivo: "desasignar_responsable",
+          nombreActivo: activo.nombreActivo,
+          codigoPatrimonial: activo.codigoPatrimonial,
+          responsableAnterior: responsableAnterior?.nombre ?? null,
+        },
         usuarioId: actor.id,
       },
       tx
@@ -303,7 +328,7 @@ export async function deleteActivoAction(activoId: string): Promise<void> {
         accion: "ELIMINAR",
         entidad: "Activo",
         entidadId: activoId,
-        detalle: { nombreActivo: activo.nombreActivo },
+        detalle: { nombreActivo: activo.nombreActivo, codigoPatrimonial: activo.codigoPatrimonial },
         usuarioId: actor.id,
       },
       tx

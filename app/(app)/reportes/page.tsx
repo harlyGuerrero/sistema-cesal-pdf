@@ -1,15 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { Building2Icon, CoinsIcon, PackageIcon, TagIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { PrintButton } from "@/components/print-button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -18,21 +11,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  ESTADO_PATRIMONIAL_LABELS,
-  ESTADO_PATRIMONIAL_OPTIONS,
-  TIPO_ACTIVO_CODE_ORDER,
-} from "@/lib/activos/labels";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { ESTADO_PATRIMONIAL_COLOR_VAR, ESTADO_PATRIMONIAL_LABELS, TIPO_ACTIVO_CODE_ORDER } from "@/lib/activos/labels";
+import { TIPO_ACTIVO_META } from "@/lib/activos/tipo-activo-meta";
 import type { EstadoPatrimonial, Prisma } from "@/lib/generated/prisma/client";
+import { ReportesFilters } from "./reportes-filters";
 
 const PAGE_SIZE = 30;
 const SIN_UBICACION = "__none__";
 
-// Fase 12 de Activos: reporte de inventario por ubicación y tipo. Sin sede
-// elegida, agrupa por Sede; con una sede elegida, "entra" un nivel y agrupa
-// por Unidad Operativa dentro de ella — mismo patrón de drill-down que
-// Sede -> Unidad Operativa -> Ambiente del resto del sistema (Fase 5).
+function formatMoney(value: number): string {
+  return `S/ ${value.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+// Fase 12 de Activos, restilizada en Fase 34: reporte de inventario por
+// ubicación y tipo. Sin sede elegida, agrupa por Sede; con una sede elegida,
+// "entra" un nivel y agrupa por Unidad Operativa dentro de ella — mismo
+// patrón de drill-down que Sede -> Unidad Operativa -> Ambiente del resto
+// del sistema (Fase 5). El rediseño reusa TIPO_ACTIVO_META/ESTADO_-
+// PATRIMONIAL_COLOR_VAR (mismos colores que /activos) para que un tipo o un
+// estado se vean igual acá que en el resto del sistema, y agrega valor
+// contable total — la única stat que tiene sentido en un reporte y no en
+// ningún otro módulo.
 export default async function ReportesPage({
   searchParams,
 }: {
@@ -64,30 +64,34 @@ export default async function ReportesPage({
 
   const sedeSeleccionada = sedeId && sedeId !== "all" ? sedes.find((s) => s.id === sedeId) : undefined;
 
-  const [matrizGrupos, unidadesDeSede, detalle, totalDetalle] = await Promise.all([
-    sedeSeleccionada
-      ? prisma.activo.groupBy({
-          by: ["unidadOperativaId", "tipoActivoId"],
-          where: { ...filterWhere, sedeId: sedeSeleccionada.id },
-          _count: true,
-        })
-      : prisma.activo.groupBy({
-          by: ["sedeId", "tipoActivoId"],
-          where: filterWhere,
-          _count: true,
-        }),
-    sedeSeleccionada
-      ? prisma.unidadOperativa.findMany({ where: { sedeId: sedeSeleccionada.id }, orderBy: { name: "asc" } })
-      : Promise.resolve([]),
-    prisma.activo.findMany({
-      where: filterWhere,
-      include: { tipoActivo: true, sede: true, unidadOperativa: true, ambiente: true, responsableActual: true },
-      orderBy: { nombreActivo: "asc" },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-    prisma.activo.count({ where: filterWhere }),
-  ]);
+  const [matrizGrupos, unidadesDeSede, detalle, totalDetalle, sedesRepresentadas, tiposRepresentados, valorContable] =
+    await Promise.all([
+      sedeSeleccionada
+        ? prisma.activo.groupBy({
+            by: ["unidadOperativaId", "tipoActivoId"],
+            where: { ...filterWhere, sedeId: sedeSeleccionada.id },
+            _count: true,
+          })
+        : prisma.activo.groupBy({
+            by: ["sedeId", "tipoActivoId"],
+            where: filterWhere,
+            _count: true,
+          }),
+      sedeSeleccionada
+        ? prisma.unidadOperativa.findMany({ where: { sedeId: sedeSeleccionada.id }, orderBy: { name: "asc" } })
+        : Promise.resolve([]),
+      prisma.activo.findMany({
+        where: filterWhere,
+        include: { tipoActivo: true, sede: true, unidadOperativa: true, ambiente: true, responsableActual: true },
+        orderBy: { nombreActivo: "asc" },
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+      }),
+      prisma.activo.count({ where: filterWhere }),
+      prisma.activo.groupBy({ by: ["sedeId"], where: { ...filterWhere, sedeId: { not: null } }, _count: true }),
+      prisma.activo.groupBy({ by: ["tipoActivoId"], where: filterWhere, _count: true }),
+      prisma.activo.aggregate({ where: filterWhere, _sum: { valorContable: true } }),
+    ]);
 
   // Fila = Sede (o Unidad Operativa, con sede elegida) -> columna = tipo de
   // activo -> conteo. rowKey usa SIN_UBICACION en vez de null porque los
@@ -129,67 +133,61 @@ export default async function ReportesPage({
         <PrintButton />
       </div>
 
-      <form className="flex flex-wrap gap-2 print:hidden" method="get">
-        <Select name="sedeId" defaultValue={sedeId ?? "all"}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Todas las sedes" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas las sedes</SelectItem>
-            {sedes.map((sede) => (
-              <SelectItem key={sede.id} value={sede.id}>
-                {sede.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select name="tipoActivoId" defaultValue={tipoActivoId ?? "all"}>
-          <SelectTrigger className="w-56">
-            <SelectValue placeholder="Todos los tipos" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los tipos</SelectItem>
-            {tiposActivo.map((tipo) => (
-              <SelectItem key={tipo.id} value={tipo.id}>
-                {tipo.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select name="estado" defaultValue={estado ?? "all"}>
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="Todos los estados" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los estados</SelectItem>
-            {ESTADO_PATRIMONIAL_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button type="submit" variant="outline">
-          Filtrar
-        </Button>
-      </form>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 print:hidden">
+        <StatCard label="Activos filtrados" value={totalDetalle} icon={PackageIcon} color="var(--primary)" hint="según filtros aplicados" />
+        <StatCard
+          label="Sedes representadas"
+          value={sedesRepresentadas.length}
+          icon={Building2Icon}
+          color="var(--color-good)"
+          hint={`de ${sedes.length} sedes`}
+        />
+        <StatCard
+          label="Tipos representados"
+          value={tiposRepresentados.length}
+          icon={TagIcon}
+          color="var(--color-chart-2)"
+          hint={`de ${tiposActivo.length} tipos`}
+        />
+        <StatCard
+          label="Valor contable"
+          value={formatMoney(Number(valorContable._sum.valorContable ?? 0))}
+          icon={CoinsIcon}
+          color="var(--color-chart-4)"
+          hint="suma del filtro actual"
+        />
+      </div>
+
+      <Card className="print:hidden">
+        <CardContent>
+          <Suspense fallback={<div className="h-8" />}>
+            <ReportesFilters sedes={sedes} tiposActivo={tiposActivo} />
+          </Suspense>
+        </CardContent>
+      </Card>
 
       <Card className="break-inside-avoid">
         <CardHeader>
-          <CardTitle className="text-base font-semibold">
+          <p className="text-sm font-medium">
             {sedeSeleccionada ? `Inventario en ${sedeSeleccionada.name} por unidad operativa` : "Inventario por sede"}
-          </CardTitle>
+          </p>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>{sedeSeleccionada ? "Unidad operativa" : "Sede"}</TableHead>
-                {columnas.map((tipo) => (
-                  <TableHead key={tipo.id} className="text-right">
-                    {tipo.name}
-                  </TableHead>
-                ))}
+                {columnas.map((tipo) => {
+                  const { icon: Icon, color } = TIPO_ACTIVO_META[tipo.code];
+                  return (
+                    <TableHead key={tipo.id} className="text-right">
+                      <span className="inline-flex items-center justify-end gap-1.5">
+                        <Icon className="size-3.5" style={{ color }} />
+                        {tipo.name}
+                      </span>
+                    </TableHead>
+                  );
+                })}
                 <TableHead className="text-right font-semibold">Total</TableHead>
               </TableRow>
             </TableHeader>
@@ -234,66 +232,73 @@ export default async function ReportesPage({
         </CardContent>
       </Card>
 
-      <div className="space-y-3 break-before-page">
-        <h2 className="text-base font-semibold">Detalle de activos ({totalDetalle.toLocaleString("es-PE")})</h2>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Código</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Ubicación</TableHead>
-              <TableHead>Responsable</TableHead>
-              <TableHead>Estado</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {detalle.map((activo) => (
-              <TableRow key={activo.id}>
-                <TableCell className="text-sm text-muted-foreground">{activo.codigoPatrimonial ?? "—"}</TableCell>
-                <TableCell>
-                  <Link href={`/activos/${activo.id}`} className="hover:underline print:no-underline">
-                    {activo.nombreActivo}
-                  </Link>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {tipoActivoById.get(activo.tipoActivoId)?.name ?? "—"}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {[activo.sede?.name, activo.unidadOperativa?.name, activo.ambiente?.name]
-                    .filter(Boolean)
-                    .join(" › ") || "—"}
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">{activo.responsableActual?.nombre ?? "—"}</TableCell>
-                <TableCell>
-                  <Badge variant="outline">{ESTADO_PATRIMONIAL_LABELS[activo.estadoPatrimonial]}</Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-            {detalle.length === 0 && (
+      <Card className="break-before-page">
+        <CardHeader>
+          <p className="text-sm font-medium">Detalle de activos ({totalDetalle.toLocaleString("es-PE")})</p>
+        </CardHeader>
+        <CardContent className="overflow-x-auto px-0">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  Sin activos que coincidan con el filtro.
-                </TableCell>
+                <TableHead className="pl-6">Código</TableHead>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Ubicación</TableHead>
+                <TableHead>Responsable</TableHead>
+                <TableHead className="pr-6">Estado</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {detalle.map((activo) => {
+                const estadoColor = ESTADO_PATRIMONIAL_COLOR_VAR[activo.estadoPatrimonial] ?? "var(--color-neutral)";
+                return (
+                  <TableRow key={activo.id}>
+                    <TableCell className="pl-6 text-sm text-muted-foreground">{activo.codigoPatrimonial ?? "—"}</TableCell>
+                    <TableCell>
+                      <Link href={`/activos/${activo.id}`} className="hover:underline print:no-underline">
+                        {activo.nombreActivo}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {tipoActivoById.get(activo.tipoActivoId)?.name ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {[activo.sede?.name, activo.unidadOperativa?.name, activo.ambiente?.name]
+                        .filter(Boolean)
+                        .join(" › ") || "—"}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{activo.responsableActual?.nombre ?? "—"}</TableCell>
+                    <TableCell className="pr-6">
+                      <span
+                        className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                        style={{ backgroundColor: `color-mix(in oklch, ${estadoColor} 15%, transparent)`, color: estadoColor }}
+                      >
+                        {ESTADO_PATRIMONIAL_LABELS[activo.estadoPatrimonial]}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {detalle.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    Sin activos que coincidan con el filtro.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-3 text-sm print:hidden">
-            <PageLink page={page - 1} disabled={page <= 1} sedeId={sedeId} tipoActivoId={tipoActivoId} estado={estado}>
-              Anterior
-            </PageLink>
-            <span className="text-muted-foreground">
-              Página {page} de {totalPages}
-            </span>
-            <PageLink page={page + 1} disabled={page >= totalPages} sedeId={sedeId} tipoActivoId={tipoActivoId} estado={estado}>
-              Siguiente
-            </PageLink>
-          </div>
-        )}
-      </div>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground print:hidden">
+          <p>
+            Mostrando {(page - 1) * PAGE_SIZE + 1} a {Math.min(page * PAGE_SIZE, totalDetalle)} de {totalDetalle} activos
+          </p>
+          <Pagination page={page} totalPages={totalPages} sedeId={sedeId} tipoActivoId={tipoActivoId} estado={estado} />
+        </div>
+      )}
 
       <footer className="hidden border-t pt-3 text-xs text-muted-foreground print:block">
         Generado el {new Date().toLocaleDateString("es-PE")} — CESAL, sistema de gestión patrimonial.
@@ -302,31 +307,116 @@ export default async function ReportesPage({
   );
 }
 
-function PageLink({
-  page,
-  disabled,
-  sedeId,
-  tipoActivoId,
-  estado,
-  children,
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  color,
+  hint,
 }: {
-  page: number;
-  disabled: boolean;
+  label: string;
+  value: number | string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  hint: string;
+}) {
+  return (
+    <Card>
+      <CardContent className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground">{label}</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums">
+            {typeof value === "number" ? value.toLocaleString("es-PE") : value}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
+        </div>
+        <span
+          className="flex size-9 shrink-0 items-center justify-center rounded-full"
+          style={{ backgroundColor: `color-mix(in oklch, ${color} 15%, transparent)`, color }}
+        >
+          <Icon className="size-4" />
+        </span>
+      </CardContent>
+    </Card>
+  );
+}
+
+interface FilterState {
   sedeId?: string;
   tipoActivoId?: string;
   estado?: string;
-  children: React.ReactNode;
-}) {
-  if (disabled) {
-    return <span className="text-muted-foreground">{children}</span>;
-  }
+}
+
+function buildHref(page: number, filters: FilterState): string {
   const params = new URLSearchParams();
-  if (sedeId) params.set("sedeId", sedeId);
-  if (tipoActivoId) params.set("tipoActivoId", tipoActivoId);
-  if (estado) params.set("estado", estado);
+  if (filters.sedeId) params.set("sedeId", filters.sedeId);
+  if (filters.tipoActivoId) params.set("tipoActivoId", filters.tipoActivoId);
+  if (filters.estado) params.set("estado", filters.estado);
   params.set("page", String(page));
+  return `/reportes?${params.toString()}`;
+}
+
+function pageWindow(page: number, totalPages: number): (number | "ellipsis")[] {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+  const pages = new Set<number>([1, totalPages, page - 1, page, page + 1]);
+  const sorted = [...pages].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
+  const result: (number | "ellipsis")[] = [];
+  for (let i = 0; i < sorted.length; i++) {
+    if (i > 0 && sorted[i] - sorted[i - 1] > 1) result.push("ellipsis");
+    result.push(sorted[i]);
+  }
+  return result;
+}
+
+function Pagination({
+  page,
+  totalPages,
+  ...filters
+}: { page: number; totalPages: number } & FilterState) {
   return (
-    <Link href={`/reportes?${params.toString()}`} className="hover:underline">
+    <div className="flex items-center gap-1">
+      <PageButton disabled={page <= 1} href={buildHref(page - 1, filters)}>
+        «
+      </PageButton>
+      {pageWindow(page, totalPages).map((entry, index) =>
+        entry === "ellipsis" ? (
+          <span key={`ellipsis-${index}`} className="px-1.5 text-muted-foreground">
+            …
+          </span>
+        ) : (
+          <PageButton key={entry} href={buildHref(entry, filters)} active={entry === page}>
+            {entry}
+          </PageButton>
+        )
+      )}
+      <PageButton disabled={page >= totalPages} href={buildHref(page + 1, filters)}>
+        »
+      </PageButton>
+    </div>
+  );
+}
+
+function PageButton({
+  children,
+  href,
+  active,
+  disabled,
+}: {
+  children: React.ReactNode;
+  href: string;
+  active?: boolean;
+  disabled?: boolean;
+}) {
+  const className = `flex size-7 shrink-0 items-center justify-center rounded-md text-sm ${
+    active
+      ? "bg-primary text-primary-foreground"
+      : disabled
+        ? "text-muted-foreground/50"
+        : "text-foreground hover:bg-muted"
+  }`;
+  if (disabled) return <span className={className}>{children}</span>;
+  return (
+    <Link href={href} className={className}>
       {children}
     </Link>
   );

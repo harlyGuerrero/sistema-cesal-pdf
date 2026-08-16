@@ -114,25 +114,31 @@ export default async function DashboardPage() {
           label="Total de activos"
           value={totalActivos}
           icon={ArchiveIcon}
-          accent="chart-1"
+          color="var(--primary)"
           hint="100% del patrimonio"
         />
         <StatCard
           label="Disponibles"
           value={disponible}
           icon={CheckCircle2Icon}
-          accent="good"
+          color="var(--color-good)"
           hint={porcentaje(disponible)}
         />
-        <StatCard label="Asignados" value={asignado} icon={UserIcon} accent="chart-1" hint={porcentaje(asignado)} />
+        <StatCard label="Asignados" value={asignado} icon={UserIcon} color="var(--primary)" hint={porcentaje(asignado)} />
         <StatCard
           label="En mantenimiento"
           value={mantenimiento}
           icon={WrenchIcon}
-          accent="warning"
+          color="var(--color-warning)"
           hint={porcentaje(mantenimiento)}
         />
-        <StatCard label="Dados de baja" value={baja} icon={Trash2Icon} accent="critical" hint={porcentaje(baja)} />
+        <StatCard
+          label="Dados de baja"
+          value={baja}
+          icon={Trash2Icon}
+          color="var(--color-critical)"
+          hint={porcentaje(baja)}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -204,41 +210,29 @@ function StatCard({
   label,
   value,
   icon: Icon,
-  accent,
+  color,
   hint,
 }: {
   label: string;
   value: number;
   icon: React.ComponentType<{ className?: string }>;
-  accent: "chart-1" | "good" | "warning" | "critical";
+  color: string;
   hint: string;
 }) {
   return (
-    <Card
-      className="border-l-4"
-      style={{ borderLeftColor: `var(--color-${accent})` }}
-    >
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            {label}
-          </span>
-          <span
-            className="flex size-8 shrink-0 items-center justify-center rounded-full"
-            style={{
-              backgroundColor: `color-mix(in oklch, var(--color-${accent}) 15%, transparent)`,
-              color: `var(--color-${accent})`,
-            }}
-          >
-            <Icon className="size-4" />
-          </span>
+    <Card>
+      <CardContent className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground">{label}</p>
+          <p className="mt-1 text-2xl font-semibold tabular-nums">{value.toLocaleString("es-PE")}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-semibold tabular-nums text-foreground">
-          {value.toLocaleString("es-PE")}
-        </p>
-        <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+        <span
+          className="flex size-9 shrink-0 items-center justify-center rounded-full"
+          style={{ backgroundColor: `color-mix(in oklch, ${color} 15%, transparent)`, color }}
+        >
+          <Icon className="size-4" />
+        </span>
       </CardContent>
     </Card>
   );

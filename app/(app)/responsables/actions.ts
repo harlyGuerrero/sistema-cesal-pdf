@@ -39,13 +39,19 @@ export async function createResponsableAction(formData: FormData): Promise<void>
   await assertEmailDisponible(data.email);
 
   await prisma.$transaction(async (tx) => {
-    const responsable = await tx.responsable.create({ data });
+    const responsable = await tx.responsable.create({ data, include: { sede: true } });
     await registrarAuditoria(
       {
         accion: "CREAR",
         entidad: "Responsable",
         entidadId: responsable.id,
-        detalle: { nombre: responsable.nombre },
+        detalle: {
+          nombre: responsable.nombre,
+          email: responsable.email,
+          cargo: responsable.cargo,
+          documento: responsable.documento,
+          sede: responsable.sede?.name ?? null,
+        },
         usuarioId: actor.id,
       },
       tx
@@ -62,13 +68,23 @@ export async function updateResponsableAction(responsableId: string, formData: F
   await assertEmailDisponible(data.email, responsableId);
 
   await prisma.$transaction(async (tx) => {
-    await tx.responsable.update({ where: { id: responsableId }, data });
+    const updated = await tx.responsable.update({
+      where: { id: responsableId },
+      data,
+      include: { sede: true },
+    });
     await registrarAuditoria(
       {
         accion: "ACTUALIZAR",
         entidad: "Responsable",
         entidadId: responsableId,
-        detalle: { nombre: data.nombre },
+        detalle: {
+          nombre: updated.nombre,
+          email: updated.email,
+          cargo: updated.cargo,
+          documento: updated.documento,
+          sede: updated.sede?.name ?? null,
+        },
         usuarioId: actor.id,
       },
       tx
@@ -83,7 +99,7 @@ export async function deleteResponsableAction(responsableId: string): Promise<vo
   const actor = await requireSessionUsuario();
   const responsable = await prisma.responsable.findUniqueOrThrow({
     where: { id: responsableId },
-    include: { _count: { select: { activos: true } } },
+    include: { sede: true, _count: { select: { activos: true } } },
   });
 
   // Eliminación controlada: si tiene activos asignados hay que desasignarlos
@@ -99,7 +115,12 @@ export async function deleteResponsableAction(responsableId: string): Promise<vo
         accion: "ELIMINAR",
         entidad: "Responsable",
         entidadId: responsableId,
-        detalle: { nombre: responsable.nombre },
+        detalle: {
+          nombre: responsable.nombre,
+          email: responsable.email,
+          cargo: responsable.cargo,
+          sede: responsable.sede?.name ?? null,
+        },
         usuarioId: actor.id,
       },
       tx

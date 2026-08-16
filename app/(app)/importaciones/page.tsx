@@ -135,7 +135,7 @@ export default async function ImportsPage({
           label="Con errores"
           value={conErrores.toLocaleString("es-PE")}
           icon={CircleAlertIcon}
-          color="var(--color-warning)"
+          color="var(--color-critical)"
           hint={porcentaje(conErrores)}
         />
         <StatCard

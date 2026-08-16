@@ -53,13 +53,20 @@ export async function subirDocumentoAction(activoId: string, formData: FormData)
         tamanoBytes: buffer.length,
         descripcion,
       },
+      include: { activo: { select: { nombreActivo: true, codigoPatrimonial: true } } },
     });
     await registrarAuditoria(
       {
         accion: "ADJUNTAR_DOCUMENTO",
         entidad: "Documento",
         entidadId: documento.id,
-        detalle: { activoId, tipoDocumento, nombreOriginal: file.name },
+        detalle: {
+          activoId,
+          activoNombre: documento.activo.nombreActivo,
+          codigoPatrimonial: documento.activo.codigoPatrimonial,
+          tipoDocumento,
+          nombreOriginal: file.name,
+        },
         usuarioId: actor.id,
       },
       tx
@@ -76,13 +83,19 @@ export async function eliminarDocumentoAction(documentoId: string): Promise<void
     const updated = await tx.documento.update({
       where: { id: documentoId },
       data: { estado: false },
+      include: { activo: { select: { nombreActivo: true, codigoPatrimonial: true } } },
     });
     await registrarAuditoria(
       {
         accion: "ELIMINAR_DOCUMENTO",
         entidad: "Documento",
         entidadId: documentoId,
-        detalle: { activoId: updated.activoId, nombreOriginal: updated.nombreOriginal },
+        detalle: {
+          activoId: updated.activoId,
+          activoNombre: updated.activo.nombreActivo,
+          codigoPatrimonial: updated.activo.codigoPatrimonial,
+          nombreOriginal: updated.nombreOriginal,
+        },
         usuarioId: actor.id,
       },
       tx
