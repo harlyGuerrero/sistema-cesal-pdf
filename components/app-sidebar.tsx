@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useTransition } from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
   LayoutDashboardIcon,
@@ -23,7 +24,7 @@ import {
   MoreVerticalIcon,
 } from "lucide-react";
 
-import { NavMain, type NavMainItem } from "@/components/nav-main";
+import { NavMain, resolveActiveUrl, type NavMainItem } from "@/components/nav-main";
 import {
   Sidebar,
   SidebarContent,
@@ -101,6 +102,13 @@ export function AppSidebar({
       ? ORG_NAV_ITEMS
       : ORG_NAV_ITEMS.filter((item) => item.url !== "/usuarios");
 
+  // Un único resuelto contra los 3 grupos a la vez (ver resolveActiveUrl en
+  // nav-main.tsx) — evita que "Activos" (Principal) y, por ejemplo, "Tipos
+  // de Activo" (Configuración) queden activos los dos al mismo tiempo en
+  // /activos/tipos, porque "/activos" es prefijo de esa URL.
+  const pathname = usePathname();
+  const activeUrl = resolveActiveUrl(pathname, [...MAIN_NAV_ITEMS, ...ACTIVOS_CONFIG_NAV_ITEMS, ...orgNavItems]);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -126,9 +134,9 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={MAIN_NAV_ITEMS} label="Principal" />
-        <NavMain items={ACTIVOS_CONFIG_NAV_ITEMS} label="Configuración de Activos" />
-        <NavMain items={orgNavItems} label="Organización" />
+        <NavMain items={MAIN_NAV_ITEMS} label="Principal" activeUrl={activeUrl} />
+        <NavMain items={ACTIVOS_CONFIG_NAV_ITEMS} label="Configuración de Activos" activeUrl={activeUrl} />
+        <NavMain items={orgNavItems} label="Organización" activeUrl={activeUrl} />
       </SidebarContent>
       <SidebarFooter>
         <div className="flex items-center justify-between gap-2 rounded-lg p-2 group-data-[collapsible=icon]:hidden">
