@@ -5,6 +5,7 @@ import type {
   TipoAccionAuditoria,
   TipoMovimiento,
 } from "@/lib/generated/prisma/client";
+import { ESTADO_PATRIMONIAL_LABELS } from "@/lib/activos/labels";
 
 type UbicacionSnapshot = Pick<Activo, "sedeId" | "unidadOperativaId" | "ambienteId" | "estadoPatrimonial">;
 
@@ -73,6 +74,46 @@ export function movimientoTipoAAccionAuditoria(tipo: TipoMovimiento | null): Tip
   if (tipo === "BAJA") return "DAR_DE_BAJA";
   if (tipo === "TRANSFERENCIA") return "TRANSFERIR";
   return "ACTUALIZAR";
+}
+
+export interface MovimientoDetalleRow {
+  responsableAnterior: { nombre: string } | null;
+  responsableNuevo: { nombre: string } | null;
+  sedeAnterior: { name: string } | null;
+  sedeNueva: { name: string } | null;
+  unidadOperativaAnterior: { name: string } | null;
+  unidadOperativaNueva: { name: string } | null;
+  ambienteAnterior: { name: string } | null;
+  ambienteNuevo: { name: string } | null;
+  estadoAnterior: string | null;
+  estadoNuevo: string | null;
+}
+
+function cambio(label: string, antes: string | null, despues: string | null): string | null {
+  if (antes === despues) return null;
+  if (antes === null && despues === null) return null;
+  return `${label}: ${antes ?? "—"} → ${despues ?? "—"}`;
+}
+
+// Fase 9/12: descripción legible de qué cambió un Movimiento, a partir de
+// los snapshots antes/después — reusada por la ficha de un Activo
+// (historial-section.tsx) y por la vista global de movimientos (/movimientos).
+export function describirMovimiento(movimiento: MovimientoDetalleRow): string[] {
+  return [
+    cambio("Responsable", movimiento.responsableAnterior?.nombre ?? null, movimiento.responsableNuevo?.nombre ?? null),
+    cambio("Sede", movimiento.sedeAnterior?.name ?? null, movimiento.sedeNueva?.name ?? null),
+    cambio(
+      "Unidad operativa",
+      movimiento.unidadOperativaAnterior?.name ?? null,
+      movimiento.unidadOperativaNueva?.name ?? null
+    ),
+    cambio("Ambiente", movimiento.ambienteAnterior?.name ?? null, movimiento.ambienteNuevo?.name ?? null),
+    cambio(
+      "Estado",
+      movimiento.estadoAnterior ? (ESTADO_PATRIMONIAL_LABELS[movimiento.estadoAnterior] ?? movimiento.estadoAnterior) : null,
+      movimiento.estadoNuevo ? (ESTADO_PATRIMONIAL_LABELS[movimiento.estadoNuevo] ?? movimiento.estadoNuevo) : null
+    ),
+  ].filter((linea): linea is string => linea !== null);
 }
 
 export function buildMovimientoDeAlta(activo: {

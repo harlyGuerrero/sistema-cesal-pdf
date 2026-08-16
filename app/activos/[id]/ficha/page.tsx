@@ -5,8 +5,8 @@ import {
   CONDICION_FISICA_LABELS,
   ESTADO_PATRIMONIAL_LABELS,
 } from "@/lib/activos/labels";
+import { PrintButton } from "@/components/print-button";
 import { Section, Field } from "./field";
-import { PrintButton } from "./print-button";
 import { HistorialSection } from "./historial-section";
 import { DocumentosSection } from "./documentos-section";
 

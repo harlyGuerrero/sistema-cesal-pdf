@@ -1,48 +1,13 @@
-import { ESTADO_PATRIMONIAL_LABELS, TIPO_MOVIMIENTO_LABELS } from "@/lib/activos/labels";
+import { TIPO_MOVIMIENTO_LABELS } from "@/lib/activos/labels";
+import { describirMovimiento, type MovimientoDetalleRow } from "@/lib/activos/movimientos";
 import { Section } from "./field";
 
-export interface MovimientoRow {
+export interface MovimientoRow extends MovimientoDetalleRow {
   id: string;
   tipo: string;
   fecha: Date;
   motivo: string | null;
   usuario: { nombre: string } | null;
-  responsableAnterior: { nombre: string } | null;
-  responsableNuevo: { nombre: string } | null;
-  sedeAnterior: { name: string } | null;
-  sedeNueva: { name: string } | null;
-  unidadOperativaAnterior: { name: string } | null;
-  unidadOperativaNueva: { name: string } | null;
-  ambienteAnterior: { name: string } | null;
-  ambienteNuevo: { name: string } | null;
-  estadoAnterior: string | null;
-  estadoNuevo: string | null;
-}
-
-function cambio(label: string, antes: string | null, despues: string | null): string | null {
-  if (antes === despues) return null;
-  if (antes === null && despues === null) return null;
-  return `${label}: ${antes ?? "—"} → ${despues ?? "—"}`;
-}
-
-function describirMovimiento(movimiento: MovimientoRow): string[] {
-  const lineas = [
-    cambio("Responsable", movimiento.responsableAnterior?.nombre ?? null, movimiento.responsableNuevo?.nombre ?? null),
-    cambio("Sede", movimiento.sedeAnterior?.name ?? null, movimiento.sedeNueva?.name ?? null),
-    cambio(
-      "Unidad operativa",
-      movimiento.unidadOperativaAnterior?.name ?? null,
-      movimiento.unidadOperativaNueva?.name ?? null
-    ),
-    cambio("Ambiente", movimiento.ambienteAnterior?.name ?? null, movimiento.ambienteNuevo?.name ?? null),
-    cambio(
-      "Estado",
-      movimiento.estadoAnterior ? (ESTADO_PATRIMONIAL_LABELS[movimiento.estadoAnterior] ?? movimiento.estadoAnterior) : null,
-      movimiento.estadoNuevo ? (ESTADO_PATRIMONIAL_LABELS[movimiento.estadoNuevo] ?? movimiento.estadoNuevo) : null
-    ),
-  ].filter((linea): linea is string => linea !== null);
-
-  return lineas;
 }
 
 // Fase 9 de Activos: historial inmutable, ordenado del más reciente al más

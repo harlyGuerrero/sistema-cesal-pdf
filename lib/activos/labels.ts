@@ -91,3 +91,20 @@ export const TIPO_MOVIMIENTO_LABELS: Record<string, string> = {
   BAJA: "Baja",
   REACTIVACION: "Reactivación",
 };
+
+// Fase 12 de Activos: filtro de tipo en la vista global de movimientos.
+export const TIPO_MOVIMIENTO_OPTIONS = Object.entries(TIPO_MOVIMIENTO_LABELS).map(
+  ([value, label]) => ({ value, label })
+);
+
+// Orden canónico de las 6 categorías patrimoniales (ver ARCHITECTURE.md 5.2).
+// Compartido entre el Dashboard y el reporte de inventario (Fase 12) para no
+// repetir el mismo orden fijo en dos lugares.
+export const TIPO_ACTIVO_CODE_ORDER = [
+  "EQUIPOS_INFORMATICOS",
+  "EQUIPOS_DE_OFICINA",
+  "MUEBLES_DE_OFICINA",
+  "BIENES_VEHICULARES",
+  "EQUIPOS_DE_MAQUINARIA",
+  "BIENES_INMUEBLES",
+] as const;

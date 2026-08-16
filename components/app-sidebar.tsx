@@ -14,6 +14,8 @@ import {
   UsersIcon,
   UserCogIcon,
   ScrollTextIcon,
+  HistoryIcon,
+  FileBarChart2Icon,
   MoonIcon,
 } from "lucide-react";
 
@@ -39,15 +41,18 @@ const MAIN_NAV_ITEMS: NavMainItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboardIcon },
   { title: "Activos", url: "/activos", icon: PackageIcon },
   { title: "Importaciones", url: "/importaciones", icon: FileStackIcon },
+  { title: "Reportes", url: "/reportes", icon: FileBarChart2Icon },
 ];
 
 // Fase B (Sedes) + Fase 8 de Activos (Responsables, personas a quien se
 // asigna un activo; Usuarios, quién opera el sistema sin login todavía) +
-// Fase 11 (Auditoría, log de solo lectura de mutaciones del sistema).
+// Fase 9/12 (Movimientos, vista global del historial por Activo) + Fase 11
+// (Auditoría, log de solo lectura de mutaciones del sistema).
 const ORG_NAV_ITEMS: NavMainItem[] = [
   { title: "Sedes", url: "/sedes", icon: Building2Icon },
   { title: "Responsables", url: "/responsables", icon: UsersIcon },
   { title: "Usuarios", url: "/usuarios", icon: UserCogIcon },
+  { title: "Movimientos", url: "/movimientos", icon: HistoryIcon },
   { title: "Auditoría", url: "/auditoria", icon: ScrollTextIcon },
 ];
 

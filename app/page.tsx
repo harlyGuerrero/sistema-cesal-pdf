@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import type { ImportItemStatus } from "@/lib/generated/prisma/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IMPORT_ITEM_STATUS_LABELS } from "@/lib/import-workflow/labels";
+import { TIPO_ACTIVO_CODE_ORDER } from "@/lib/activos/labels";
 import { CategoryBarChart, type CategoryBarDatum } from "./category-bar-chart";
 import { StatusDonutChart, type StatusDatum } from "./status-donut-chart";
 
@@ -10,16 +11,6 @@ import { StatusDonutChart, type StatusDatum } from "./status-donut-chart";
 // (no usa searchParams ni otra API dinámica) y los números quedan congelados
 // con los datos que hubiera en la base durante el build.
 export const dynamic = "force-dynamic";
-
-// Orden canónico de las 6 categorías patrimoniales (ver ARCHITECTURE.md 5.2).
-const CATEGORY_ORDER = [
-  "EQUIPOS_INFORMATICOS",
-  "EQUIPOS_DE_OFICINA",
-  "MUEBLES_DE_OFICINA",
-  "BIENES_VEHICULARES",
-  "EQUIPOS_DE_MAQUINARIA",
-  "BIENES_INMUEBLES",
-] as const;
 
 // Colores de estado fijos (skill dataviz: good/warning/critical/neutral —
 // nunca se tematizan, mismos valores en claro y oscuro).
@@ -41,7 +32,7 @@ export default async function DashboardPage() {
   const countByTipoActivoId = new Map(activoCounts.map((row) => [row.tipoActivoId, row._count]));
   const tipoActivoByCode = new Map(tiposActivo.map((tipo) => [tipo.code, tipo]));
 
-  const barData: CategoryBarDatum[] = CATEGORY_ORDER.map((code) => {
+  const barData: CategoryBarDatum[] = TIPO_ACTIVO_CODE_ORDER.map((code) => {
     const tipo = tipoActivoByCode.get(code);
     return {
       name: tipo?.name ?? code,
