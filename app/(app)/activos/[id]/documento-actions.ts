@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { validateDocumentUpload, DocumentValidationError } from "@/lib/security/document-validation";
 import { guardarDocumento } from "@/lib/documentos/storage";
 import { registrarAuditoria } from "@/lib/auditoria/registrar";
+import { requireSessionUsuario } from "@/lib/auth/session";
 import type { TipoDocumento } from "@/lib/generated/prisma/client";
 
 // Fase 10 de Activos: subir/eliminar documentos adjuntos a un Activo. El
@@ -13,6 +14,7 @@ import type { TipoDocumento } from "@/lib/generated/prisma/client";
 // disco.
 
 export async function subirDocumentoAction(activoId: string, formData: FormData): Promise<void> {
+  const actor = await requireSessionUsuario();
   const file = formData.get("file");
   const tipoDocumento = formData.get("tipoDocumento") as TipoDocumento;
   const descripcion = (formData.get("descripcion") as string | null)?.trim() || null;
@@ -41,6 +43,7 @@ export async function subirDocumentoAction(activoId: string, formData: FormData)
     const documento = await tx.documento.create({
       data: {
         activoId,
+        usuarioCargaId: actor.id,
         tipoDocumento,
         nombre: file.name,
         nombreOriginal: file.name,
@@ -57,6 +60,7 @@ export async function subirDocumentoAction(activoId: string, formData: FormData)
         entidad: "Documento",
         entidadId: documento.id,
         detalle: { activoId, tipoDocumento, nombreOriginal: file.name },
+        usuarioId: actor.id,
       },
       tx
     );
@@ -67,6 +71,7 @@ export async function subirDocumentoAction(activoId: string, formData: FormData)
 }
 
 export async function eliminarDocumentoAction(documentoId: string): Promise<void> {
+  const actor = await requireSessionUsuario();
   const documento = await prisma.$transaction(async (tx) => {
     const updated = await tx.documento.update({
       where: { id: documentoId },
@@ -78,6 +83,7 @@ export async function eliminarDocumentoAction(documentoId: string): Promise<void
         entidad: "Documento",
         entidadId: documentoId,
         detalle: { activoId: updated.activoId, nombreOriginal: updated.nombreOriginal },
+        usuarioId: actor.id,
       },
       tx
     );

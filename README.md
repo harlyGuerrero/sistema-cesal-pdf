@@ -104,7 +104,24 @@ ollama pull qwen2.5:3b-instruct
 
 Verificar: `http://127.0.0.1:11434/api/version` debe responder.
 
-### 6. Levantar Next.js
+### 6. Login
+
+Todo el sistema queda detrás de login (ver `CLAUDE.md`). Genera tu propio
+`AUTH_SECRET` (firma las cookies de sesión, no reutilices el de otra
+máquina) y agrégalo a `.env`:
+
+```powershell
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+No hay seed con un usuario ni contraseña por defecto a propósito. Crea el
+primer Super Administrador por consola:
+
+```powershell
+npm run crear-admin
+```
+
+### 7. Levantar Next.js
 
 ```powershell
 npm run dev

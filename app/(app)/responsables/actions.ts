@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { registrarAuditoria } from "@/lib/auditoria/registrar";
+import { requireSessionUsuario } from "@/lib/auth/session";
 
 // Fase 8 de Activos: Responsable es la persona a la que se puede asignar un
 // Activo — no implica acceso al sistema (ver Usuario).
@@ -22,12 +23,19 @@ function readResponsableInput(formData: FormData) {
 }
 
 export async function createResponsableAction(formData: FormData): Promise<void> {
+  const actor = await requireSessionUsuario();
   const data = readResponsableInput(formData);
 
   await prisma.$transaction(async (tx) => {
     const responsable = await tx.responsable.create({ data });
     await registrarAuditoria(
-      { accion: "CREAR", entidad: "Responsable", entidadId: responsable.id, detalle: { nombre: responsable.nombre } },
+      {
+        accion: "CREAR",
+        entidad: "Responsable",
+        entidadId: responsable.id,
+        detalle: { nombre: responsable.nombre },
+        usuarioId: actor.id,
+      },
       tx
     );
   });
@@ -37,12 +45,19 @@ export async function createResponsableAction(formData: FormData): Promise<void>
 }
 
 export async function updateResponsableAction(responsableId: string, formData: FormData): Promise<void> {
+  const actor = await requireSessionUsuario();
   const data = readResponsableInput(formData);
 
   await prisma.$transaction(async (tx) => {
     await tx.responsable.update({ where: { id: responsableId }, data });
     await registrarAuditoria(
-      { accion: "ACTUALIZAR", entidad: "Responsable", entidadId: responsableId, detalle: { nombre: data.nombre } },
+      {
+        accion: "ACTUALIZAR",
+        entidad: "Responsable",
+        entidadId: responsableId,
+        detalle: { nombre: data.nombre },
+        usuarioId: actor.id,
+      },
       tx
     );
   });
@@ -52,6 +67,7 @@ export async function updateResponsableAction(responsableId: string, formData: F
 }
 
 export async function deleteResponsableAction(responsableId: string): Promise<void> {
+  const actor = await requireSessionUsuario();
   const responsable = await prisma.responsable.findUniqueOrThrow({
     where: { id: responsableId },
     include: { _count: { select: { activos: true } } },
@@ -66,7 +82,13 @@ export async function deleteResponsableAction(responsableId: string): Promise<vo
   await prisma.$transaction(async (tx) => {
     await tx.responsable.delete({ where: { id: responsableId } });
     await registrarAuditoria(
-      { accion: "ELIMINAR", entidad: "Responsable", entidadId: responsableId, detalle: { nombre: responsable.nombre } },
+      {
+        accion: "ELIMINAR",
+        entidad: "Responsable",
+        entidadId: responsableId,
+        detalle: { nombre: responsable.nombre },
+        usuarioId: actor.id,
+      },
       tx
     );
   });

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { requireSuperAdmin } from "@/lib/auth/session";
 import { UsuarioEditForm } from "./usuario-edit-form";
 import { DeleteUsuarioButton } from "./delete-usuario-button";
 
@@ -9,6 +10,7 @@ export default async function UsuarioDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const actor = await requireSuperAdmin();
   const { id } = await params;
 
   const usuario = await prisma.usuario.findUnique({ where: { id } });
@@ -16,6 +18,8 @@ export default async function UsuarioDetailPage({
   if (!usuario) {
     notFound();
   }
+
+  const esUsuarioActual = actor.id === usuario.id;
 
   return (
     <main className="mx-auto max-w-2xl space-y-6 p-6">
@@ -28,12 +32,21 @@ export default async function UsuarioDetailPage({
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-muted-foreground">Editar</h2>
-        <UsuarioEditForm usuarioId={usuario.id} nombre={usuario.nombre} email={usuario.email ?? ""} />
+        <UsuarioEditForm
+          usuarioId={usuario.id}
+          nombre={usuario.nombre}
+          email={usuario.email}
+          rol={usuario.rol}
+          estado={usuario.estado}
+          esUsuarioActual={esUsuarioActual}
+        />
       </section>
 
-      <section className="border-t pt-4">
-        <DeleteUsuarioButton usuarioId={usuario.id} />
-      </section>
+      {!esUsuarioActual && (
+        <section className="border-t pt-4">
+          <DeleteUsuarioButton usuarioId={usuario.id} />
+        </section>
+      )}
     </main>
   );
 }

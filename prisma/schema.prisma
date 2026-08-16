@@ -157,6 +157,14 @@ enum TipoAccionAuditoria {
   ELIMINAR_DOCUMENTO
 }
 
+// Fase 13: los únicos dos roles del sistema (ver CLAUDE.md). SUPER_ADMIN
+// tiene todo lo de ADMIN más la gestión de Usuario (crear/editar/eliminar
+// cuentas, asignar roles) — ver proxy.ts y lib/auth/session.ts.
+enum RolUsuario {
+  SUPER_ADMIN
+  ADMIN
+}
+
 // ---------------------------------------------------------------------------
 // Models
 // ---------------------------------------------------------------------------
@@ -339,11 +347,16 @@ model Proveedor {
 // Movimiento/Auditoría (Fase 9/11) sin inventar autenticación real antes de
 // tiempo. No confundir con Responsable: un Usuario puede no ser responsable
 // de ningún activo, y viceversa.
+// Fase 13: gana login real — email + passwordHash + rol. El primer
+// SUPER_ADMIN se crea con scripts/crear-super-admin.ts (ver README), no por
+// seed, para no dejar una contraseña fija escrita en el repo.
 model Usuario {
-  id     String  @id @default(cuid())
-  nombre String
-  email  String? @unique
-  estado Boolean @default(true)
+  id           String     @id @default(cuid())
+  nombre       String
+  email        String     @unique
+  passwordHash String
+  rol          RolUsuario @default(ADMIN)
+  estado       Boolean    @default(true)
 
   movimientos        Movimiento[]
   documentosCargados Documento[]

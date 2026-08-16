@@ -10,8 +10,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ROL_USUARIO_LABELS } from "@/lib/usuarios/labels";
+import { requireSuperAdmin } from "@/lib/auth/session";
 
 export default async function UsuariosPage() {
+  await requireSuperAdmin();
   const usuarios = await prisma.usuario.findMany({ orderBy: { nombre: "asc" } });
 
   return (
@@ -19,9 +22,7 @@ export default async function UsuariosPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-medium">Usuarios</h1>
-          <p className="text-sm text-muted-foreground">
-            Quién opera el sistema — sin login todavía, solo para trazabilidad.
-          </p>
+          <p className="text-sm text-muted-foreground">Quién opera el sistema y con qué rol.</p>
         </div>
         <Button render={<Link href="/usuarios/nuevo" />} nativeButton={false}>
           Nuevo usuario
@@ -33,6 +34,7 @@ export default async function UsuariosPage() {
           <TableRow>
             <TableHead>Nombre</TableHead>
             <TableHead>Email</TableHead>
+            <TableHead>Rol</TableHead>
             <TableHead>Estado</TableHead>
           </TableRow>
         </TableHeader>
@@ -44,7 +46,12 @@ export default async function UsuariosPage() {
                   {usuario.nombre}
                 </Link>
               </TableCell>
-              <TableCell>{usuario.email ?? "—"}</TableCell>
+              <TableCell>{usuario.email}</TableCell>
+              <TableCell>
+                <Badge variant={usuario.rol === "SUPER_ADMIN" ? "default" : "outline"}>
+                  {ROL_USUARIO_LABELS[usuario.rol]}
+                </Badge>
+              </TableCell>
               <TableCell>
                 <Badge variant={usuario.estado ? "outline" : "secondary"}>
                   {usuario.estado ? "Activo" : "Inactivo"}
@@ -54,7 +61,7 @@ export default async function UsuariosPage() {
           ))}
           {usuarios.length === 0 && (
             <TableRow>
-              <TableCell colSpan={3} className="text-center text-muted-foreground">
+              <TableCell colSpan={4} className="text-center text-muted-foreground">
                 Sin usuarios todavía.
               </TableCell>
             </TableRow>

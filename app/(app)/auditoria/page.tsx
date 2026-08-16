@@ -30,9 +30,9 @@ function resumenDetalle(detalle: unknown): string {
 }
 
 // Fase 11 de Activos: log de solo lectura, filtrable por entidad/acción.
-// Sin restricción por rol todavía — no hay autenticación (fuera de alcance,
-// ver CLAUDE.md); cuando exista, esta pantalla debería quedar solo para un
-// rol administrador.
+// Fase 13 agrega login, pero no restringe esta pantalla por rol: ADMIN y
+// SUPER_ADMIN tienen ambos acceso completo salvo a la gestión de Usuario
+// (ver CLAUDE.md y proxy.ts).
 export default async function AuditoriaPage({
   searchParams,
 }: {

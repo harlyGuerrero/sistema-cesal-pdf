@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTransition } from "react";
 import { useTheme } from "next-themes";
 import {
   LayoutDashboardIcon,
@@ -17,6 +18,8 @@ import {
   HistoryIcon,
   FileBarChart2Icon,
   MoonIcon,
+  LogOutIcon,
+  ChevronsUpDownIcon,
 } from "lucide-react";
 
 import { NavMain, type NavMainItem } from "@/components/nav-main";
@@ -30,13 +33,25 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { logoutAction } from "@/app/login/actions";
+import { ROL_USUARIO_LABELS } from "@/lib/usuarios/labels";
+import type { SessionUsuario } from "@/lib/auth/session";
 
 // Las 3 áreas funcionales originales (ver ARCHITECTURE.md sección 1) —
 // "Productos" pasó a ser "Activos" en Fase 6: Product se fusionó con Activo
 // desde Fase 1, y esta es la pantalla real (antes solo existía /productos,
-// una versión mínima heredada del pipeline de PDFs).
+// una versión mínima heredada del pipeline de PDFs). Fase 12 agrega
+// Reportes.
 const MAIN_NAV_ITEMS: NavMainItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboardIcon },
   { title: "Activos", url: "/activos", icon: PackageIcon },
@@ -45,9 +60,9 @@ const MAIN_NAV_ITEMS: NavMainItem[] = [
 ];
 
 // Fase B (Sedes) + Fase 8 de Activos (Responsables, personas a quien se
-// asigna un activo; Usuarios, quién opera el sistema sin login todavía) +
-// Fase 9/12 (Movimientos, vista global del historial por Activo) + Fase 11
-// (Auditoría, log de solo lectura de mutaciones del sistema).
+// asigna un activo) + Fase 9/12 (Movimientos, vista global del historial
+// por Activo) + Fase 11 (Auditoría, log de solo lectura de mutaciones del
+// sistema). "Usuarios" se filtra abajo: Fase 13 lo reserva a SUPER_ADMIN.
 const ORG_NAV_ITEMS: NavMainItem[] = [
   { title: "Sedes", url: "/sedes", icon: Building2Icon },
   { title: "Responsables", url: "/responsables", icon: UsersIcon },
@@ -65,18 +80,23 @@ const ACTIVOS_CONFIG_NAV_ITEMS: NavMainItem[] = [
   { title: "Catálogos", url: "/activos/catalogos", icon: BookMarkedIcon },
 ];
 
-// Sin NavUser: no hay concepto de usuario autenticado todavía (auth fuera de
-// alcance de esta fase, ver CLAUDE.md) — un footer sin usuario evita inventar
-// datos de una sesión que no existe. El toggle de modo oscuro sí es real,
-// respaldado por next-themes (ver components/theme-provider.tsx).
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  usuario,
+  ...props
+}: React.ComponentProps<typeof Sidebar> & { usuario: SessionUsuario }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
+  const [isPending, startTransition] = useTransition();
   // resolvedTheme es undefined en el server (next-themes no conoce el tema
   // hasta hidratar) — sin este guard el switch parpadearía "unchecked" en el
   // primer render del cliente aunque el tema real ya sea dark.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => setMounted(true), []);
+
+  const orgNavItems =
+    usuario.rol === "SUPER_ADMIN"
+      ? ORG_NAV_ITEMS
+      : ORG_NAV_ITEMS.filter((item) => item.url !== "/usuarios");
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -100,7 +120,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={MAIN_NAV_ITEMS} label="Principal" />
         <NavMain items={ACTIVOS_CONFIG_NAV_ITEMS} label="Configuración de Activos" />
-        <NavMain items={ORG_NAV_ITEMS} label="Organización" />
+        <NavMain items={orgNavItems} label="Organización" />
       </SidebarContent>
       <SidebarFooter>
         <div className="flex items-center justify-between gap-2 rounded-lg p-2 group-data-[collapsible=icon]:hidden">
@@ -114,6 +134,41 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
           />
         </div>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <SidebarMenuButton size="lg">
+                    <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold uppercase">
+                      {usuario.nombre.slice(0, 2)}
+                    </div>
+                    <div className="flex min-w-0 flex-col text-left leading-tight">
+                      <span className="truncate text-sm font-medium">{usuario.nombre}</span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {ROL_USUARIO_LABELS[usuario.rol]}
+                      </span>
+                    </div>
+                    <ChevronsUpDownIcon className="ml-auto size-4 text-muted-foreground" />
+                  </SidebarMenuButton>
+                }
+              />
+              <DropdownMenuContent side="top" align="start" className="w-56">
+                <DropdownMenuLabel className="truncate font-normal text-muted-foreground">
+                  {usuario.email}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  disabled={isPending}
+                  onClick={() => startTransition(() => logoutAction())}
+                >
+                  <LogOutIcon />
+                  Cerrar sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

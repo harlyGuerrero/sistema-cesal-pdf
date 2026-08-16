@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -22,6 +20,10 @@ export const metadata: Metadata = {
   description: "Sistema de importación y clasificación patrimonial de productos desde PDFs",
 };
 
+// Fase 13: el sidebar (y la sesión que necesita para renderizarlo) se movió
+// a app/(app)/layout.tsx — /login vive fuera de ese route group y no debe
+// mostrar el sidebar de una app en la que todavía no iniciaste sesión (ver
+// app/(app)/layout.tsx).
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
@@ -31,17 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full bg-background text-foreground">
         <ThemeProvider>
-          <TooltipProvider>
-            <SidebarProvider>
-              <AppSidebar className="print:hidden" />
-              <SidebarInset>
-                <header className="flex h-12 shrink-0 items-center border-b px-4 print:hidden">
-                  <SidebarTrigger className="-ml-1" />
-                </header>
-                {children}
-              </SidebarInset>
-            </SidebarProvider>
-          </TooltipProvider>
+          <TooltipProvider>{children}</TooltipProvider>
           <Toaster />
         </ThemeProvider>
       </body>

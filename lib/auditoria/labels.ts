@@ -1,8 +1,8 @@
-// Fase 11: etiquetas de TipoAccionAuditoria y la lista de entidades que hoy
-// escriben auditoría (ver registrarAuditoria en actions.ts de Activo,
-// Documento y Responsable) — no es un enum en la base (entidad es texto
-// libre, referencia lógica), así que esta lista documenta lo que el sistema
-// realmente produce, no una posibilidad abierta.
+// Fase 11 (+ Fase 13 agrega Usuario): etiquetas de TipoAccionAuditoria y la
+// lista de entidades que hoy escriben auditoría (ver registrarAuditoria en
+// actions.ts de Activo, Documento, Responsable y Usuario) — no es un enum en
+// la base (entidad es texto libre, referencia lógica), así que esta lista
+// documenta lo que el sistema realmente produce, no una posibilidad abierta.
 
 export const TIPO_ACCION_AUDITORIA_LABELS: Record<string, string> = {
   CREAR: "Crear",
@@ -20,4 +20,4 @@ export const TIPO_ACCION_AUDITORIA_OPTIONS = Object.entries(TIPO_ACCION_AUDITORI
   ([value, label]) => ({ value, label })
 );
 
-export const ENTIDADES_AUDITADAS = ["Activo", "Documento", "Responsable"] as const;
+export const ENTIDADES_AUDITADAS = ["Activo", "Documento", "Responsable", "Usuario"] as const;

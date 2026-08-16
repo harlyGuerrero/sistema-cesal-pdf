@@ -11,6 +11,7 @@ import {
   movimientoTipoAAccionAuditoria,
 } from "@/lib/activos/movimientos";
 import { registrarAuditoria } from "@/lib/auditoria/registrar";
+import { requireSessionUsuario } from "@/lib/auth/session";
 import type { CondicionFisica, EstadoPatrimonial } from "@/lib/generated/prisma/client";
 
 // Fase 6 de Activos: alta/edición/eliminación de Activo, integrando la
@@ -112,6 +113,7 @@ async function readActivoInput(formData: FormData) {
 }
 
 export async function createActivoAction(formData: FormData): Promise<void> {
+  const actor = await requireSessionUsuario();
   const { especificaciones, ...data } = await readActivoInput(formData);
 
   const codigoPatrimonial = (formData.get("codigoPatrimonial") as string | null)?.trim() || null;
@@ -130,9 +132,17 @@ export async function createActivoAction(formData: FormData): Promise<void> {
         especificaciones: { create: especificaciones },
       },
     });
-    await tx.movimiento.create({ data: { activoId: created.id, ...buildMovimientoDeAlta(created) } });
+    await tx.movimiento.create({
+      data: { activoId: created.id, usuarioId: actor.id, ...buildMovimientoDeAlta(created) },
+    });
     await registrarAuditoria(
-      { accion: "DAR_DE_ALTA", entidad: "Activo", entidadId: created.id, detalle: { nombreActivo: created.nombreActivo } },
+      {
+        accion: "DAR_DE_ALTA",
+        entidad: "Activo",
+        entidadId: created.id,
+        detalle: { nombreActivo: created.nombreActivo },
+        usuarioId: actor.id,
+      },
       tx
     );
     return created;
@@ -143,6 +153,7 @@ export async function createActivoAction(formData: FormData): Promise<void> {
 }
 
 export async function updateActivoAction(activoId: string, formData: FormData): Promise<void> {
+  const actor = await requireSessionUsuario();
   const { especificaciones, ...data } = await readActivoInput(formData);
 
   const codigoPatrimonial = (formData.get("codigoPatrimonial") as string | null)?.trim() || null;
@@ -173,7 +184,7 @@ export async function updateActivoAction(activoId: string, formData: FormData): 
     // depende de si el cambio fue patrimonialmente relevante.
     const movimiento = buildMovimientoDeEdicion(anterior, data);
     if (movimiento) {
-      await tx.movimiento.create({ data: { activoId, ...movimiento } });
+      await tx.movimiento.create({ data: { activoId, usuarioId: actor.id, ...movimiento } });
     }
     await registrarAuditoria(
       {
@@ -181,6 +192,7 @@ export async function updateActivoAction(activoId: string, formData: FormData): 
         entidad: "Activo",
         entidadId: activoId,
         detalle: { nombreActivo: data.nombreActivo },
+        usuarioId: actor.id,
       },
       tx
     );
@@ -194,6 +206,7 @@ export async function updateActivoAction(activoId: string, formData: FormData): 
 // Movimiento correspondiente en la misma transacción.
 
 export async function asignarResponsableAction(activoId: string, responsableId: string): Promise<void> {
+  const actor = await requireSessionUsuario();
   if (!responsableId) {
     throw new Error("Selecciona un responsable.");
   }
@@ -212,6 +225,7 @@ export async function asignarResponsableAction(activoId: string, responsableId: 
     await tx.movimiento.create({
       data: {
         activoId,
+        usuarioId: actor.id,
         tipo: activo.responsableActualId ? "REASIGNACION" : "ASIGNACION",
         responsableAnteriorId: activo.responsableActualId,
         responsableNuevoId: responsableId,
@@ -220,7 +234,7 @@ export async function asignarResponsableAction(activoId: string, responsableId: 
       },
     });
     await registrarAuditoria(
-      { accion: "ASIGNAR", entidad: "Activo", entidadId: activoId, detalle: { responsableId } },
+      { accion: "ASIGNAR", entidad: "Activo", entidadId: activoId, detalle: { responsableId }, usuarioId: actor.id },
       tx
     );
   });
@@ -230,6 +244,7 @@ export async function asignarResponsableAction(activoId: string, responsableId: 
 }
 
 export async function desasignarResponsableAction(activoId: string): Promise<void> {
+  const actor = await requireSessionUsuario();
   await prisma.$transaction(async (tx) => {
     const activo = await tx.activo.findUniqueOrThrow({ where: { id: activoId } });
 
@@ -241,6 +256,7 @@ export async function desasignarResponsableAction(activoId: string): Promise<voi
     await tx.movimiento.create({
       data: {
         activoId,
+        usuarioId: actor.id,
         tipo: "CAMBIO_RESPONSABLE",
         responsableAnteriorId: activo.responsableActualId,
         responsableNuevoId: null,
@@ -254,6 +270,7 @@ export async function desasignarResponsableAction(activoId: string): Promise<voi
         entidad: "Activo",
         entidadId: activoId,
         detalle: { motivo: "desasignar_responsable" },
+        usuarioId: actor.id,
       },
       tx
     );
@@ -264,6 +281,7 @@ export async function desasignarResponsableAction(activoId: string): Promise<voi
 }
 
 export async function deleteActivoAction(activoId: string): Promise<void> {
+  const actor = await requireSessionUsuario();
   const activo = await prisma.activo.findUniqueOrThrow({
     where: { id: activoId },
     include: { _count: { select: { documentos: true } } },
@@ -286,7 +304,13 @@ export async function deleteActivoAction(activoId: string): Promise<void> {
   await prisma.$transaction(async (tx) => {
     await tx.activo.delete({ where: { id: activoId } });
     await registrarAuditoria(
-      { accion: "ELIMINAR", entidad: "Activo", entidadId: activoId, detalle: { nombreActivo: activo.nombreActivo } },
+      {
+        accion: "ELIMINAR",
+        entidad: "Activo",
+        entidadId: activoId,
+        detalle: { nombreActivo: activo.nombreActivo },
+        usuarioId: actor.id,
+      },
       tx
     );
   });
