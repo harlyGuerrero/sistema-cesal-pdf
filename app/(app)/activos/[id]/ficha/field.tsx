@@ -21,7 +21,7 @@ export function Section({
 }) {
   return (
     <section
-      className="overflow-hidden rounded-xl border break-inside-avoid bg-white"
+      className="overflow-hidden rounded-xl border break-inside-avoid bg-card"
       style={{ borderColor: `color-mix(in oklch, ${color} 25%, var(--border))` }}
     >
       <div
