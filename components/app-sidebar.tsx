@@ -36,6 +36,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -154,9 +155,11 @@ export function AppSidebar({
                 }
               />
               <DropdownMenuContent side="top" align="start" className="w-56">
-                <DropdownMenuLabel className="truncate font-normal text-muted-foreground">
-                  {usuario.email}
-                </DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="truncate font-normal text-muted-foreground">
+                    {usuario.email}
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   disabled={isPending}
