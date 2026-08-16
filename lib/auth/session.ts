@@ -61,7 +61,11 @@ export function verifySessionToken(token: string): SessionTokenPayload | null {
   return payload;
 }
 
-export async function createSession(usuarioId: string): Promise<void> {
+// "Recordar sesión" desmarcado en /login: la cookie queda sin maxAge (cookie
+// de sesión del navegador, se borra al cerrarlo) en vez de persistir 7 días.
+// El token igual lleva `exp` a 7 días como tope de todos modos — es solo la
+// cookie la que decide si sobrevive a cerrar el navegador.
+export async function createSession(usuarioId: string, remember: boolean = true): Promise<void> {
   const token = sign({ sub: usuarioId, exp: Date.now() + SESSION_DURATION_MS });
   const store = await cookies();
   store.set(SESSION_COOKIE, token, {
@@ -69,7 +73,7 @@ export async function createSession(usuarioId: string): Promise<void> {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_DURATION_MS / 1000,
+    ...(remember ? { maxAge: SESSION_DURATION_MS / 1000 } : {}),
   });
 }
 

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useTransition } from "react";
+import Image from "next/image";
 import { useTheme } from "next-themes";
 import {
   LayoutDashboardIcon,
@@ -105,15 +106,20 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="pointer-events-none">
-              <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-                C
-              </div>
-              <span className="flex items-baseline gap-1 truncate">
-                <span className="text-base font-bold text-foreground">cesal</span>
-                <span className="rounded-sm bg-good px-1 text-[10px] font-bold text-white">
-                  ONG
-                </span>
-              </span>
+              <Image
+                src="/logo-mobile.svg"
+                alt="CESAL"
+                width={32}
+                height={32}
+                className="size-8 shrink-0"
+              />
+              <Image
+                src="/logo-desktop.svg"
+                alt="CESAL"
+                width={132}
+                height={36}
+                className="h-5 w-auto group-data-[collapsible=icon]:hidden"
+              />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -133,6 +133,19 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Fondo de marca del sitio (modo claro): glow azul/amarillo de CESAL en
+       las esquinas sobre un degradado casi blanco — decisión explícita del
+       usuario. background-attachment: fixed para que las esquinas queden
+       ancladas al viewport, no al final del scroll en páginas largas.
+       Sin equivalente en modo oscuro a propósito: se resetea abajo, --dark
+       ya tiene su propio --background sólido. */
+    background-image: radial-gradient(circle at 0 0, #006ba61f, #0000 38%),
+      radial-gradient(circle at 100% 100%, #e5e60029, #0000 35%),
+      linear-gradient(135deg, #f9fcff 0%, #f4f9fb 50%, #fffef4 100%);
+    background-attachment: fixed;
+  }
+  .dark body {
+    background-image: none;
   }
   html {
     @apply font-sans;

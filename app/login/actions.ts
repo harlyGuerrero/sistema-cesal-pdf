@@ -17,6 +17,7 @@ export async function loginAction(formData: FormData): Promise<void> {
   const email = (formData.get("email") as string).trim().toLowerCase();
   const password = formData.get("password") as string;
   const from = formData.get("from") as string | null;
+  const recordar = formData.get("recordar") === "true";
 
   if (!email || !password) {
     throw new Error("Email y contraseña son obligatorios.");
@@ -29,7 +30,7 @@ export async function loginAction(formData: FormData): Promise<void> {
     throw new Error("Credenciales inválidas.");
   }
 
-  await createSession(usuario.id);
+  await createSession(usuario.id, recordar);
   redirect(safeRedirectTarget(from));
 }
 
