@@ -4,12 +4,14 @@ import {
   ArrowRightLeftIcon,
   Building2Icon,
   ClipboardListIcon,
+  DownloadIcon,
   MapPinIcon,
   UserCogIcon,
   UserPlusIcon,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Table,
@@ -22,7 +24,8 @@ import {
 import { ROL_USUARIO_LABELS } from "@/lib/usuarios/labels";
 import { TIPO_MOVIMIENTO_OPTIONS } from "@/lib/activos/labels";
 import { inicialesPersona, nombreCompleto } from "@/lib/nombre-completo";
-import type { Prisma, TipoMovimiento } from "@/lib/generated/prisma/client";
+import { buildMovimientosWhere } from "@/lib/activos/movimientos-filtros";
+import type { Prisma } from "@/lib/generated/prisma/client";
 import { MovimientoBadge } from "../movimiento-badge";
 import { MovimientoDetalleCell } from "./movimiento-detalle";
 import { MovimientosFilters } from "./movimientos-filters";
@@ -65,33 +68,17 @@ export default async function MovimientosPage({
     fecha: sort === "asc" ? "asc" : "desc",
   };
 
-  const filtros: Prisma.MovimientoWhereInput[] = [];
-  if (tipo && tipo !== "all") filtros.push({ tipo: tipo as TipoMovimiento });
-  if (sedeId && sedeId !== "all") {
-    filtros.push({ OR: [{ sedeAnteriorId: sedeId }, { sedeNuevaId: sedeId }] });
-  }
-  if (unidadOperativaId && unidadOperativaId !== "all") {
-    filtros.push({
-      OR: [
-        { unidadOperativaAnteriorId: unidadOperativaId },
-        { unidadOperativaNuevaId: unidadOperativaId },
-      ],
-    });
-  }
-  if (q) {
-    filtros.push({
-      activo: {
-        OR: [
-          { nombreActivo: { contains: q, mode: "insensitive" } },
-          { codigoPatrimonial: { contains: q, mode: "insensitive" } },
-        ],
-      },
-    });
-  }
-  if (fechaDesde) filtros.push({ fecha: { gte: new Date(`${fechaDesde}T00:00:00`) } });
-  if (fechaHasta) filtros.push({ fecha: { lte: new Date(`${fechaHasta}T23:59:59`) } });
+  const where = buildMovimientosWhere({ tipo, sedeId, unidadOperativaId, q, fechaDesde, fechaHasta });
 
-  const where: Prisma.MovimientoWhereInput = filtros.length > 0 ? { AND: filtros } : {};
+  const exportParams = new URLSearchParams();
+  if (tipo) exportParams.set("tipo", tipo);
+  if (sedeId) exportParams.set("sedeId", sedeId);
+  if (unidadOperativaId) exportParams.set("unidadOperativaId", unidadOperativaId);
+  if (q) exportParams.set("q", q);
+  if (fechaDesde) exportParams.set("fechaDesde", fechaDesde);
+  if (fechaHasta) exportParams.set("fechaHasta", fechaHasta);
+  const exportQs = exportParams.toString();
+  const exportHref = exportQs ? `/api/movimientos/export?${exportQs}` : "/api/movimientos/export";
 
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
@@ -131,11 +118,17 @@ export default async function MovimientosPage({
 
   return (
     <main className="space-y-6 p-6">
-      <div>
-        <h1 className="text-xl font-medium">Movimientos</h1>
-        <p className="text-sm text-muted-foreground">
-          Historial completo de todos los movimientos realizados a los activos.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-medium">Movimientos</h1>
+          <p className="text-sm text-muted-foreground">
+            Historial completo de todos los movimientos realizados a los activos.
+          </p>
+        </div>
+        <Button variant="outline" className="w-full sm:w-auto" render={<a href={exportHref} />} nativeButton={false}>
+          <DownloadIcon />
+          Exportar a Excel
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">

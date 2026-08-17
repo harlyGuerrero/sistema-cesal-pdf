@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { CalendarIcon, ScrollTextIcon, Trash2Icon, UsersIcon } from "lucide-react";
+import { CalendarIcon, DownloadIcon, ScrollTextIcon, Trash2Icon, UsersIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -14,8 +15,9 @@ import {
 } from "@/components/ui/table";
 import { TIPO_ACCION_AUDITORIA_LABELS, TIPO_ACCION_AUDITORIA_META } from "@/lib/auditoria/labels";
 import { describirDetalleAuditoria, resumenDetalleCrudo } from "@/lib/auditoria/describir-detalle";
+import { buildAuditoriaWhere } from "@/lib/auditoria/filtros";
 import { inicialesPersona, nombreCompleto } from "@/lib/nombre-completo";
-import type { Prisma, TipoAccionAuditoria } from "@/lib/generated/prisma/client";
+import type { TipoAccionAuditoria } from "@/lib/generated/prisma/client";
 import { AuditoriaFilters } from "./auditoria-filters";
 
 const PAGE_SIZE = 30;
@@ -42,23 +44,16 @@ export default async function AuditoriaPage({
   const { q, entidad, accion, fechaDesde, fechaHasta, page: pageParam } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
 
-  const filtros: Prisma.AuditoriaLogWhereInput[] = [];
-  if (q) {
-    filtros.push({
-      usuario: {
-        OR: [
-          { nombres: { contains: q, mode: "insensitive" } },
-          { apellidos: { contains: q, mode: "insensitive" } },
-        ],
-      },
-    });
-  }
-  if (entidad && entidad !== "all") filtros.push({ entidad });
-  if (accion && accion !== "all") filtros.push({ accion: accion as TipoAccionAuditoria });
-  if (fechaDesde) filtros.push({ fecha: { gte: new Date(`${fechaDesde}T00:00:00`) } });
-  if (fechaHasta) filtros.push({ fecha: { lte: new Date(`${fechaHasta}T23:59:59`) } });
+  const where = buildAuditoriaWhere({ q, entidad, accion, fechaDesde, fechaHasta });
 
-  const where: Prisma.AuditoriaLogWhereInput = filtros.length > 0 ? { AND: filtros } : {};
+  const exportParams = new URLSearchParams();
+  if (q) exportParams.set("q", q);
+  if (entidad) exportParams.set("entidad", entidad);
+  if (accion) exportParams.set("accion", accion);
+  if (fechaDesde) exportParams.set("fechaDesde", fechaDesde);
+  if (fechaHasta) exportParams.set("fechaHasta", fechaHasta);
+  const exportQs = exportParams.toString();
+  const exportHref = exportQs ? `/api/auditoria/export?${exportQs}` : "/api/auditoria/export";
 
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
@@ -87,11 +82,17 @@ export default async function AuditoriaPage({
 
   return (
     <main className="space-y-6 p-6">
-      <div>
-        <h1 className="text-xl font-medium">Auditoría</h1>
-        <p className="text-sm text-muted-foreground">
-          Qué hizo el usuario en el sistema — distinto del historial de movimientos de cada activo.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-medium">Auditoría</h1>
+          <p className="text-sm text-muted-foreground">
+            Qué hizo el usuario en el sistema — distinto del historial de movimientos de cada activo.
+          </p>
+        </div>
+        <Button variant="outline" className="w-full sm:w-auto" render={<a href={exportHref} />} nativeButton={false}>
+          <DownloadIcon />
+          Exportar a Excel
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
