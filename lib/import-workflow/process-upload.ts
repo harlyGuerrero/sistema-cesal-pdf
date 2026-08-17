@@ -4,8 +4,7 @@ import { computeHash, validateUpload } from "@/lib/security/pdf-validation";
 import { DocumentServiceError, processDocument } from "@/lib/document-service/client";
 import { normalizeProductCandidate } from "@/lib/normalization/normalize";
 import { classifyRelevance } from "@/lib/classification/relevance";
-import { classifyCategory, HIGH_CONFIDENCE_THRESHOLD } from "@/lib/classification/category";
-import { buildActivoRows } from "./activo-creation";
+import { classifyCategory } from "@/lib/classification/category";
 
 // Orquesta el flujo completo (Fase 8): Upload -> validación -> hash ->
 // duplicate check -> crear Import -> PROCESSING -> Document Service ->
@@ -15,13 +14,15 @@ import { buildActivoRows } from "./activo-creation";
 // secuencia — cada una sigue viviendo en su propio módulo (ver CLAUDE.md
 // regla 2), esto solo las orquesta y persiste el resultado.
 //
-// Regla de revisión (Fase 9): confidence alta -> CONFIRMED, si no ->
-// REVIEW_REQUIRED. "Alta" acá significa específicamente method === "RULE"
-// (siempre 0.85, por encima del umbral) — un resultado de OLLAMA nunca
-// auto-confirma, sin importar su confidence autorreportada, por el problema
-// de calibración medido y documentado en skill ollama (Fase 7). Los ítems
-// auto-confirmados quedan con reviewedAt=null (nadie los revisó); los que
-// confirma/rechaza un humano desde /importaciones/[id] sí llevan reviewedAt.
+// Fase 39: la confirmación siempre es manual, sin excepción — antes un ítem
+// con clasificación por regla y confidence alta se auto-confirmaba (creaba
+// su Activo sin que nadie lo revisara). Eso quedó eliminado a pedido
+// explícito: todo activo detectado pasa por /importaciones/[id] y un humano
+// lo confirma o rechaza. classifyCategory sigue corriendo igual — su
+// resultado (tipoActivoId/method/confidence) precarga el formulario de
+// revisión, solo que ya no decide el status por sí solo. Único status que
+// sigue siendo automático: IGNORED, cuando la relevancia ni siquiera es
+// PRODUCT (no es algo que revisar).
 
 export interface UploadedFile {
   buffer: Buffer;
@@ -61,38 +62,16 @@ export async function processUpload(file: UploadedFile): Promise<ProcessUploadRe
   try {
     const itemsToCreate = await extractAndClassify(importRecord.id, file);
 
-    // Si nada quedó pendiente de revisión (todo se auto-confirmó o se ignoró),
-    // el Import pasa directo a COMPLETED — READY_FOR_REVIEW existe para
-    // avisar que hay trabajo humano pendiente, no como parada obligatoria
-    // (ver skill import-workflow).
+    // Ya nada se auto-confirma (Fase 39) — solo IGNORED no necesita revisión.
+    // Si hay al menos un ítem PRODUCT, queda READY_FOR_REVIEW; si todo fue
+    // IGNORED (o no se detectó ningún ítem), pasa directo a COMPLETED.
     const hasPendingReview = itemsToCreate.items.some((item) => item.status === "REVIEW_REQUIRED");
     const finalStatus = hasPendingReview ? "READY_FOR_REVIEW" : "COMPLETED";
     const now = new Date();
 
-    // Los ImportItem se crean primero (need sus ids) y recién con esos ids
-    // se arman los Activo de los que quedaron auto-confirmados — un Activo
-    // referencia su ImportItem de origen, no al revés (ver activo-creation.ts).
     await prisma.$transaction(async (tx) => {
-      const createdItems =
-        itemsToCreate.items.length > 0
-          ? await tx.importItem.createManyAndReturn({ data: itemsToCreate.items })
-          : [];
-
-      const activoRows: Prisma.ActivoCreateManyInput[] = [];
-      for (const item of createdItems) {
-        if (item.status !== "CONFIRMED" || !item.tipoActivoId) continue;
-        const rows = await buildActivoRows(tx, {
-          importItemId: item.id,
-          tipoActivoId: item.tipoActivoId,
-          nombreActivo: item.normalizedName ?? item.rawText,
-          quantity: item.quantity !== null ? Number(item.quantity) : null,
-          unitPrice: item.unitPrice !== null ? Number(item.unitPrice) : null,
-          numeroFactura: importRecord.numeroFactura,
-        });
-        activoRows.push(...rows);
-      }
-      if (activoRows.length > 0) {
-        await tx.activo.createMany({ data: activoRows });
+      if (itemsToCreate.items.length > 0) {
+        await tx.importItem.createMany({ data: itemsToCreate.items });
       }
 
       if (itemsToCreate.ollamaUsedCount > 0) {
@@ -188,22 +167,10 @@ async function extractAndClassify(
       }
     }
 
-    let status: "IGNORED" | "CONFIRMED" | "REVIEW_REQUIRED";
-
-    if (relevanceResult.relevance !== "PRODUCT") {
-      status = "IGNORED";
-    } else if (
-      tipoActivoId &&
-      categoryMethod === "RULE" &&
-      categoryConfidence !== null &&
-      categoryConfidence >= HIGH_CONFIDENCE_THRESHOLD
-    ) {
-      // El Activo correspondiente se crea después, en processUpload, una vez
-      // que este ImportItem exista y tenga id (ver activo-creation.ts).
-      status = "CONFIRMED";
-    } else {
-      status = "REVIEW_REQUIRED";
-    }
+    // Fase 39: confirmación siempre manual — cualquier PRODUCT, sin importar
+    // qué tan alta sea la confianza de la regla, espera revisión humana en
+    // /importaciones/[id] (ver confirmItemAction/editAndConfirmItemAction).
+    const status: "IGNORED" | "REVIEW_REQUIRED" = relevanceResult.relevance !== "PRODUCT" ? "IGNORED" : "REVIEW_REQUIRED";
 
     items.push({
       importId,

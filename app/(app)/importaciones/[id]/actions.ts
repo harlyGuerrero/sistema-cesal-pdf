@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { createActivosFromImportItem } from "@/lib/import-workflow/activo-creation";
+import { requireSessionUsuario } from "@/lib/auth/session";
 
 // Acciones de revisión humana (Fase 9). A diferencia de Fase 8 (auto-confirma
 // solo cuando method === "RULE"), estas siempre llevan reviewedAt — alguien
-// las ejecutó. reviewedBy queda null hasta que exista autenticación (fuera de
-// alcance, ver CLAUDE.md).
+// las ejecutó.
 //
 // Confirmar ya no busca ni reutiliza un Activo existente: crea uno por
 // unidad física (ver lib/import-workflow/activo-creation.ts).
@@ -37,6 +37,7 @@ async function completeImportIfNoPending(importId: string): Promise<void> {
 }
 
 export async function confirmItemAction(itemId: string): Promise<void> {
+  const actor = await requireSessionUsuario();
   const item = await prisma.importItem.findUniqueOrThrow({
     where: { id: itemId },
     include: { import: { select: { numeroFactura: true } } },
@@ -53,6 +54,7 @@ export async function confirmItemAction(itemId: string): Promise<void> {
     quantity: item.quantity !== null ? Number(item.quantity) : null,
     unitPrice: item.unitPrice !== null ? Number(item.unitPrice) : null,
     numeroFactura: item.import.numeroFactura,
+    usuarioId: actor.id,
   });
 
   await prisma.importItem.update({
@@ -77,6 +79,7 @@ export async function rejectItemAction(itemId: string, formData: FormData): Prom
 }
 
 export async function editAndConfirmItemAction(itemId: string, formData: FormData): Promise<void> {
+  const actor = await requireSessionUsuario();
   const name = (formData.get("name") as string).trim();
   const tipoActivoId = formData.get("categoryId") as string;
   const quantityRaw = formData.get("quantity") as string;
@@ -114,6 +117,7 @@ export async function editAndConfirmItemAction(itemId: string, formData: FormDat
     quantity,
     unitPrice,
     numeroFactura: item.import.numeroFactura,
+    usuarioId: actor.id,
   });
 
   await completeImportIfNoPending(item.importId);

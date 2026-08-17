@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { normalizeName } from "@/lib/normalization/normalize";
 import { generarCodigosPatrimoniales } from "@/lib/activos/codigo-patrimonial";
+import { buildMovimientoDeAlta } from "@/lib/activos/movimientos";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
 // Cantidad fraccionaria, cero o ausente -> 1 unidad física. No hay forma de
@@ -54,6 +55,15 @@ export async function buildActivoRows(
   }));
 }
 
+// Fase 39: motivo del Movimiento(ALTA) de un Activo confirmado desde un PDF
+// (ver createActivosFromImportItem, abajo) — toda confirmación es manual,
+// no hay más un camino de auto-confirmación por regla que necesite
+// distinguirse acá.
+export function motivoAltaPorImportacion(numeroFactura: string | null): string {
+  const base = "Alta por importación de PDF";
+  return numeroFactura ? `${base} (factura ${numeroFactura})` : base;
+}
+
 export async function createActivosFromImportItem(params: {
   importItemId: string;
   tipoActivoId: string;
@@ -61,10 +71,25 @@ export async function createActivosFromImportItem(params: {
   quantity: number | null;
   unitPrice: number | null;
   numeroFactura?: string | null;
+  usuarioId: string;
 }): Promise<number> {
   return prisma.$transaction(async (tx) => {
     const rows = await buildActivoRows(tx, params);
-    const { count } = await tx.activo.createMany({ data: rows });
-    return count;
+    const created = await tx.activo.createManyAndReturn({ data: rows });
+
+    // Fase 39: cada unidad física confirmada desde un PDF también queda de
+    // alta en su historial de Movimientos (mismo helper que usa el alta
+    // manual, ver app/(app)/activos/actions.ts) — antes esta ruta era la
+    // única forma de crear un Activo que no dejaba rastro en /movimientos.
+    const motivo = motivoAltaPorImportacion(params.numeroFactura ?? null);
+    await tx.movimiento.createMany({
+      data: created.map((activo) => ({
+        activoId: activo.id,
+        usuarioId: params.usuarioId,
+        ...buildMovimientoDeAlta(activo, motivo),
+      })),
+    });
+
+    return created.length;
   });
 }

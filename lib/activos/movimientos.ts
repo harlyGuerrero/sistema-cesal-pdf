@@ -177,18 +177,21 @@ export function tonoTransicionEstado(antes: string | null, despues: string | nul
   return "neutral";
 }
 
-export function buildMovimientoDeAlta(activo: {
-  sedeId: string | null;
-  unidadOperativaId: string | null;
-  ambienteId: string | null;
-  estadoPatrimonial: EstadoPatrimonial;
-}): Omit<Prisma.MovimientoUncheckedCreateInput, "activoId"> {
+export function buildMovimientoDeAlta(
+  activo: {
+    sedeId: string | null;
+    unidadOperativaId: string | null;
+    ambienteId: string | null;
+    estadoPatrimonial: EstadoPatrimonial;
+  },
+  motivo: string = "Alta del activo"
+): Omit<Prisma.MovimientoUncheckedCreateInput, "activoId"> {
   return {
     tipo: "ALTA",
     sedeNuevaId: activo.sedeId,
     unidadOperativaNuevaId: activo.unidadOperativaId,
     ambienteNuevoId: activo.ambienteId,
     estadoNuevo: activo.estadoPatrimonial,
-    motivo: "Alta del activo",
+    motivo,
   };
 }

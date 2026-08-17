@@ -47,7 +47,7 @@ Nunca crear `OTROS`. Un `PRODUCT` que no encaja con confianza suficiente en ning
 - `lib/classification/category-rules.ts` (`RuleCategoryProvider`) — patrones por categoría sobre `normalizedName`; si matchea exactamente una categoría → confianza 0.85; si no matchea ninguna o matchea más de una (ambiguo) → `null` (nunca fuerza).
 - `lib/classification/ollama-provider.ts` (`OllamaCategoryProvider`) — ver skill `ollama` para el detalle de implementación, modelo, timeout y el hallazgo de calibración.
 
-**Importante para cuando se implemente Human Review (Fase 9)**: no tratar `confidence` de `method: "OLLAMA"` igual que la de `method: "RULE"` para decidir auto-confirmación — ver la nota de calibración en skill `ollama`. Los resultados de Ollama son evidencia útil para el revisor humano, no una fuente confiable de auto-confirmación con el mismo umbral que las reglas.
+**Fase 39: no hay auto-confirmación, de ningún método.** Entre Fase 9 y Fase 38 un `method: "RULE"` con `confidence >= HIGH_CONFIDENCE_THRESHOLD` auto-confirmaba el `ImportItem` (un `method: "OLLAMA"` nunca lo hacía, por la calibración documentada en skill `ollama`); esa rama se eliminó por completo a pedido del usuario — todo `ImportItem` con `relevance === "PRODUCT"` pasa a `REVIEW_REQUIRED` sin importar el método o la confianza. `classifyCategory` sigue corriendo y su resultado sigue precargando el formulario de revisión (categoría sugerida, barra de confianza en `review-table.tsx`), pero ya no decide el `status` de ningún ítem.
 
 Tests: `tests/category-rules.test.ts`, `tests/ollama-provider.test.ts` (con `fetch` inyectado, no requieren Ollama corriendo), `tests/category.test.ts` (orquestador, con providers falsos inyectados).
 
