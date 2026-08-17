@@ -17,6 +17,10 @@ describe("RuleCategoryProvider", () => {
       ["CALEFACTOR", "EQUIPOS_DE_OFICINA"],
       ["REFRIGERADORA LG 200L", "EQUIPOS_DE_OFICINA"],
       ["MICROONDAS 20L", "EQUIPOS_DE_OFICINA"],
+      ["BALANZA", "EQUIPOS_DE_OFICINA"],
+      ["HORNO A GAS", "EQUIPOS_DE_OFICINA"],
+      ["COSTURA CASERA", "EQUIPOS_DE_MAQUINARIA"],
+      ["MAQUINA DE COSER INDUSTRIAL", "EQUIPOS_DE_MAQUINARIA"],
     ];
 
     for (const [name, expected] of cases) {

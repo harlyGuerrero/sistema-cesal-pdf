@@ -40,6 +40,8 @@ const CATEGORY_PATTERNS: Record<CategoryCode, RegExp[]> = {
     /\bMICROONDAS\b/,
     /\bHERV(IDOR|IDORA)(ES)?\b/,
     /\bEXTRACTOR(ES)? DE AIRE\b/,
+    /\bBALANZAS?\b/,
+    /\bHORNOS?\b/,
   ],
   MUEBLES_DE_OFICINA: [
     /\bESCRITORIOS?\b/,
@@ -70,6 +72,7 @@ const CATEGORY_PATTERNS: Record<CategoryCode, RegExp[]> = {
     /\bSOLDADORAS?\b/,
     /\bTORNOS?\b/,
     /\bGR[UÚ]AS?\b/,
+    /\bCOSTURA\b|\bM[AÁ]QUINA(S)? DE COSER\b/,
   ],
   BIENES_INMUEBLES: [
     /\bTERRENOS?\b/,
