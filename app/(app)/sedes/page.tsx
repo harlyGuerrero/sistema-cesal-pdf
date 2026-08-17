@@ -243,7 +243,7 @@ export default async function SedesPage({
                     </p>
                   )}
                 </CardContent>
-                <div className="border-t p-4">
+                <div className="border-t px-4 pt-4">
                   <Link
                     href={`/sedes?view=lista&region=${option.value}`}
                     className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
