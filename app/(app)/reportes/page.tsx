@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Building2Icon, CoinsIcon, DownloadIcon, PackageIcon, TagIcon } from "lucide-react";
@@ -20,6 +21,10 @@ import { buildReportesWhere, buildReporteMatriz } from "@/lib/activos/reportes";
 import { ReportesFilters } from "./reportes-filters";
 
 const PAGE_SIZE = 30;
+
+// El título de la pestaña/encabezado de impresión — antes heredaba el
+// genérico de la Fase 0 ("Importación de Productos", ver app/layout.tsx).
+export const metadata: Metadata = { title: "Reportes" };
 
 function formatMoney(value: number): string {
   return `S/ ${value.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -135,35 +140,35 @@ export default async function ReportesPage({
             {sedeSeleccionada ? `Inventario en ${sedeSeleccionada.name} por unidad operativa` : "Inventario por sede"}
           </p>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
+        <CardContent className="overflow-x-auto print:overflow-visible">
+          <Table className="print:text-[10px]">
             <TableHeader>
               <TableRow>
-                <TableHead>{sedeSeleccionada ? "Unidad operativa" : "Sede"}</TableHead>
+                <TableHead className="print:whitespace-normal">{sedeSeleccionada ? "Unidad operativa" : "Sede"}</TableHead>
                 {columnas.map((tipo) => {
                   const { icon: Icon, color } = TIPO_ACTIVO_META[tipo.code];
                   return (
-                    <TableHead key={tipo.id} className="text-right">
-                      <span className="inline-flex items-center justify-end gap-1.5">
-                        <Icon className="size-3.5" style={{ color }} />
+                    <TableHead key={tipo.id} className="text-right print:px-1 print:whitespace-normal print:break-words">
+                      <span className="inline-flex items-center justify-end gap-1.5 print:gap-1">
+                        <Icon className="size-3.5 print:hidden" style={{ color }} />
                         {tipo.name}
                       </span>
                     </TableHead>
                   );
                 })}
-                <TableHead className="text-right font-semibold">Total</TableHead>
+                <TableHead className="text-right font-semibold print:px-1">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filas.map((fila) => (
                 <TableRow key={fila.key}>
-                  <TableCell>{fila.label}</TableCell>
+                  <TableCell className="print:whitespace-normal">{fila.label}</TableCell>
                   {fila.counts.map((count, i) => (
-                    <TableCell key={columnas[i].id} className="text-right tabular-nums">
+                    <TableCell key={columnas[i].id} className="text-right tabular-nums print:px-1">
                       {count.toLocaleString("es-PE")}
                     </TableCell>
                   ))}
-                  <TableCell className="text-right font-semibold tabular-nums">
+                  <TableCell className="text-right font-semibold tabular-nums print:px-1">
                     {fila.total.toLocaleString("es-PE")}
                   </TableCell>
                 </TableRow>
@@ -179,13 +184,13 @@ export default async function ReportesPage({
             {filas.length > 0 && (
               <tfoot>
                 <TableRow>
-                  <TableCell className="font-semibold">Total</TableCell>
+                  <TableCell className="font-semibold print:px-1">Total</TableCell>
                   {totalesPorColumna.map((total, i) => (
-                    <TableCell key={columnas[i].id} className="text-right font-semibold tabular-nums">
+                    <TableCell key={columnas[i].id} className="text-right font-semibold tabular-nums print:px-1">
                       {total.toLocaleString("es-PE")}
                     </TableCell>
                   ))}
-                  <TableCell className="text-right font-semibold tabular-nums">
+                  <TableCell className="text-right font-semibold tabular-nums print:px-1">
                     {totalGeneral.toLocaleString("es-PE")}
                   </TableCell>
                 </TableRow>
@@ -199,16 +204,16 @@ export default async function ReportesPage({
         <CardHeader>
           <p className="text-sm font-medium">Detalle de activos ({totalDetalle.toLocaleString("es-PE")})</p>
         </CardHeader>
-        <CardContent className="overflow-x-auto px-0">
-          <Table>
+        <CardContent className="overflow-x-auto px-0 print:overflow-visible">
+          <Table className="print:text-[10px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="pl-6">Código</TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Ubicación</TableHead>
-                <TableHead>Responsable</TableHead>
-                <TableHead className="pr-6">Estado</TableHead>
+                <TableHead className="pl-6 print:whitespace-normal">Código</TableHead>
+                <TableHead className="print:whitespace-normal">Nombre</TableHead>
+                <TableHead className="print:whitespace-normal">Tipo</TableHead>
+                <TableHead className="print:whitespace-normal">Ubicación</TableHead>
+                <TableHead className="print:whitespace-normal">Responsable</TableHead>
+                <TableHead className="pr-6 print:whitespace-normal">Estado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -216,24 +221,24 @@ export default async function ReportesPage({
                 const estadoColor = ESTADO_PATRIMONIAL_COLOR_VAR[activo.estadoPatrimonial] ?? "var(--color-neutral)";
                 return (
                   <TableRow key={activo.id}>
-                    <TableCell className="pl-6 text-sm text-muted-foreground">{activo.codigoPatrimonial ?? "—"}</TableCell>
-                    <TableCell>
+                    <TableCell className="pl-6 text-sm text-muted-foreground print:whitespace-normal">{activo.codigoPatrimonial ?? "—"}</TableCell>
+                    <TableCell className="print:whitespace-normal print:break-words">
                       <Link href={`/activos/${activo.id}`} className="hover:underline print:no-underline">
                         {activo.nombreActivo}
                       </Link>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm text-muted-foreground print:whitespace-normal">
                       {tipoActivoById.get(activo.tipoActivoId)?.name ?? "—"}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm text-muted-foreground print:whitespace-normal print:break-words">
                       {[activo.sede?.name, activo.unidadOperativa?.name, activo.ambiente?.name]
                         .filter(Boolean)
                         .join(" › ") || "—"}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-sm text-muted-foreground print:whitespace-normal">
                       {activo.responsableActual ? nombreCompleto(activo.responsableActual) : "—"}
                     </TableCell>
-                    <TableCell className="pr-6">
+                    <TableCell className="pr-6 print:whitespace-normal">
                       <span
                         className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                         style={{ backgroundColor: `color-mix(in oklch, ${estadoColor} 15%, transparent)`, color: estadoColor }}

@@ -15,9 +15,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// El título por defecto queda de la Fase 0 (antes de que el sistema se
+// rebautizara "Sistema Patrimonial" — ver /login, sidebar). El template deja
+// que cada página ponga su propio título (ver app/(app)/reportes/page.tsx)
+// sin repetir el sufijo — se nota sobre todo en el encabezado que el
+// navegador agrega al imprimir.
 export const metadata: Metadata = {
-  title: "Importación de Productos",
-  description: "Sistema de importación y clasificación patrimonial de productos desde PDFs",
+  title: { default: "Sistema Patrimonial CESAL", template: "%s — Sistema Patrimonial CESAL" },
+  description: "Sistema de gestión patrimonial de activos fijos de CESAL",
 };
 
 // Fase 13: el sidebar (y la sesión que necesita para renderizarlo) se movió
