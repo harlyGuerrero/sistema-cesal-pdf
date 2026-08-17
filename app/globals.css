@@ -167,6 +167,33 @@
    contenedor interno y deja el gap reservado, así que se oculta por
    data-slot en vez de pelear con el componente. */
 @media print {
+  /* En modo oscuro, --foreground/--muted-foreground/--border quedan casi
+     blancos o casi transparentes (pensados para el fondo oscuro de
+     .dark, ver arriba) -- con el fondo forzado a blanco de acá abajo, ese
+     texto se ve gris lavado o directamente invisible, y los bordes de
+     tabla desaparecen. Un documento impreso siempre debe leerse en claro,
+     sin importar el tema que el usuario tenga elegido en pantalla:
+     resetea las variables a sus valores de :root (claro). !important
+     porque .dark tiene la misma especificidad (una clase) y podría
+     declararse después en el bundle final. */
+  :root {
+    --background: oklch(1 0 0) !important;
+    --foreground: oklch(0.145 0 0) !important;
+    --card: oklch(1 0 0) !important;
+    --card-foreground: oklch(0.145 0 0) !important;
+    --popover: oklch(1 0 0) !important;
+    --popover-foreground: oklch(0.145 0 0) !important;
+    --primary-foreground: #fcfcfb !important;
+    --secondary: oklch(0.97 0 0) !important;
+    --secondary-foreground: oklch(0.205 0 0) !important;
+    --muted: oklch(0.97 0 0) !important;
+    --muted-foreground: oklch(0.556 0 0) !important;
+    --accent: oklch(0.97 0 0) !important;
+    --accent-foreground: oklch(0.205 0 0) !important;
+    --border: oklch(0.922 0 0) !important;
+    --input: oklch(0.922 0 0) !important;
+  }
+
   /* Decisión explícita: la ficha técnica (y cualquier otra pantalla que se
      imprima, ej. /reportes) sale sin fondos de color al imprimir/exportar a
      PDF -- solo blanco, bordes y texto. !important en un stylesheet gana
