@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { normalizeName } from "@/lib/normalization/normalize";
 import { generarCodigosPatrimoniales } from "@/lib/activos/codigo-patrimonial";
 import { buildMovimientoDeAlta } from "@/lib/activos/movimientos";
+import { registrarAuditoria } from "@/lib/auditoria/registrar";
 import type { Prisma } from "@/lib/generated/prisma/client";
 
 // Cantidad fraccionaria, cero o ausente -> 1 unidad física. No hay forma de
@@ -89,6 +90,23 @@ export async function createActivosFromImportItem(params: {
         ...buildMovimientoDeAlta(activo, motivo),
       })),
     });
+
+    // Fase 41: mismo AuditoriaLog(DAR_DE_ALTA) que el alta manual y la
+    // importación por Excel (ver excel-import.ts) — esta ruta se había
+    // quedado afuera al agregar el Movimiento en Fase 39, así que un activo
+    // confirmado desde un PDF no aparecía en /auditoria.
+    for (const activo of created) {
+      await registrarAuditoria(
+        {
+          accion: "DAR_DE_ALTA",
+          entidad: "Activo",
+          entidadId: activo.id,
+          detalle: { nombreActivo: activo.nombreActivo, codigoPatrimonial: activo.codigoPatrimonial, origen: "pdf" },
+          usuarioId: params.usuarioId,
+        },
+        tx
+      );
+    }
 
     return created.length;
   });
