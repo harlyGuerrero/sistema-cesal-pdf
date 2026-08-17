@@ -11,11 +11,12 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// Fase 11 (+ Fase 13 agrega Usuario): etiquetas de TipoAccionAuditoria y la
-// lista de entidades que hoy escriben auditoría (ver registrarAuditoria en
-// actions.ts de Activo, Documento, Responsable y Usuario) — no es un enum en
-// la base (entidad es texto libre, referencia lógica), así que esta lista
-// documenta lo que el sistema realmente produce, no una posibilidad abierta.
+// Fase 11 (+ Fase 13 agrega Usuario, Fase 47 agrega Sede/UnidadOperativa/
+// Ambiente): etiquetas de TipoAccionAuditoria y la lista de entidades que hoy
+// escriben auditoría (ver registrarAuditoria en actions.ts de Activo,
+// Documento, Responsable, Usuario y Sede) — no es un enum en la base
+// (entidad es texto libre, referencia lógica), así que esta lista documenta
+// lo que el sistema realmente produce, no una posibilidad abierta.
 
 export const TIPO_ACCION_AUDITORIA_LABELS: Record<string, string> = {
   CREAR: "Crear",
@@ -33,7 +34,15 @@ export const TIPO_ACCION_AUDITORIA_OPTIONS = Object.entries(TIPO_ACCION_AUDITORI
   ([value, label]) => ({ value, label })
 );
 
-export const ENTIDADES_AUDITADAS = ["Activo", "Documento", "Responsable", "Usuario"] as const;
+export const ENTIDADES_AUDITADAS = [
+  "Activo",
+  "Documento",
+  "Responsable",
+  "Usuario",
+  "Sede",
+  "UnidadOperativa",
+  "Ambiente",
+] as const;
 
 // Fase 32: ícono + color fijo por acción, agrupadas por semántica en vez de
 // una tonalidad distinta cada una (mismo criterio que ESTADO_PATRIMONIAL_-

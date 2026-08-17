@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSessionUsuario } from "@/lib/auth/session";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({
@@ -15,7 +16,8 @@ export default async function LoginPage({
   const { from } = await searchParams;
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
+    <main className="relative flex min-h-screen flex-col items-center justify-center gap-6 p-6">
+      <ThemeToggle className="absolute top-4 right-4" />
       <div className="w-full max-w-3xl">
         <LoginForm from={from} />
       </div>

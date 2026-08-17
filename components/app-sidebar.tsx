@@ -5,7 +5,7 @@ import { useTransition } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { MoonIcon, LogOutIcon, MoreVerticalIcon } from "lucide-react";
+import { MoonIcon, SunIcon, LogOutIcon, MoreVerticalIcon } from "lucide-react";
 
 import { NavMain, resolveActiveUrl } from "@/components/nav-main";
 import { MAIN_NAV_ITEMS, ACTIVOS_CONFIG_NAV_ITEMS, ORG_NAV_ITEMS } from "@/lib/nav-items";
@@ -47,6 +47,7 @@ export function AppSidebar({
   // primer render del cliente aunque el tema real ya sea dark.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   React.useEffect(() => setMounted(true), []);
+  const isDarkMode = mounted && resolvedTheme === "dark";
 
   const orgNavItems =
     usuario.rol === "SUPER_ADMIN"
@@ -97,13 +98,17 @@ export function AppSidebar({
       </SidebarContent>
       <SidebarFooter>
         <div className="flex items-center justify-between gap-2 rounded-lg p-2 group-data-[collapsible=icon]:hidden">
-          <Label htmlFor="dark-mode" className="flex items-center gap-2 text-sm text-gray-600 font-semibold dark:text-blue-50">
-            <MoonIcon className="size-4 text-muted-foreground dark:text-green-600" />
+          <Label htmlFor="dark-mode" className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-blue-50">
+            {isDarkMode ? (
+              <SunIcon className="size-4 text-muted-foreground" />
+            ) : (
+              <MoonIcon className="size-4 text-muted-foreground" />
+            )}
             Modo Oscuro
           </Label>
           <Switch
             id="dark-mode"
-            checked={mounted && resolvedTheme === "dark"}
+            checked={isDarkMode}
             onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
           />
         </div>
@@ -139,8 +144,8 @@ export function AppSidebar({
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
+                  variant="destructive"
                   disabled={isPending}
-                  className={"text-red-600"}
                   onClick={() => startTransition(() => logoutAction())}
                 >
                   <LogOutIcon />

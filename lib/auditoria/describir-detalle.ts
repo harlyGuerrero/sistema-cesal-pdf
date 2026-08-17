@@ -90,6 +90,34 @@ export function describirDetalleAuditoria(entidad: string, accion: string, detal
     }
   }
 
+  if (entidad === "Sede") {
+    const nombre = str(d.nombre) ?? "—";
+    const region = str(d.region);
+
+    if (accion === "CREAR") return `Se creó la sede «${nombre}»${region ? ` (${region})` : ""}.`;
+    if (accion === "ACTUALIZAR") return `Se actualizó la sede «${nombre}»${region ? ` (${region})` : ""}.`;
+    if (accion === "ELIMINAR") return `Se eliminó la sede «${nombre}»${region ? ` (${region})` : ""}.`;
+  }
+
+  if (entidad === "UnidadOperativa") {
+    const nombre = str(d.nombre) ?? "—";
+    const sede = str(d.sede);
+    const contexto = sede ? ` en la sede «${sede}»` : "";
+
+    if (accion === "CREAR") return `Se creó la unidad operativa «${nombre}»${contexto}.`;
+    if (accion === "ELIMINAR") return `Se eliminó la unidad operativa «${nombre}»${contexto}.`;
+  }
+
+  if (entidad === "Ambiente") {
+    const nombre = str(d.nombre) ?? "—";
+    const sede = str(d.sede);
+    const unidad = str(d.unidadOperativa);
+    const contexto = join([sede && `sede «${sede}»`, unidad && `unidad «${unidad}»`]);
+
+    if (accion === "CREAR") return `Se creó el ambiente «${nombre}»${contexto ? ` (${contexto})` : ""}.`;
+    if (accion === "ELIMINAR") return `Se eliminó el ambiente «${nombre}»${contexto ? ` (${contexto})` : ""}.`;
+  }
+
   if (entidad === "Documento") {
     const nombreOriginal = str(d.nombreOriginal) ?? "—";
     const tipoDocumento = str(d.tipoDocumento);
