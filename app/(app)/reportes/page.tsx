@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Building2Icon, CoinsIcon, PackageIcon, TagIcon } from "lucide-react";
+import { Building2Icon, CoinsIcon, DownloadIcon, PackageIcon, TagIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { PrintButton } from "@/components/print-button";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -12,14 +13,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ESTADO_PATRIMONIAL_COLOR_VAR, ESTADO_PATRIMONIAL_LABELS, TIPO_ACTIVO_CODE_ORDER } from "@/lib/activos/labels";
+import { ESTADO_PATRIMONIAL_COLOR_VAR, ESTADO_PATRIMONIAL_LABELS } from "@/lib/activos/labels";
 import { TIPO_ACTIVO_META } from "@/lib/activos/tipo-activo-meta";
 import { nombreCompleto } from "@/lib/nombre-completo";
-import type { EstadoPatrimonial, Prisma } from "@/lib/generated/prisma/client";
+import { buildReportesWhere, buildReporteMatriz } from "@/lib/activos/reportes";
 import { ReportesFilters } from "./reportes-filters";
 
 const PAGE_SIZE = 30;
-const SIN_UBICACION = "__none__";
 
 function formatMoney(value: number): string {
   return `S/ ${value.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -47,40 +47,17 @@ export default async function ReportesPage({
   const { sedeId, tipoActivoId, estado, page: pageParam } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
 
-  const filterWhere: Prisma.ActivoWhereInput = {
-    ...(sedeId && sedeId !== "all" ? { sedeId } : {}),
-    ...(tipoActivoId && tipoActivoId !== "all" ? { tipoActivoId } : {}),
-    ...(estado && estado !== "all" ? { estadoPatrimonial: estado as EstadoPatrimonial } : {}),
-  };
+  const filterWhere = buildReportesWhere({ sedeId, tipoActivoId, estado });
 
   const [sedes, tiposActivo] = await Promise.all([
     prisma.sede.findMany({ orderBy: { name: "asc" } }),
     prisma.tipoActivo.findMany(),
   ]);
-  const tipoActivoByCode = new Map(tiposActivo.map((tipo) => [tipo.code, tipo]));
   const tipoActivoById = new Map(tiposActivo.map((tipo) => [tipo.id, tipo]));
-  const columnas = TIPO_ACTIVO_CODE_ORDER.map((code) => tipoActivoByCode.get(code)).filter(
-    (tipo): tipo is NonNullable<typeof tipo> => tipo != null
-  );
 
-  const sedeSeleccionada = sedeId && sedeId !== "all" ? sedes.find((s) => s.id === sedeId) : undefined;
-
-  const [matrizGrupos, unidadesDeSede, detalle, totalDetalle, sedesRepresentadas, tiposRepresentados, valorContable] =
+  const [{ columnas, filas, totalesPorColumna, totalGeneral, sedeSeleccionada }, detalle, totalDetalle, sedesRepresentadas, tiposRepresentados, valorContable] =
     await Promise.all([
-      sedeSeleccionada
-        ? prisma.activo.groupBy({
-            by: ["unidadOperativaId", "tipoActivoId"],
-            where: { ...filterWhere, sedeId: sedeSeleccionada.id },
-            _count: true,
-          })
-        : prisma.activo.groupBy({
-            by: ["sedeId", "tipoActivoId"],
-            where: filterWhere,
-            _count: true,
-          }),
-      sedeSeleccionada
-        ? prisma.unidadOperativa.findMany({ where: { sedeId: sedeSeleccionada.id }, orderBy: { name: "asc" } })
-        : Promise.resolve([]),
+      buildReporteMatriz(filterWhere, { sedeId, tipoActivoId, estado }),
       prisma.activo.findMany({
         where: filterWhere,
         include: { tipoActivo: true, sede: true, unidadOperativa: true, ambiente: true, responsableActual: true },
@@ -94,35 +71,14 @@ export default async function ReportesPage({
       prisma.activo.aggregate({ where: filterWhere, _sum: { valorContable: true } }),
     ]);
 
-  // Fila = Sede (o Unidad Operativa, con sede elegida) -> columna = tipo de
-  // activo -> conteo. rowKey usa SIN_UBICACION en vez de null porque los
-  // valores de un Map deben compararse por identidad, no por null === null.
-  const conteoPorFila = new Map<string, Map<string, number>>();
-  for (const grupo of matrizGrupos) {
-    const rowKey = sedeSeleccionada
-      ? ((grupo as { unidadOperativaId: string | null }).unidadOperativaId ?? SIN_UBICACION)
-      : ((grupo as { sedeId: string | null }).sedeId ?? SIN_UBICACION);
-    if (!conteoPorFila.has(rowKey)) conteoPorFila.set(rowKey, new Map());
-    conteoPorFila.get(rowKey)!.set(grupo.tipoActivoId, grupo._count);
-  }
-
-  const filasBase: { key: string; label: string }[] = sedeSeleccionada
-    ? unidadesDeSede.map((u) => ({ key: u.id, label: u.name }))
-    : sedes.map((s) => ({ key: s.id, label: s.name }));
-  if (conteoPorFila.has(SIN_UBICACION)) {
-    filasBase.push({ key: SIN_UBICACION, label: sedeSeleccionada ? "Sin unidad operativa" : "Sin sede" });
-  }
-
-  const filas = filasBase.map((fila) => {
-    const porTipo = conteoPorFila.get(fila.key) ?? new Map<string, number>();
-    const counts = columnas.map((tipo) => porTipo.get(tipo.id) ?? 0);
-    return { ...fila, counts, total: counts.reduce((a, b) => a + b, 0) };
-  });
-
-  const totalesPorColumna = columnas.map((_, i) => filas.reduce((sum, fila) => sum + fila.counts[i], 0));
-  const totalGeneral = totalesPorColumna.reduce((a, b) => a + b, 0);
-
   const totalPages = Math.max(1, Math.ceil(totalDetalle / PAGE_SIZE));
+
+  const exportParams = new URLSearchParams();
+  if (sedeId) exportParams.set("sedeId", sedeId);
+  if (tipoActivoId) exportParams.set("tipoActivoId", tipoActivoId);
+  if (estado) exportParams.set("estado", estado);
+  const exportQs = exportParams.toString();
+  const exportHref = exportQs ? `/api/reportes/export?${exportQs}` : "/api/reportes/export";
 
   return (
     <main className="space-y-6 p-6 print:p-8">
@@ -131,7 +87,13 @@ export default async function ReportesPage({
           <h1 className="text-xl font-medium">Reportes</h1>
           <p className="text-sm text-muted-foreground">Inventario de activos por ubicación y tipo.</p>
         </div>
-        <PrintButton className="w-full sm:w-auto" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" className="w-full sm:w-auto" render={<a href={exportHref} />} nativeButton={false}>
+            <DownloadIcon />
+            Exportar a Excel
+          </Button>
+          <PrintButton className="w-full sm:w-auto" />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 print:hidden">
