@@ -4,9 +4,11 @@ import { ArchiveIcon, CheckCircle2Icon, PlusIcon, Trash2Icon, UserIcon, WrenchIc
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import type { EstadoPatrimonial, Prisma } from "@/lib/generated/prisma/client";
+import type { Prisma } from "@/lib/generated/prisma/client";
+import { buildActivosWhere } from "@/lib/activos/filtros";
 import { ActivosFilters } from "./activos-filters";
 import { ActivosTable } from "./activos-table";
+import { ImportExportActivosBar } from "./import-export-activos-bar";
 
 const PAGE_SIZE = 10;
 
@@ -30,22 +32,7 @@ export default async function ActivosPage({
   const { q, tipoActivoId, sedeId, estadoPatrimonial, sort, page: pageParam } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
 
-  const where: Prisma.ActivoWhereInput = {
-    ...(q
-      ? {
-          OR: [
-            { nombreNormalizado: { contains: q, mode: "insensitive" } },
-            { codigoPatrimonial: { contains: q, mode: "insensitive" } },
-            { numeroFactura: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : {}),
-    ...(tipoActivoId && tipoActivoId !== "all" ? { tipoActivoId } : {}),
-    ...(sedeId && sedeId !== "all" ? { sedeId } : {}),
-    ...(estadoPatrimonial && estadoPatrimonial !== "all"
-      ? { estadoPatrimonial: estadoPatrimonial as EstadoPatrimonial }
-      : {}),
-  };
+  const where: Prisma.ActivoWhereInput = buildActivosWhere({ q, tipoActivoId, sedeId, estadoPatrimonial });
 
   const orderBy: Prisma.ActivoOrderByWithRelationInput =
     sort === "antiguos" ? { updatedAt: "asc" } : sort === "nombre" ? { nombreActivo: "asc" } : { updatedAt: "desc" };
@@ -77,15 +64,18 @@ export default async function ActivosPage({
 
   return (
     <main className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-xl font-medium">Activos</h1>
           <p className="text-sm text-muted-foreground">Gestiona y consulta todos los activos registrados en el sistema.</p>
         </div>
-        <Button render={<Link href="/activos/nuevo" />} nativeButton={false}>
-          <PlusIcon />
-          Nuevo activo
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <ImportExportActivosBar exportQuery={{ q, tipoActivoId, sedeId, estadoPatrimonial }} />
+          <Button render={<Link href="/activos/nuevo" />} nativeButton={false}>
+            <PlusIcon />
+            Nuevo activo
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
