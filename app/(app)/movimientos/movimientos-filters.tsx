@@ -78,10 +78,10 @@ export function MovimientosFilters({ tiposMovimiento, sedes, unidadesOperativas 
   const hasFilters = [...searchParams.keys()].some((key) => key !== "page");
 
   return (
-    <div className="flex flex-wrap items-end gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
       <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
         <div className="col-span-2 space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Buscar movimiento</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Buscar movimiento</label>
           <div className="relative">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -98,7 +98,7 @@ export function MovimientosFilters({ tiposMovimiento, sedes, unidadesOperativas 
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Tipo de movimiento</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Tipo de movimiento</label>
           <Select value={searchParams.get("tipo") ?? "all"} onValueChange={(value) => applyParams({ tipo: value as string })}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Todos los tipos" />
@@ -115,7 +115,7 @@ export function MovimientosFilters({ tiposMovimiento, sedes, unidadesOperativas 
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Sede</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Sede</label>
           <Select value={searchParams.get("sedeId") ?? "all"} onValueChange={(value) => applyParams({ sedeId: value as string })}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Todas las sedes" />
@@ -132,7 +132,7 @@ export function MovimientosFilters({ tiposMovimiento, sedes, unidadesOperativas 
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Unidad operativa</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Unidad operativa</label>
           <Select
             value={searchParams.get("unidadOperativaId") ?? "all"}
             onValueChange={(value) => applyParams({ unidadOperativaId: value as string })}
@@ -152,7 +152,7 @@ export function MovimientosFilters({ tiposMovimiento, sedes, unidadesOperativas 
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Fecha desde</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Fecha desde</label>
           <Input
             type="date"
             value={searchParams.get("fechaDesde") ?? ""}
@@ -161,7 +161,7 @@ export function MovimientosFilters({ tiposMovimiento, sedes, unidadesOperativas 
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Fecha hasta</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Fecha hasta</label>
           <Input
             type="date"
             value={searchParams.get("fechaHasta") ?? ""}
@@ -170,7 +170,7 @@ export function MovimientosFilters({ tiposMovimiento, sedes, unidadesOperativas 
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Orden</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Orden</label>
           <Select value={searchParams.get("sort") === "asc" ? "asc" : "desc"} onValueChange={(value) => applyParams({ sort: value as string })}>
             <SelectTrigger className="w-full">
               <SelectValue />
@@ -185,12 +185,18 @@ export function MovimientosFilters({ tiposMovimiento, sedes, unidadesOperativas 
 
       {/* Fijos: siempre al final de la barra, nunca se mezclan con el resto
           de los campos ni cambian de lugar cuando estos se envuelven. */}
-      <div className="flex shrink-0 items-center gap-2">
-        <Button type="button" onClick={() => applyParams({ q })}>
+      <div className="flex gap-2 sm:shrink-0">
+        <Button type="button" className="flex-1 sm:flex-none" onClick={() => applyParams({ q })}>
           <FilterIcon />
           Filtrar
         </Button>
-        <Button type="button" variant="outline" onClick={limpiarFiltros} disabled={!hasFilters}>
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1 sm:flex-none"
+          onClick={limpiarFiltros}
+          disabled={!hasFilters}
+        >
           <XIcon />
           Limpiar
         </Button>

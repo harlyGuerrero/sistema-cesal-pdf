@@ -126,12 +126,12 @@ export default async function ReportesPage({
 
   return (
     <main className="space-y-6 p-6 print:p-8">
-      <div className="flex items-center justify-between print:hidden">
-        <div>
+      <div className="flex flex-col gap-3 print:hidden sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-xl font-medium">Reportes</h1>
           <p className="text-sm text-muted-foreground">Inventario de activos por ubicación y tipo.</p>
         </div>
-        <PrintButton />
+        <PrintButton className="w-full sm:w-auto" />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 print:hidden">

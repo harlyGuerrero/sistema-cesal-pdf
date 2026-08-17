@@ -105,19 +105,17 @@ export default async function FichaActivoPage({
         ]}
       />
       <main className="mx-auto max-w-3xl space-y-6 p-6 print:max-w-none print:space-y-4 print:p-8">
-      <header className="flex items-start justify-between gap-4 border-b pb-4">
-        <div className="space-y-1">
+      <header className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-1">
           <p className="text-xs tracking-wide text-muted-foreground uppercase">Ficha técnica</p>
-          <h1 className="text-2xl font-bold">{activo.nombreActivo}</h1>
+          <h1 className="text-xl font-bold break-words sm:text-2xl">{activo.nombreActivo}</h1>
           <p className="text-sm text-muted-foreground">
             {activo.tipoActivo.name}
             {activo.subcategoria && ` · ${activo.subcategoria.categoria.nombre} › ${activo.subcategoria.nombre}`}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-3">
-          <div className="print:hidden">
-            <PrintButton />
-          </div>
+        <div className="shrink-0 print:hidden">
+          <PrintButton className="w-full sm:w-auto" />
         </div>
       </header>
 

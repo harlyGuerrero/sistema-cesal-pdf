@@ -131,7 +131,7 @@ export function LoginForm({ from }: { from?: string }) {
               </div>
             </Field>
 
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 text-sm">
               <label className="flex items-center gap-2 text-muted-foreground">
                 <input type="checkbox" name="recordar" value="true" className="size-4 rounded accent-primary" />
                 Recordar sesión

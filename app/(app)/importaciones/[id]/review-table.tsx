@@ -104,22 +104,27 @@ export function ReviewTable({
   return (
     <div className="space-y-4">
       <Tabs value={filter} onValueChange={(value) => setFilter(value as typeof filter)}>
-        <TabsList variant="line">
-          {FILTERS.map((f) => (
-            <TabsTrigger
-              key={f.value}
-              value={f.value}
-              className="data-active:text-primary data-active:after:bg-primary"
-            >
-              {f.label}
-              {f.value !== "ALL" && (
-                <span className="ml-1 text-muted-foreground">
-                  ({items.filter((item) => item.status === f.value).length})
-                </span>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        {/* overflow-x-auto: en móvil las 5 pestañas no caben en una fila
+            (TabsList es w-fit sin wrap) — sin esto "Ignorados" quedaba
+            recortado fuera de la pantalla, inalcanzable. */}
+        <div className="overflow-x-auto">
+          <TabsList variant="line">
+            {FILTERS.map((f) => (
+              <TabsTrigger
+                key={f.value}
+                value={f.value}
+                className="data-active:text-primary data-active:after:bg-primary"
+              >
+                {f.label}
+                {f.value !== "ALL" && (
+                  <span className="ml-1 text-muted-foreground">
+                    ({items.filter((item) => item.status === f.value).length})
+                  </span>
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
       </Tabs>
 
       <Card>

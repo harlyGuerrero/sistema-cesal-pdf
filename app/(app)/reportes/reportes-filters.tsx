@@ -40,10 +40,10 @@ export function ReportesFilters({ sedes, tiposActivo }: ReportesFiltersProps) {
   const hasFilters = [...searchParams.keys()].some((key) => key !== "page");
 
   return (
-    <div className="flex flex-wrap items-end gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
       <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Sede</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Sede</label>
           <Select
             value={searchParams.get("sedeId") ?? "all"}
             onValueChange={(value) => applyParams({ sedeId: value as string })}
@@ -63,7 +63,7 @@ export function ReportesFilters({ sedes, tiposActivo }: ReportesFiltersProps) {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Tipo de activo</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Tipo de activo</label>
           <Select
             value={searchParams.get("tipoActivoId") ?? "all"}
             onValueChange={(value) => applyParams({ tipoActivoId: value as string })}
@@ -83,7 +83,7 @@ export function ReportesFilters({ sedes, tiposActivo }: ReportesFiltersProps) {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Estado</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Estado</label>
           <Select
             value={searchParams.get("estado") ?? "all"}
             onValueChange={(value) => applyParams({ estado: value as string })}
@@ -106,6 +106,7 @@ export function ReportesFilters({ sedes, tiposActivo }: ReportesFiltersProps) {
       <Button
         type="button"
         variant="outline"
+        className="sm:shrink-0"
         disabled={!hasFilters || isPending}
         onClick={() => startTransition(() => router.replace(pathname, { scroll: false }))}
       >

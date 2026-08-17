@@ -26,23 +26,23 @@ export function BreadcrumbSlot() {
   const moduleHref = currentModule?.url ?? "/";
 
   return (
-    <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-sm">
+    <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 overflow-hidden text-sm">
       {items.length > 0 ? (
-        <Link href={moduleHref} className="text-muted-foreground hover:text-foreground">
+        <Link href={moduleHref} className="shrink-0 text-muted-foreground hover:text-foreground">
           {moduleLabel}
         </Link>
       ) : (
-        <span className="font-medium text-foreground">{moduleLabel}</span>
+        <span className="shrink-0 font-medium text-foreground">{moduleLabel}</span>
       )}
       {items.map((item, index) => (
-        <span key={index} className="flex items-center gap-1.5">
-          <ChevronRightIcon className="size-3.5 text-muted-foreground" />
+        <span key={index} className="flex min-w-0 items-center gap-1.5">
+          <ChevronRightIcon className="size-3.5 shrink-0 text-muted-foreground" />
           {item.href ? (
-            <Link href={item.href} className="text-muted-foreground hover:text-primary">
+            <Link href={item.href} className="block min-w-0 truncate text-muted-foreground hover:text-primary">
               {item.label}
             </Link>
           ) : (
-            <span className="font-medium text-primary">{item.label}</span>
+            <span className="block min-w-0 truncate font-medium text-primary">{item.label}</span>
           )}
         </span>
       ))}

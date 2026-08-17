@@ -17,7 +17,10 @@ export function PasswordInput({ className, ...props }: React.ComponentProps<type
       <button
         type="button"
         onClick={() => setVisible((current) => !current)}
-        className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        // inset-y-0 + flex: el área tocable ocupa todo el alto del input, no
+        // solo el ícono de 16px — en móvil un botón tan chico es casi
+        // imposible de acertar con el dedo.
+        className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-muted-foreground hover:text-foreground"
         aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
       >
         {visible ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}

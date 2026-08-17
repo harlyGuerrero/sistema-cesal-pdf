@@ -69,10 +69,10 @@ export function ActivosFilters({ tiposActivo, sedes }: ActivosFiltersProps) {
   const hasFilters = [...searchParams.keys()].some((key) => key !== "page");
 
   return (
-    <div className="flex flex-wrap items-end gap-3">
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
       <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
         <div className="col-span-2 space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Buscar activo</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Buscar activo</label>
           <div className="relative">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -89,7 +89,7 @@ export function ActivosFilters({ tiposActivo, sedes }: ActivosFiltersProps) {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Tipo de activo</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Tipo de activo</label>
           <Select
             value={searchParams.get("tipoActivoId") ?? "all"}
             onValueChange={(value) => applyParams({ tipoActivoId: value as string })}
@@ -109,7 +109,7 @@ export function ActivosFilters({ tiposActivo, sedes }: ActivosFiltersProps) {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Sede</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Sede</label>
           <Select
             value={searchParams.get("sedeId") ?? "all"}
             onValueChange={(value) => applyParams({ sedeId: value as string })}
@@ -129,7 +129,7 @@ export function ActivosFilters({ tiposActivo, sedes }: ActivosFiltersProps) {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Estado</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Estado</label>
           <Select
             value={searchParams.get("estadoPatrimonial") ?? "all"}
             onValueChange={(value) => applyParams({ estadoPatrimonial: value as string })}
@@ -149,7 +149,7 @@ export function ActivosFilters({ tiposActivo, sedes }: ActivosFiltersProps) {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Orden</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Orden</label>
           <Select
             value={searchParams.get("sort") ?? "recientes"}
             onValueChange={(value) => applyParams({ sort: value as string })}
@@ -166,12 +166,18 @@ export function ActivosFilters({ tiposActivo, sedes }: ActivosFiltersProps) {
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">
-        <Button type="button" onClick={() => applyParams({ q })}>
+      <div className="flex gap-2 sm:shrink-0">
+        <Button type="button" className="flex-1 sm:flex-none" onClick={() => applyParams({ q })}>
           <FilterIcon />
           Filtrar
         </Button>
-        <Button type="button" variant="outline" onClick={limpiarFiltros} disabled={!hasFilters}>
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1 sm:flex-none"
+          onClick={limpiarFiltros}
+          disabled={!hasFilters}
+        >
           <XIcon />
           Limpiar
         </Button>

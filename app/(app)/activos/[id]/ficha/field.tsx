@@ -38,7 +38,9 @@ export function Section({
           {title}
         </h2>
       </div>
-      <div className={cn("p-4", bodyClassName ?? "grid grid-cols-2 gap-x-6 gap-y-3")}>{children}</div>
+      <div className={cn("p-4", bodyClassName ?? "grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 print:grid-cols-2")}>
+        {children}
+      </div>
     </section>
   );
 }
