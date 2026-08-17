@@ -12,6 +12,7 @@ import {
   movimientoTipoAAccionAuditoria,
 } from "@/lib/activos/movimientos";
 import { registrarAuditoria } from "@/lib/auditoria/registrar";
+import { crearNotificacionDesdeMovimiento } from "@/lib/notificaciones/crear";
 import { requireSessionUsuario } from "@/lib/auth/session";
 import { nombreCompleto } from "@/lib/nombre-completo";
 import type { CondicionFisica, EstadoPatrimonial } from "@/lib/generated/prisma/client";
@@ -187,6 +188,20 @@ export async function updateActivoAction(activoId: string, formData: FormData): 
     const movimiento = buildMovimientoDeEdicion(anterior, data);
     if (movimiento) {
       await tx.movimiento.create({ data: { activoId, usuarioId: actor.id, ...movimiento } });
+      // Fase 49: notifica solo si el tipo de movimiento está en el alcance
+      // pedido (ver TIPO_MOVIMIENTO_A_NOTIFICACION) — no una por cada edición.
+      const sede = movimiento.sedeNuevaId
+        ? await tx.sede.findUnique({ where: { id: movimiento.sedeNuevaId }, select: { name: true } })
+        : null;
+      await crearNotificacionDesdeMovimiento(
+        {
+          tipoMovimiento: movimiento.tipo,
+          activo: { id: activoId, nombreActivo: data.nombreActivo, codigoPatrimonial: anterior.codigoPatrimonial },
+          actorId: actor.id,
+          sedeNombre: sede?.name ?? null,
+        },
+        tx
+      );
     }
     await registrarAuditoria(
       {
@@ -225,17 +240,27 @@ export async function asignarResponsableAction(activoId: string, responsableId: 
       data: { responsableActualId: responsableId, estadoPatrimonial: "ASIGNADO" },
     });
 
+    const tipoMovimiento = activo.responsableActualId ? "REASIGNACION" : "ASIGNACION";
     await tx.movimiento.create({
       data: {
         activoId,
         usuarioId: actor.id,
-        tipo: activo.responsableActualId ? "REASIGNACION" : "ASIGNACION",
+        tipo: tipoMovimiento,
         responsableAnteriorId: activo.responsableActualId,
         responsableNuevoId: responsableId,
         estadoAnterior: activo.estadoPatrimonial,
         estadoNuevo: "ASIGNADO",
       },
     });
+    await crearNotificacionDesdeMovimiento(
+      {
+        tipoMovimiento,
+        activo: { id: activoId, nombreActivo: activo.nombreActivo, codigoPatrimonial: activo.codigoPatrimonial },
+        actorId: actor.id,
+        responsableNombre: nombreCompleto(responsable),
+      },
+      tx
+    );
     await registrarAuditoria(
       {
         accion: "ASIGNAR",
@@ -280,6 +305,15 @@ export async function desasignarResponsableAction(activoId: string): Promise<voi
         estadoNuevo: "DISPONIBLE",
       },
     });
+    await crearNotificacionDesdeMovimiento(
+      {
+        tipoMovimiento: "CAMBIO_RESPONSABLE",
+        activo: { id: activoId, nombreActivo: activo.nombreActivo, codigoPatrimonial: activo.codigoPatrimonial },
+        actorId: actor.id,
+        responsableNombre: responsableAnterior ? nombreCompleto(responsableAnterior) : null,
+      },
+      tx
+    );
     await registrarAuditoria(
       {
         accion: "ACTUALIZAR",

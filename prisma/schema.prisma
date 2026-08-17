@@ -165,6 +165,31 @@ enum RolUsuario {
   ADMIN
 }
 
+// Fase 49: eventos que ameritan avisarle a un Usuario, distinto tanto de
+// Movimiento (historial permanente de qué le pasó a un Activo) como de
+// AuditoriaLog (quién hizo qué, para cualquier admin) — ver
+// lib/notificaciones/crear.ts. Los primeros 6 valores son un subconjunto de
+// TipoMovimiento a propósito: se generan desde el mismo punto donde ya se
+// infiere el tipo de movimiento, sin duplicar esa detección.
+enum TipoNotificacion {
+  ASIGNACION
+  REASIGNACION
+  CAMBIO_RESPONSABLE
+  CAMBIO_UBICACION
+  MANTENIMIENTO
+  BAJA
+  IMPORTACION_COMPLETADA
+  IMPORTACION_CON_ERRORES
+  DOCUMENTO_AGREGADO
+  SISTEMA
+}
+
+enum PrioridadNotificacion {
+  NORMAL
+  ALTA
+  INFORMATIVA
+}
+
 // ---------------------------------------------------------------------------
 // Models
 // ---------------------------------------------------------------------------
@@ -362,6 +387,7 @@ model Usuario {
   movimientos        Movimiento[]
   documentosCargados Documento[]
   auditoriaLogs      AuditoriaLog[]
+  notificaciones     Notificacion[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -503,6 +529,39 @@ model AuditoriaLog {
   @@index([usuarioId])
   @@index([accion])
   @@map("auditoria_logs")
+}
+
+// Fase 49: aviso dirigido a un Usuario puntual (nunca broadcast a nivel de
+// fila — un evento que informa a 5 usuarios activos crea 5 filas, una por
+// destinatario, para que cada quien tenga su propio estado de lectura). Usa
+// la misma convención que AuditoriaLog para "a qué se refiere" (entidad +
+// entidadId como referencia lógica en texto libre, no una FK por tipo de
+// entidad) — mismo motivo: sobrevive si el recurso se borra después, y no
+// requiere una columna nueva por cada origen de notificación. titulo/mensaje
+// se guardan ya redactados al crear la notificación (no como AuditoriaLog,
+// que guarda un detalle JSON crudo e interpretable después) porque acá el
+// texto es lo que el usuario final lee, no algo que un admin reconstruye.
+model Notificacion {
+  id        String  @id @default(cuid())
+  usuarioId String
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  tipo      TipoNotificacion
+  prioridad PrioridadNotificacion @default(NORMAL)
+  titulo    String
+  mensaje   String
+
+  entidad   String?
+  entidadId String?
+
+  leida   Boolean   @default(false)
+  leidaEn DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([usuarioId, leida])
+  @@index([usuarioId, createdAt])
+  @@map("notificaciones")
 }
 
 // Activo patrimonial individual — antes "Product" (producto lógico

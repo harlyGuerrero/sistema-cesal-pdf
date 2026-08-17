@@ -3,8 +3,12 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { BreadcrumbProvider } from "@/components/breadcrumb-context";
 import { BreadcrumbSlot } from "@/components/breadcrumb-slot";
+import { NotificationBell } from "@/components/notification-bell";
 import { getSessionUsuario } from "@/lib/auth/session";
 import { Separator } from "@/components/ui/separator";
+import { prisma } from "@/lib/db";
+
+const NOTIFICACIONES_CAMPANA_TAKE = 8;
 
 // Fase 13: layout de las pantallas autenticadas (todo salvo /login, que
 // vive fuera de este route group a propósito — ver app/layout.tsx). proxy.ts
@@ -15,6 +19,18 @@ export default async function AuthenticatedLayout({ children }: LayoutProps<"/">
   if (!usuario) {
     redirect("/login");
   }
+
+  // Fase 49: se resuelve acá (no en cada página) porque la campana vive en
+  // este header compartido — mismo criterio que getSessionUsuario arriba.
+  const [notificaciones, unreadCount] = await Promise.all([
+    prisma.notificacion.findMany({
+      where: { usuarioId: usuario.id },
+      orderBy: [{ leida: "asc" }, { createdAt: "desc" }],
+      take: NOTIFICACIONES_CAMPANA_TAKE,
+      select: { id: true, tipo: true, titulo: true, mensaje: true, entidad: true, entidadId: true, leida: true, createdAt: true },
+    }),
+    prisma.notificacion.count({ where: { usuarioId: usuario.id, leida: false } }),
+  ]);
 
   return (
     <SidebarProvider>
@@ -30,6 +46,9 @@ export default async function AuthenticatedLayout({ children }: LayoutProps<"/">
             <SidebarTrigger className="-ml-1" />
             <div className="h-4 w-px bg-border" aria-hidden="true" />
             <BreadcrumbSlot />
+            <div className="ml-auto">
+              <NotificationBell notificaciones={notificaciones} unreadCount={unreadCount} />
+            </div>
           </header>
           {children}
         </BreadcrumbProvider>

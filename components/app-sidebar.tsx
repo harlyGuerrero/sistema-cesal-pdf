@@ -3,9 +3,10 @@
 import * as React from "react";
 import { useTransition } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
-import { MoonIcon, SunIcon, LogOutIcon, MoreVerticalIcon } from "lucide-react";
+import { MoonIcon, SunIcon, LogOutIcon, MoreVerticalIcon, UserIcon } from "lucide-react";
 
 import { NavMain, resolveActiveUrl } from "@/components/nav-main";
 import { MAIN_NAV_ITEMS, ACTIVOS_CONFIG_NAV_ITEMS, ORG_NAV_ITEMS } from "@/lib/nav-items";
@@ -142,6 +143,11 @@ export function AppSidebar({
                     {usuario.email}
                   </DropdownMenuLabel>
                 </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem render={<Link href="/mi-cuenta" />}>
+                  <UserIcon />
+                  Mi Cuenta
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"

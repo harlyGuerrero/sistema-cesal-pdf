@@ -5,6 +5,7 @@ import { DocumentServiceError, processDocument } from "@/lib/document-service/cl
 import { normalizeProductCandidate } from "@/lib/normalization/normalize";
 import { classifyRelevance } from "@/lib/classification/relevance";
 import { classifyCategory } from "@/lib/classification/category";
+import { crearNotificacionBroadcast } from "@/lib/notificaciones/crear";
 
 // Orquesta el flujo completo (Fase 8): Upload -> validación -> hash ->
 // duplicate check -> crear Import -> PROCESSING -> Document Service ->
@@ -65,7 +66,8 @@ export async function processUpload(file: UploadedFile): Promise<ProcessUploadRe
     // Ya nada se auto-confirma (Fase 39) — solo IGNORED no necesita revisión.
     // Si hay al menos un ítem PRODUCT, queda READY_FOR_REVIEW; si todo fue
     // IGNORED (o no se detectó ningún ítem), pasa directo a COMPLETED.
-    const hasPendingReview = itemsToCreate.items.some((item) => item.status === "REVIEW_REQUIRED");
+    const reviewCount = itemsToCreate.items.filter((item) => item.status === "REVIEW_REQUIRED").length;
+    const hasPendingReview = reviewCount > 0;
     const finalStatus = hasPendingReview ? "READY_FOR_REVIEW" : "COMPLETED";
     const now = new Date();
 
@@ -94,6 +96,35 @@ export async function processUpload(file: UploadedFile): Promise<ProcessUploadRe
           completedAt: finalStatus === "COMPLETED" ? now : null,
         },
       });
+
+      // Fase 49: sin requireSessionUsuario en este flujo (POST /api/imports
+      // no queda atado a un actor, ver skill import-workflow) — se avisa a
+      // todos los usuarios activos, no se puede excluir a "quien subió".
+      if (finalStatus === "COMPLETED") {
+        await crearNotificacionBroadcast(
+          {
+            tipo: "IMPORTACION_COMPLETADA",
+            prioridad: "NORMAL",
+            titulo: "Importación completada",
+            mensaje: `La importación de "${file.filename}" se completó correctamente.`,
+            entidad: "Import",
+            entidadId: importRecord.id,
+          },
+          tx
+        );
+      } else {
+        await crearNotificacionBroadcast(
+          {
+            tipo: "IMPORTACION_CON_ERRORES",
+            prioridad: "ALTA",
+            titulo: "Importación con pendientes",
+            mensaje: `La importación de "${file.filename}" tiene ${reviewCount} registro(s) pendiente(s) de revisión.`,
+            entidad: "Import",
+            entidadId: importRecord.id,
+          },
+          tx
+        );
+      }
     });
 
     return { outcome: "processed", importId: importRecord.id, itemCount: itemsToCreate.items.length };
@@ -102,6 +133,14 @@ export async function processUpload(file: UploadedFile): Promise<ProcessUploadRe
     await prisma.import.update({
       where: { id: importRecord.id },
       data: { status: "FAILED", errorMessage: message, processedAt: new Date() },
+    });
+    await crearNotificacionBroadcast({
+      tipo: "IMPORTACION_CON_ERRORES",
+      prioridad: "ALTA",
+      titulo: "Importación con pendientes",
+      mensaje: `La importación de "${file.filename}" falló: ${message}`,
+      entidad: "Import",
+      entidadId: importRecord.id,
     });
     return { outcome: "failed", importId: importRecord.id, error: message };
   }

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { validateDocumentUpload, DocumentValidationError } from "@/lib/security/document-validation";
 import { guardarDocumento } from "@/lib/documentos/storage";
 import { registrarAuditoria } from "@/lib/auditoria/registrar";
+import { crearNotificacionBroadcast } from "@/lib/notificaciones/crear";
 import { requireSessionUsuario } from "@/lib/auth/session";
 import type { TipoDocumento } from "@/lib/generated/prisma/client";
 
@@ -68,6 +69,18 @@ export async function subirDocumentoAction(activoId: string, formData: FormData)
           nombreOriginal: file.name,
         },
         usuarioId: actor.id,
+      },
+      tx
+    );
+    await crearNotificacionBroadcast(
+      {
+        tipo: "DOCUMENTO_AGREGADO",
+        prioridad: "INFORMATIVA",
+        titulo: "Documento agregado",
+        mensaje: `Se agregó un documento a "${documento.activo.nombreActivo}" (${documento.activo.codigoPatrimonial}).`,
+        entidad: "Activo",
+        entidadId: activoId,
+        excluirUsuarioId: actor.id,
       },
       tx
     );
