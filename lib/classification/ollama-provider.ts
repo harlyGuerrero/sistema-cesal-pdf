@@ -7,8 +7,8 @@ import { categoryCodeSchema, type CategoryClassificationInput, type CategoryCode
 // extracción — solo clasificación en casos ambiguos).
 
 const SYSTEM_PROMPT = `Clasificas nombres de productos de facturas en exactamente una categoria patrimonial. Categorias y ejemplos:
-EQUIPOS_INFORMATICOS: laptop, computadora, monitor, impresora, servidor, router, teclado, mouse, tablet.
-EQUIPOS_DE_OFICINA: fotocopiadora, telefono fijo, calculadora, aire acondicionado, proyector, fax.
+EQUIPOS_INFORMATICOS: laptop, computadora, monitor, impresora, servidor, router, teclado, mouse, tablet, proyector.
+EQUIPOS_DE_OFICINA: fotocopiadora, telefono fijo, calculadora, aire acondicionado, fax, friobar, frigobar, refrigeradora, calefactor, ventilador, microondas, hervidor, dispensador de agua, cafetera.
 MUEBLES_DE_OFICINA: escritorio, silla, archivador, estante, mesa, libreros.
 BIENES_VEHICULARES: camioneta, automovil, camion, motocicleta, furgon, bus.
 EQUIPOS_DE_MAQUINARIA: generador, compresora, montacargas, excavadora, tractor, soldadora.

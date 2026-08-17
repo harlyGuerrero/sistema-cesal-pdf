@@ -34,6 +34,12 @@ const CATEGORY_PATTERNS: Record<CategoryCode, RegExp[]> = {
     /\bVENTILADOR(ES)?\b/,
     /\bDISPENSADOR DE AGUA\b/,
     /\bCAFETERAS?\b/,
+    /\bFR[IÍ]OBAR(ES)?\b|\bFRIGOBAR(ES)?\b/,
+    /\bREFRIGERADORAS?\b|\bREFRIGERADORES?\b/,
+    /\bCALEFACTOR(ES)?\b/,
+    /\bMICROONDAS\b/,
+    /\bHERV(IDOR|IDORA)(ES)?\b/,
+    /\bEXTRACTOR(ES)? DE AIRE\b/,
   ],
   MUEBLES_DE_OFICINA: [
     /\bESCRITORIOS?\b/,
