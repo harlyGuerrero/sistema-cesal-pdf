@@ -15,6 +15,19 @@ def test_parse_number_formats():
     assert parse_number(None) is None
 
 
+def test_parse_number_comma_as_both_thousands_and_decimal_separator():
+    """Bug real (Fase 53): una factura escaneada con "70.000,00" (miles con
+    punto, decimal con coma) donde el OCR lee el punto decimal como una coma
+    más, produce "70,000,00" — antes esto se interpretaba como 7,000,000
+    (las 3 comas como separador de miles), 100x el valor real."""
+    assert parse_number("70,000,00") == 70000.0
+    assert parse_number("1,234,567,89") == 1234567.89
+    # Sin decimales (último grupo de 3 dígitos): sigue siendo separador de
+    # miles, no debe interpretarse como decimal.
+    assert parse_number("70,000") == 70000.0
+    assert parse_number("1,234") == 1234.0
+
+
 def test_is_numeric_cell_distinguishes_numbers_from_text_containing_digits():
     """Bug real de Fase 9: un nombre de producto con modelo ("LATITUDE 5420",
     "2000VA") no debe contar como celda numérica al clasificar columnas, o la

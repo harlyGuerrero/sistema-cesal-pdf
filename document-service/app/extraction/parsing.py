@@ -27,8 +27,14 @@ def parse_number(text: str | None) -> float | None:
             cleaned = cleaned.replace(",", "")
     elif has_comma:
         parts = cleaned.split(",")
-        if len(parts) == 2 and len(parts[1]) in (1, 2):
-            cleaned = cleaned.replace(",", ".")
+        # Último grupo de 1-2 dígitos = separador decimal, sin importar
+        # cuántas comas hay antes (ej. "70,000,00": el escaneo/OCR de una
+        # factura puede leer el punto decimal de "70.000,00" como una coma
+        # más — bug real, ver Fase 53). Con eso, los grupos anteriores son
+        # miles y se concatenan sin separador; si el último grupo tiene 3+
+        # dígitos, es un miles más (ej. "70,000" -> 70000, sin decimales).
+        if len(parts) >= 2 and len(parts[-1]) in (1, 2):
+            cleaned = "".join(parts[:-1]) + "." + parts[-1]
         else:
             cleaned = cleaned.replace(",", "")
 
