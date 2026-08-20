@@ -11,6 +11,7 @@ export interface ActivoTableRow {
   nombreActivo: string;
   codigoPatrimonial: string;
   numeroFactura: string | null;
+  numeroFC: string | null;
   estadoPatrimonial: EstadoPatrimonial;
   tipoActivo: { code: TipoActivoCode; name: string };
   sede: { name: string } | null;
@@ -19,7 +20,7 @@ export interface ActivoTableRow {
   responsableActual: { nombres: string; apellidos: string; email: string } | null;
 }
 
-const COLUMN_COUNT = 8;
+const COLUMN_COUNT = 9;
 
 // Fase 25: tabla de Activos extraída de /activos (Fase 19) para reusarla tal
 // cual en el Dashboard ("Activos recientes") — mismo ícono por categoría
@@ -37,12 +38,13 @@ export function ActivosTable({
       <TableHeader>
         <TableRow>
           <TableHead className="pl-6">Nombre del activo</TableHead>
+          <TableHead>Código patrimonial</TableHead>
           <TableHead>Tipo de activo</TableHead>
           <TableHead>Sede</TableHead>
           <TableHead>Responsable</TableHead>
           <TableHead>Estado</TableHead>
-          <TableHead>Código patrimonial</TableHead>
           <TableHead>N° de factura</TableHead>
+          <TableHead>N° FC</TableHead>
           <TableHead className="pr-6 text-right">Acciones</TableHead>
         </TableRow>
       </TableHeader>
@@ -71,6 +73,7 @@ export function ActivosTable({
                   </div>
                 </div>
               </TableCell>
+              <TableCell className="text-sm tabular-nums">{activo.codigoPatrimonial}</TableCell>
               <TableCell className="text-sm text-muted-foreground">{activo.tipoActivo.name}</TableCell>
               <TableCell className="text-sm">
                 <p>{activo.sede?.name ?? "Sin sede"}</p>
@@ -94,8 +97,8 @@ export function ActivosTable({
                   {ESTADO_PATRIMONIAL_LABELS[activo.estadoPatrimonial] ?? activo.estadoPatrimonial}
                 </span>
               </TableCell>
-              <TableCell className="text-sm tabular-nums">{activo.codigoPatrimonial}</TableCell>
               <TableCell className="text-sm text-muted-foreground">{activo.numeroFactura ?? "—"}</TableCell>
+              <TableCell className="text-sm text-muted-foreground">{activo.numeroFC ?? "—"}</TableCell>
               <TableCell className="pr-6">
                 <ActivoRowActions activoId={activo.id} nombreActivo={activo.nombreActivo} />
               </TableCell>

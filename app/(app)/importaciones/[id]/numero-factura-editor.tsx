@@ -20,17 +20,22 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Ocurrió un error inesperado.";
 }
 
-// Único campo editable de un Import (el resto se fija al subir el PDF). El
-// Document Service detecta el N° de factura del propio documento al
+// Únicos campos editables de un Import (el resto se fija al subir el PDF).
+// El Document Service detecta el N° de factura del propio documento al
 // procesarlo (ver invoice_number.py) y llega acá ya precargado — esto queda
-// como corrección manual para cuando la detección falla o se equivoca. Se
-// propaga a Activo.numeroFactura al confirmar cada ítem (ver activo-creation.ts).
+// como corrección manual para cuando la detección falla o se equivoca. El
+// N° FC, en cambio, es el correlativo interno de CESAL: nunca se autodetecta
+// (no está impreso en el PDF del proveedor), siempre se carga a mano acá.
+// Ambos se propagan a Activo.numeroFactura/numeroFC al confirmar cada ítem
+// (ver activo-creation.ts).
 export function NumeroFacturaEditor({
   importId,
   numeroFactura,
+  numeroFC,
 }: {
   importId: string;
   numeroFactura: string | null;
+  numeroFC: string | null;
 }) {
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -46,10 +51,13 @@ export function NumeroFacturaEditor({
         }
       >
         <ReceiptTextIcon className="size-3.5 shrink-0" />
-        {numeroFactura ? (
-          <span>N° de factura: {numeroFactura}</span>
+        {numeroFactura || numeroFC ? (
+          <span>
+            {numeroFactura ? `N° de factura: ${numeroFactura}` : "Sin N° de factura"}
+            {numeroFC ? ` · N° FC: ${numeroFC}` : " · Sin N° FC"}
+          </span>
         ) : (
-          <span className="italic">Sin número de factura</span>
+          <span className="italic">Sin número de factura ni N° FC</span>
         )}
         <PencilIcon className="size-3 shrink-0" />
       </DialogTrigger>
@@ -72,16 +80,22 @@ export function NumeroFacturaEditor({
               }
             });
           }}
-          className="space-y-1"
+          className="space-y-3"
         >
-          <Label htmlFor="numeroFactura">N° de factura</Label>
-          <Input
-            id="numeroFactura"
-            name="numeroFactura"
-            defaultValue={numeroFactura ?? ""}
-            placeholder="Ej. F001-00123"
-            autoFocus
-          />
+          <div className="space-y-1">
+            <Label htmlFor="numeroFactura">N° de factura</Label>
+            <Input
+              id="numeroFactura"
+              name="numeroFactura"
+              defaultValue={numeroFactura ?? ""}
+              placeholder="Ej. F001-00123"
+              autoFocus
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="numeroFC">N° FC (correlativo interno CESAL)</Label>
+            <Input id="numeroFC" name="numeroFC" defaultValue={numeroFC ?? ""} placeholder="Ej. FC-0456" />
+          </div>
         </form>
         <DialogFooter>
           <Button type="submit" form="numero-factura-form" disabled={isPending}>

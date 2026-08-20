@@ -58,6 +58,7 @@ export interface ActivoFormInitial {
   proveedorRazonSocial: string;
   fechaAdquisicion: string;
   numeroFactura: string;
+  numeroFC: string;
   codigoProyecto: string;
   costoAdquisicion: string;
   valorContable: string;
@@ -391,6 +392,19 @@ export function ActivoForm({
             <div className="space-y-1">
               <Label htmlFor="numeroFactura">N° de factura</Label>
               <Input id="numeroFactura" name="numeroFactura" defaultValue={initial?.numeroFactura} />
+            </div>
+          )}
+          {esDeImportacion ? (
+            <div className="space-y-1">
+              <Label>N° FC</Label>
+              <p className="flex h-8 items-center rounded-lg border border-input bg-muted/40 px-2.5 text-sm font-medium">
+                {initial?.numeroFC || "—"}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <Label htmlFor="numeroFC">N° FC</Label>
+              <Input id="numeroFC" name="numeroFC" defaultValue={initial?.numeroFC} placeholder="Correlativo interno CESAL" />
             </div>
           )}
           <div className="space-y-1">

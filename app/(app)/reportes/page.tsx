@@ -208,11 +208,13 @@ export default async function ReportesPage({
           <Table className="print:text-[10px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="pl-6 print:whitespace-normal">Código</TableHead>
-                <TableHead className="print:whitespace-normal">Nombre</TableHead>
+                <TableHead className="pl-6 print:whitespace-normal">Nombre</TableHead>
+                <TableHead className="print:whitespace-normal">Código</TableHead>
                 <TableHead className="print:whitespace-normal">Tipo</TableHead>
                 <TableHead className="print:whitespace-normal">Ubicación</TableHead>
                 <TableHead className="print:whitespace-normal">Responsable</TableHead>
+                <TableHead className="print:whitespace-normal">N° de factura</TableHead>
+                <TableHead className="print:whitespace-normal">N° FC</TableHead>
                 <TableHead className="pr-6 print:whitespace-normal">Estado</TableHead>
               </TableRow>
             </TableHeader>
@@ -221,12 +223,12 @@ export default async function ReportesPage({
                 const estadoColor = ESTADO_PATRIMONIAL_COLOR_VAR[activo.estadoPatrimonial] ?? "var(--color-neutral)";
                 return (
                   <TableRow key={activo.id}>
-                    <TableCell className="pl-6 text-sm text-muted-foreground print:whitespace-normal">{activo.codigoPatrimonial ?? "—"}</TableCell>
-                    <TableCell className="print:whitespace-normal print:break-words">
+                    <TableCell className="pl-6 print:whitespace-normal print:break-words">
                       <Link href={`/activos/${activo.id}`} className="hover:underline print:no-underline">
                         {activo.nombreActivo}
                       </Link>
                     </TableCell>
+                    <TableCell className="text-sm text-muted-foreground print:whitespace-normal">{activo.codigoPatrimonial ?? "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground print:whitespace-normal">
                       {tipoActivoById.get(activo.tipoActivoId)?.name ?? "—"}
                     </TableCell>
@@ -237,6 +239,12 @@ export default async function ReportesPage({
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground print:whitespace-normal">
                       {activo.responsableActual ? nombreCompleto(activo.responsableActual) : "—"}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground print:whitespace-normal">
+                      {activo.numeroFactura ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground print:whitespace-normal">
+                      {activo.numeroFC ?? "—"}
                     </TableCell>
                     <TableCell className="pr-6 print:whitespace-normal">
                       <span
@@ -251,7 +259,7 @@ export default async function ReportesPage({
               })}
               {detalle.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
                     Sin activos que coincidan con el filtro.
                   </TableCell>
                 </TableRow>

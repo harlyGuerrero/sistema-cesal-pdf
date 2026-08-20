@@ -573,7 +573,7 @@ model Notificacion {
 // agrega vacío de antemano.
 model Activo {
   id                String  @id @default(cuid())
-  codigoPatrimonial String @unique
+  codigoPatrimonial String  @unique
   nombreActivo      String
   nombreNormalizado String
   descripcion       String?
@@ -615,6 +615,11 @@ model Activo {
 
   fechaAdquisicion DateTime?
   numeroFactura    String?
+  // Fase 52: correlativo interno de CESAL para la factura (distinto del N°
+  // de factura del proveedor, que va en numeroFactura) — mismo patrón:
+  // hereda de Import.numeroFC al confirmar el ítem (ver activo-creation.ts),
+  // pero CESAL lo asigna internamente, así que nunca se autodetecta del PDF.
+  numeroFC         String?
   codigoProyecto   String?
 
   costoAdquisicion Decimal? @db.Decimal(14, 2)
@@ -674,6 +679,9 @@ model Import {
   fileSize      Int
   mimeType      String
   numeroFactura String?
+  // Fase 52: correlativo interno de CESAL para esta factura (ver comentario
+  // en Activo.numeroFC) — siempre manual, nunca se intenta autodetectar.
+  numeroFC      String?
   status        ImportStatus @default(UPLOADED)
   errorMessage  String?
 

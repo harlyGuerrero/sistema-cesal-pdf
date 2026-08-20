@@ -108,7 +108,11 @@ export default async function ImportDetailPage({
               <CalendarIcon className="size-3.5" />
               Subido el {importRecord.createdAt.toLocaleString("es-PE")}
             </div>
-            <NumeroFacturaEditor importId={importRecord.id} numeroFactura={importRecord.numeroFactura} />
+            <NumeroFacturaEditor
+              importId={importRecord.id}
+              numeroFactura={importRecord.numeroFactura}
+              numeroFC={importRecord.numeroFC}
+            />
           </div>
         </CardContent>
       </Card>

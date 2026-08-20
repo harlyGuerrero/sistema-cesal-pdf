@@ -11,6 +11,8 @@ export interface ReporteDetalleActivo {
   unidadOperativa: { name: string } | null;
   ambiente: { name: string } | null;
   responsableActual: { nombres: string; apellidos: string } | null;
+  numeroFactura: string | null;
+  numeroFC: string | null;
   estadoPatrimonial: string;
 }
 
@@ -56,11 +58,13 @@ export async function buildReporteWorkbook(params: {
 
   const detalleSheet = workbook.addWorksheet("Detalle de activos");
   detalleSheet.columns = [
-    { header: "Código", key: "codigo", width: 20 },
     { header: "Nombre", key: "nombre", width: 32 },
+    { header: "Código", key: "codigo", width: 20 },
     { header: "Tipo", key: "tipo", width: 22 },
     { header: "Ubicación", key: "ubicacion", width: 32 },
     { header: "Responsable", key: "responsable", width: 26 },
+    { header: "N° de factura", key: "numeroFactura", width: 18 },
+    { header: "N° FC", key: "numeroFC", width: 16 },
     { header: "Estado", key: "estado", width: 16 },
   ];
   detalleSheet.getRow(1).font = { bold: true };
@@ -72,6 +76,8 @@ export async function buildReporteWorkbook(params: {
       tipo: activo.tipoActivo.name,
       ubicacion: [activo.sede?.name, activo.unidadOperativa?.name, activo.ambiente?.name].filter(Boolean).join(" › ") || "—",
       responsable: activo.responsableActual ? nombreCompleto(activo.responsableActual) : "—",
+      numeroFactura: activo.numeroFactura ?? "—",
+      numeroFC: activo.numeroFC ?? "—",
       estado: ESTADO_PATRIMONIAL_LABELS[activo.estadoPatrimonial] ?? activo.estadoPatrimonial,
     });
   }

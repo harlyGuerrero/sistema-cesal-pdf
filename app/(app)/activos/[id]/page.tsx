@@ -84,6 +84,7 @@ export default async function ActivoDetailPage({
     proveedorRazonSocial: activo.proveedor?.razonSocial ?? "",
     fechaAdquisicion: toDateInputValue(activo.fechaAdquisicion),
     numeroFactura: activo.numeroFactura ?? "",
+    numeroFC: activo.numeroFC ?? "",
     codigoProyecto: activo.codigoProyecto ?? "",
     costoAdquisicion: toDecimalInputValue(activo.costoAdquisicion),
     valorContable: toDecimalInputValue(activo.valorContable),

@@ -109,6 +109,10 @@ async function readActivoInput(formData: FormData) {
     numeroFactura: formData.has("numeroFactura")
       ? (formData.get("numeroFactura") as string).trim() || null
       : undefined,
+    // Mismo criterio que numeroFactura de arriba: el input se oculta en
+    // activo-form.tsx para activos nacidos de una importación (numeroFC ya
+    // heredado del Import, ver activo-creation.ts).
+    numeroFC: formData.has("numeroFC") ? (formData.get("numeroFC") as string).trim() || null : undefined,
     codigoProyecto: (formData.get("codigoProyecto") as string | null)?.trim() || null,
     costoAdquisicion: parseDecimal(formData, "costoAdquisicion", "Costo de adquisición"),
     valorContable: parseDecimal(formData, "valorContable", "Valor contable"),

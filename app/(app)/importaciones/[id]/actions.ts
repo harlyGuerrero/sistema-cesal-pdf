@@ -14,10 +14,11 @@ import { requireSessionUsuario } from "@/lib/auth/session";
 
 export async function updateNumeroFacturaAction(importId: string, formData: FormData): Promise<void> {
   const numeroFactura = (formData.get("numeroFactura") as string | null)?.trim() || null;
+  const numeroFC = (formData.get("numeroFC") as string | null)?.trim() || null;
 
   await prisma.import.update({
     where: { id: importId },
-    data: { numeroFactura },
+    data: { numeroFactura, numeroFC },
   });
 
   revalidatePath(`/importaciones/${importId}`);
@@ -40,7 +41,7 @@ export async function confirmItemAction(itemId: string): Promise<void> {
   const actor = await requireSessionUsuario();
   const item = await prisma.importItem.findUniqueOrThrow({
     where: { id: itemId },
-    include: { import: { select: { numeroFactura: true } } },
+    include: { import: { select: { numeroFactura: true, numeroFC: true } } },
   });
 
   if (!item.tipoActivoId || !item.normalizedName) {
@@ -54,6 +55,7 @@ export async function confirmItemAction(itemId: string): Promise<void> {
     quantity: item.quantity !== null ? Number(item.quantity) : null,
     unitPrice: item.unitPrice !== null ? Number(item.unitPrice) : null,
     numeroFactura: item.import.numeroFactura,
+    numeroFC: item.import.numeroFC,
     usuarioId: actor.id,
   });
 
@@ -110,7 +112,7 @@ export async function editAndConfirmItemAction(itemId: string, formData: FormDat
       status: "CONFIRMED",
       reviewedAt: new Date(),
     },
-    include: { import: { select: { numeroFactura: true } } },
+    include: { import: { select: { numeroFactura: true, numeroFC: true } } },
   });
 
   await createActivosFromImportItem({
@@ -120,6 +122,7 @@ export async function editAndConfirmItemAction(itemId: string, formData: FormDat
     quantity,
     unitPrice,
     numeroFactura: item.import.numeroFactura,
+    numeroFC: item.import.numeroFC,
     usuarioId: actor.id,
   });
 
