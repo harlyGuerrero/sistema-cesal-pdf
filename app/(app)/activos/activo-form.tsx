@@ -165,11 +165,17 @@ export function ActivoForm({
   initial,
   tiposActivo,
   sedes,
+  esDeImportacion = false,
 }: {
   activoId?: string;
   initial?: ActivoFormInitial;
   tiposActivo: TipoActivoTree[];
   sedes: SedeOption[];
+  // Fase 51: un Activo nacido de una importación de PDF ya trae numeroFactura
+  // heredado del Import (ver activo-creation.ts) — el input manual se oculta
+  // para no invitar a pisarlo a mano; el alta manual (sin PDF de por medio)
+  // sigue mostrándolo porque ahí no hay Import del que heredarlo.
+  esDeImportacion?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -374,10 +380,19 @@ export function ActivoForm({
               defaultValue={initial?.proveedorRazonSocial}
             />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="numeroFactura">N° de factura</Label>
-            <Input id="numeroFactura" name="numeroFactura" defaultValue={initial?.numeroFactura} />
-          </div>
+          {esDeImportacion ? (
+            <div className="space-y-1">
+              <Label>N° de factura</Label>
+              <p className="flex h-8 items-center rounded-lg border border-input bg-muted/40 px-2.5 text-sm font-medium">
+                {initial?.numeroFactura || "—"}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <Label htmlFor="numeroFactura">N° de factura</Label>
+              <Input id="numeroFactura" name="numeroFactura" defaultValue={initial?.numeroFactura} />
+            </div>
+          )}
           <div className="space-y-1">
             <Label htmlFor="codigoProyecto">Código de proyecto</Label>
             <Input id="codigoProyecto" name="codigoProyecto" defaultValue={initial?.codigoProyecto} />

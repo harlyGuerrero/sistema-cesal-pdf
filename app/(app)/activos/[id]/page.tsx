@@ -130,7 +130,13 @@ export default async function ActivoDetailPage({
             </FormSection>
           </div>
 
-          <ActivoForm activoId={activo.id} initial={initial} tiposActivo={tiposActivo} sedes={sedes} />
+          <ActivoForm
+            activoId={activo.id}
+            initial={initial}
+            tiposActivo={tiposActivo}
+            sedes={sedes}
+            esDeImportacion={activo.importItemId != null}
+          />
 
           <div className="border-t p-6">
             <DeleteActivoButton

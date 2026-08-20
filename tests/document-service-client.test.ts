@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { DocumentServiceError, processDocument } from "@/lib/document-service/client";
 
 const VALID_RESPONSE = {
-  document: { pages: 1 },
+  document: { pages: 1, invoiceNumber: "F001-00123" },
   tables: [{ page: 1, index: 0, rows: 2, cols: 4, isProductTable: true }],
   products: [
     {

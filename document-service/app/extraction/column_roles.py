@@ -20,6 +20,11 @@ class ColumnRoles:
     quantity: int | None
     unit_price: int | None
     total_price: int | None
+    # True cuando la asignación de columnas no quedó determinada de forma
+    # inequívoca (empate de score en _score_triple, o ningún triple validó
+    # cantidad*precio=total) — ver product_candidate.py, capa la confidence
+    # de las filas resultantes aunque la fila individual cuadre matemáticamente.
+    ambiguous: bool = False
 
 
 def _pick_description_column(data_rows: list[list[str]], num_cols: int) -> int | None:
@@ -66,21 +71,54 @@ def assign_column_roles(data_rows: list[list[str]], num_cols: int) -> ColumnRole
 
     if len(numeric_cols) >= 3:
         best_score = -1
-        best_triple: tuple[int, int, int] | None = None
+        winners: list[tuple[int, int, int]] = []
         for triple in permutations(numeric_cols, 3):
             score = _score_triple(data_rows, *triple)
             if score > best_score:
                 best_score = score
-                best_triple = triple
-        if best_triple is not None and best_score > 0:
-            qty_col, unit_col, total_col = best_triple
-            return ColumnRoles(description_col, qty_col, unit_col, total_col)
+                winners = [triple]
+            elif score == best_score:
+                winners.append(triple)
+
+        if best_score > 0:
+            if len(winners) == 1:
+                qty_col, unit_col, total_col = winners[0]
+                return ColumnRoles(description_col, qty_col, unit_col, total_col)
+
+            # Empate genuino de score: cantidad*precio=total se cumple igual sin
+            # importar cuál columna se llame cantidad y cuál precio (caso real:
+            # cantidad=1 en todas las filas hace que precio y total coincidan
+            # numéricamente). Desempatar por magnitud promedio — cantidades
+            # suelen ser números chicos (unidades) y precios/totales números
+            # más grandes, misma idea que el fallback de abajo — con
+            # integer_ratio (cantidades casi siempre enteras) como desempate
+            # secundario si la magnitud también empata.
+            stats = {c: compute_column_stats(data_rows, c) for c in numeric_cols}
+
+            def qty_key(col: int) -> tuple[float, float]:
+                avg = stats[col].avg_value if stats[col].avg_value is not None else float("inf")
+                return (avg, -stats[col].integer_ratio)
+
+            qty_candidates = sorted({triple[0] for triple in winners})
+            best_qty_col = min(qty_candidates, key=qty_key)
+            tied_qty_cols = [c for c in qty_candidates if qty_key(c) == qty_key(best_qty_col)]
+
+            # Solo cuenta como ambiguo si la columna de CANTIDAD en sí queda
+            # incierta — si unit/total quedan intercambiables entre sí pero la
+            # cantidad ya está resuelta, no es la ambigüedad que rompió
+            # producción (esa fue justamente confundir cantidad con precio).
+            same_qty_winners = sorted(t for t in winners if t[0] == best_qty_col)
+            qty_col, unit_col, total_col = same_qty_winners[0]
+            return ColumnRoles(
+                description_col, qty_col, unit_col, total_col, ambiguous=len(tied_qty_cols) > 1
+            )
+
         # Sin filas que validen la relación cantidad*precio=total: mejor esfuerzo
         # por magnitud (cantidad = valor promedio más chico).
         ordered = sorted(
             numeric_cols, key=lambda c: compute_column_stats(data_rows, c).avg_value or 0
         )
-        return ColumnRoles(description_col, ordered[0], ordered[1], ordered[-1])
+        return ColumnRoles(description_col, ordered[0], ordered[1], ordered[-1], ambiguous=True)
 
     if len(numeric_cols) == 2:
         stats = {c: compute_column_stats(data_rows, c) for c in numeric_cols}

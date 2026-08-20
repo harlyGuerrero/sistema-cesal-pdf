@@ -102,7 +102,13 @@ async function readActivoInput(formData: FormData) {
     ambienteId,
     proveedorId,
     fechaAdquisicion: fechaAdquisicionRaw ? new Date(fechaAdquisicionRaw) : null,
-    numeroFactura: (formData.get("numeroFactura") as string | null)?.trim() || null,
+    // El input se oculta en activo-form.tsx cuando el Activo nació de una
+    // importación (numeroFactura ya heredado del Import, ver
+    // activo-creation.ts) — formData.has() en `undefined` le dice a Prisma
+    // "no toques esta columna" en vez de pisarla con null al no venir el campo.
+    numeroFactura: formData.has("numeroFactura")
+      ? (formData.get("numeroFactura") as string).trim() || null
+      : undefined,
     codigoProyecto: (formData.get("codigoProyecto") as string | null)?.trim() || null,
     costoAdquisicion: parseDecimal(formData, "costoAdquisicion", "Costo de adquisición"),
     valorContable: parseDecimal(formData, "valorContable", "Valor contable"),

@@ -59,6 +59,13 @@ def rows_to_candidates(
 
         raw_text = " | ".join(c.strip() for c in row if c and c.strip())
 
+        confidence = _compute_confidence(quantity, unit_price, total_price)
+        if roles.ambiguous:
+            # La fila puede cuadrar matemáticamente por pura coincidencia (ver
+            # ColumnRoles.ambiguous): la asignación de columnas en sí no quedó
+            # determinada, así que un match perfecto no amerita HIGH_CONFIDENCE.
+            confidence = min(confidence, PARTIAL_CONFIDENCE)
+
         candidates.append(
             ProductCandidate(
                 rawText=raw_text,
@@ -68,7 +75,7 @@ def rows_to_candidates(
                 totalPrice=total_price,
                 currency=None,
                 source=ProductSource(page=table.page, table=table.index, row=row_index),
-                confidence=_compute_confidence(quantity, unit_price, total_price),
+                confidence=confidence,
             )
         )
 

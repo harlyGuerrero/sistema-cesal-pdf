@@ -11,23 +11,59 @@ import os
 # de que Docling/torch lo evalúen en tiempo de ejecución.
 os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
 
-from docling.datamodel.base_models import DocumentStream
-from docling.document_converter import DocumentConverter
+from docling.datamodel.base_models import DocumentStream, InputFormat
+from docling.datamodel.pipeline_options import (
+    PdfPipelineOptions,
+    RapidOcrOptions,
+    TableFormerMode,
+    TableStructureOptions,
+)
+from docling.document_converter import DocumentConverter, PdfFormatOption
 
+from .invoice_number import detect_invoice_number
 from .models import Table
 
 _converter: DocumentConverter | None = None
 
 
+def _build_pipeline_options() -> PdfPipelineOptions:
+    return PdfPipelineOptions(
+        do_ocr=True,
+        # RapidOCR es el único motor OCR instalado (ver requirements.txt) —
+        # se fija explícito en vez de dejar que Docling auto-detecte, porque
+        # OcrAutoModel arma RapidOcrOptions SIN heredar `lang`, así que cae
+        # en su default de fábrica lang=["chinese"]. Facturas de este
+        # sistema son en español: "latin" es el modelo de reconocimiento de
+        # RapidOCR que cubre alfabeto latino con tildes/ñ (no hay un modelo
+        # "es" dedicado en RapidOCR/PP-OCR). Backend "torch": es el que de
+        # hecho queda disponible en este entorno (onnxruntime no está
+        # instalado pese a figurar como backend "por defecto" de RapidOCR;
+        # torch sí, y es al que la auto-detección de Docling termina cayendo).
+        ocr_options=RapidOcrOptions(lang=["latin"], backend="torch"),
+        do_table_structure=True,
+        # ACCURATE ya es el default de esta versión de Docling, pero se fija
+        # explícito para no depender de que un upgrade futuro lo cambie —
+        # facturas tienen tablas densas y chicas, vale la pena el costo extra
+        # frente a FAST.
+        table_structure_options=TableStructureOptions(mode=TableFormerMode.ACCURATE),
+    )
+
+
 def _get_converter() -> DocumentConverter:
     global _converter
     if _converter is None:
-        _converter = DocumentConverter()
+        _converter = DocumentConverter(
+            allowed_formats=[InputFormat.PDF],
+            format_options={
+                InputFormat.PDF: PdfFormatOption(pipeline_options=_build_pipeline_options())
+            },
+        )
     return _converter
 
 
-def extract(content: bytes, filename: str) -> tuple[int, list[Table]]:
-    """Devuelve (num_páginas, tablas) a partir de los bytes de un PDF."""
+def extract(content: bytes, filename: str) -> tuple[int, list[Table], str | None]:
+    """Devuelve (num_páginas, tablas, n° de factura detectado) a partir de los
+    bytes de un PDF."""
     source = DocumentStream(name=filename, stream=io.BytesIO(content))
     result = _get_converter().convert(source)
     document = result.document
@@ -41,7 +77,9 @@ def extract(content: bytes, filename: str) -> tuple[int, list[Table]]:
         if grid:
             tables.append(Table(page=page_no, index=index, rows=grid))
 
-    return num_pages, tables
+    invoice_number = detect_invoice_number(document.export_to_text())
+
+    return num_pages, tables, invoice_number
 
 
 def _table_item_to_grid(table_item) -> list[list[str]]:

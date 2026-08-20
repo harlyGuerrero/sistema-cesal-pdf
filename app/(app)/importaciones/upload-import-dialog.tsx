@@ -96,17 +96,13 @@ export function UploadImportDialog() {
           <DialogTitle>Importar factura en PDF</DialogTitle>
           <DialogDescription>
             El PDF se procesa automáticamente: se detecta la tabla de productos, se clasifican
-            los ítems y quedan listos para revisión.
+            los ítems, se reconoce el N° de factura y quedan listos para revisión.
           </DialogDescription>
         </DialogHeader>
         <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
             <Label htmlFor="file">Archivo PDF</Label>
             <Input id="file" name="file" type="file" accept="application/pdf,.pdf" required />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="numeroFactura">N° de factura (opcional)</Label>
-            <Input id="numeroFactura" name="numeroFactura" placeholder="Ej. F001-00123" />
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <DialogFooter>

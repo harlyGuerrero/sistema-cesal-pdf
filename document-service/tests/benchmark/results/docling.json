@@ -1,0 +1,44 @@
+{
+  "label": "docling",
+  "fixtureCount": 2,
+  "avgNameAccuracy": 1.0,
+  "avgQuantityAccuracy": 1.0,
+  "avgPriceAccuracy": 1.0,
+  "avgTotalAccuracy": 1.0,
+  "totalCorrectRows": 11,
+  "totalExpectedRows": 11,
+  "fixtures": [
+    {
+      "fixture": "factura-cantidad-uno-sintetica.pdf",
+      "expectedRows": 7,
+      "detectedRows": 7,
+      "correctRows": 7,
+      "missingRows": 0,
+      "mergedRows": 0,
+      "extraRows": 0,
+      "falsePositives": 0,
+      "nameAccuracy": 1.0,
+      "quantityAccuracy": 1.0,
+      "priceAccuracy": 1.0,
+      "totalAccuracy": 1.0,
+      "processingTimeMs": 8578,
+      "errors": []
+    },
+    {
+      "fixture": "factura-estudio-shonos.pdf",
+      "expectedRows": 4,
+      "detectedRows": 4,
+      "correctRows": 4,
+      "missingRows": 0,
+      "mergedRows": 0,
+      "extraRows": 0,
+      "falsePositives": 0,
+      "nameAccuracy": 1.0,
+      "quantityAccuracy": 1.0,
+      "priceAccuracy": 1.0,
+      "totalAccuracy": 1.0,
+      "processingTimeMs": 4092,
+      "errors": []
+    }
+  ]
+}

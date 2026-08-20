@@ -1,0 +1,9 @@
+{
+  "_note": "Ground truth leído manualmente del PDF (no generado por el pipeline) — ver Fase 52. Factura real adjunta a un Activo del sistema (document-storage/activos/...), con datos de plantilla genérica (direcciones/contactos de ejemplo).",
+  "products": [
+    { "name": "MOTOCICLETA HONDA", "quantity": 1, "unitPrice": 5000, "totalPrice": 5000 },
+    { "name": "CAMIONETA", "quantity": 3, "unitPrice": 500.0, "totalPrice": 1500 },
+    { "name": "PC ASUS", "quantity": 1, "unitPrice": 15000, "totalPrice": 15000 },
+    { "name": "LECTOR CODIGO BARRAS", "quantity": 5, "unitPrice": 300.0, "totalPrice": 1500 }
+  ]
+}

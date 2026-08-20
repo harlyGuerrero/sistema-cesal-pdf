@@ -26,6 +26,11 @@ class ProductCandidate(BaseModel):
 
 class DocumentInfo(BaseModel):
     pages: int
+    # Serie-correlativo detectado en el texto del documento (ver
+    # extraction/invoice_number.py) — None si no se encontró nada con esa
+    # forma. Mejor esfuerzo: Next.js lo usa para precargar Import.numeroFactura,
+    # pero sigue siendo editable a mano si la detección falla o se equivoca.
+    invoiceNumber: str | None = None
 
 
 class ProcessMetrics(BaseModel):

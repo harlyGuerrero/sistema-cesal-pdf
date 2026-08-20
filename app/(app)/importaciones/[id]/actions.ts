@@ -101,6 +101,9 @@ export async function editAndConfirmItemAction(itemId: string, formData: FormDat
       tipoActivoId,
       categoryMethod: "MANUAL",
       categoryConfidence: 1,
+      // Un humano corrigió cantidad/precio a mano: es la fuente de verdad,
+      // ya no tiene sentido conservar la confianza de extracción original.
+      extractionConfidence: 1,
       quantity,
       unitPrice,
       totalPrice,

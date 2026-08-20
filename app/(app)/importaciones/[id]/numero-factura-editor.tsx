@@ -20,10 +20,11 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Ocurrió un error inesperado.";
 }
 
-// Único campo editable de un Import (el resto se fija al subir el PDF) —
-// se guarda manualmente porque el Document Service no extrae el número de
-// factura del documento (ver skill import-workflow). Se propaga a
-// Activo.numeroFactura al confirmar cada ítem (ver activo-creation.ts).
+// Único campo editable de un Import (el resto se fija al subir el PDF). El
+// Document Service detecta el N° de factura del propio documento al
+// procesarlo (ver invoice_number.py) y llega acá ya precargado — esto queda
+// como corrección manual para cuando la detección falla o se equivoca. Se
+// propaga a Activo.numeroFactura al confirmar cada ítem (ver activo-creation.ts).
 export function NumeroFacturaEditor({
   importId,
   numeroFactura,

@@ -50,6 +50,7 @@ export interface ReviewItem {
   category: { id: string; name: string; code: TipoActivoCode } | null;
   categoryConfidence: number | null;
   relevanceConfidence: number | null;
+  extractionConfidence: number | null;
 }
 
 function formatCurrency(value: number): string {
@@ -275,6 +276,12 @@ function ReviewRow({ item, categories }: { item: ReviewItem; categories: ReviewC
                       </SelectContent>
                     </Select>
                   </div>
+                  {item.extractionConfidence != null && (
+                    <div className="space-y-1">
+                      <Label>Confianza de extracción (cantidad/precio)</Label>
+                      <ConfidenceBar value={item.extractionConfidence} />
+                    </div>
+                  )}
                   <div className="grid grid-cols-3 gap-2">
                     <div className="space-y-1">
                       <Label htmlFor={`qty-${item.id}`}>Cantidad</Label>

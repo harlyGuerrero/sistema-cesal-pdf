@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { CANAL_NOTIFICACIONES } from "@/lib/notificaciones/pg-listen";
 import type {
   Prisma,
   PrioridadNotificacion,
@@ -6,7 +7,18 @@ import type {
   TipoNotificacion,
 } from "@/lib/generated/prisma/client";
 
-type NotificacionClient = Pick<typeof prisma, "notificacion" | "usuario">;
+type NotificacionClient = Pick<typeof prisma, "notificacion" | "usuario" | "$executeRaw">;
+
+// Fase 50: pg_notify como raw query sobre el mismo `client` que ya está
+// insertando la fila (el pool de Prisma o la tx en curso) — no abre una
+// conexión pg aparte por cada notificación creada. Emitido dentro de una
+// transacción, Postgres lo entrega recién al hacer COMMIT (comportamiento
+// nativo de NOTIFY), así que nunca llega antes de que la fila sea visible
+// para quien la escucha (ver app/api/notificaciones/stream/route.ts).
+async function emitirPush(client: NotificacionClient, usuarioId: string, notificacionId: string): Promise<void> {
+  const payload = JSON.stringify({ usuarioId, notificacionId });
+  await client.$executeRaw`SELECT pg_notify(${CANAL_NOTIFICACIONES}, ${payload})`;
+}
 
 // Fase 49: mismo criterio que registrarAuditoria (lib/auditoria/registrar.ts)
 // — recibe `client` para participar de la transacción de quien la llama.
@@ -22,7 +34,7 @@ export async function crearNotificacion(
   },
   client: NotificacionClient = prisma
 ): Promise<void> {
-  await client.notificacion.create({
+  const creada = await client.notificacion.create({
     data: {
       usuarioId: params.usuarioId,
       tipo: params.tipo,
@@ -33,6 +45,7 @@ export async function crearNotificacion(
       entidadId: params.entidadId ?? null,
     },
   });
+  await emitirPush(client, creada.usuarioId, creada.id);
 }
 
 // Responsable (a quien se asigna un Activo) no tiene cuenta de acceso al
@@ -71,7 +84,12 @@ export async function crearNotificacionBroadcast(
     entidad: params.entidad ?? null,
     entidadId: params.entidadId ?? null,
   }));
-  await client.notificacion.createMany({ data });
+  // createManyAndReturn (no createMany) a propósito: necesitamos el id de
+  // cada fila insertada para avisar por su canal a cada destinatario — un
+  // solo pg_notify por broadcast no alcanza porque cada usuario escucha
+  // filtrando por su propio usuarioId (ver suscribirseANotificaciones).
+  const creadas = await client.notificacion.createManyAndReturn({ data, select: { id: true, usuarioId: true } });
+  await Promise.all(creadas.map((n) => emitirPush(client, n.usuarioId, n.id)));
 }
 
 // Subconjunto de TipoMovimiento que amerita notificación — ALTA (ya se avisa

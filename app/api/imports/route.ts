@@ -18,10 +18,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Falta el archivo 'file'" }, { status: 400 });
   }
 
-  const numeroFacturaRaw = formData.get("numeroFactura");
-  const numeroFactura =
-    typeof numeroFacturaRaw === "string" && numeroFacturaRaw.trim() ? numeroFacturaRaw.trim() : null;
-
   const buffer = Buffer.from(await file.arrayBuffer());
 
   try {
@@ -29,7 +25,6 @@ export async function POST(request: Request) {
       buffer,
       filename: file.name,
       mimeType: file.type,
-      numeroFactura,
     });
 
     if (result.outcome === "duplicate") {

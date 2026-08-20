@@ -26,7 +26,7 @@ export default async function MiCuentaPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="flex flex-col items-center gap-3 rounded-2xl border bg-card p-6 text-center lg:col-span-1">
+          <div className="flex flex-col items-center gap-3 rounded-2xl border bg-card p-6 text-center lg:col-span-1 justify-center">
             <Avatar className="size-20 shrink-0 rounded-full">
               <AvatarFallback
                 className="rounded-full text-xl font-semibold uppercase"

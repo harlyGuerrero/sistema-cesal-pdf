@@ -1,8 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { BellIcon, CheckCheckIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -23,22 +24,55 @@ export interface NotificacionResumen {
   createdAt: Date;
 }
 
-// Fase 49: campana del header (punto 8/9 del spec) — muestra las últimas
-// notificaciones del usuario actual, resueltas server-side en el layout (ver
-// app/(app)/layout.tsx) y pasadas acá ya listas; este componente solo
-// interactúa (marcar leída, marcar todas) vía Server Action + router.refresh(),
-// mismo patrón que MiCuentaForm.
+const MAX_NOTIFICACIONES_PANEL = 8;
+
+// Fase 50: campana del header (punto 8/9 del spec) — el layout (Server
+// Component, ver app/(app)/layout.tsx) resuelve el estado inicial en cada
+// navegación; a partir de ahí, un EventSource contra
+// /api/notificaciones/stream (Postgres LISTEN/NOTIFY, ver
+// lib/notificaciones/pg-listen.ts) agrega notificaciones nuevas sin esperar
+// a recargar. Las props solo "siembran" el estado local (useEffect de
+// resync más abajo) — el layout sigue siendo la fuente de verdad tras un
+// router.refresh() (marcar leída, marcar todas, o simplemente navegar).
 export function NotificationBell({
-  notificaciones,
-  unreadCount,
+  notificaciones: notificacionesIniciales,
+  unreadCount: unreadCountInicial,
 }: {
   notificaciones: NotificacionResumen[];
   unreadCount: number;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [notificaciones, setNotificaciones] = useState(notificacionesIniciales);
+  const [unreadCount, setUnreadCount] = useState(unreadCountInicial);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resincroniza con el layout server-side tras router.refresh()
+    setNotificaciones(notificacionesIniciales);
+    setUnreadCount(unreadCountInicial);
+  }, [notificacionesIniciales, unreadCountInicial]);
+
+  useEffect(() => {
+    const eventSource = new EventSource("/api/notificaciones/stream");
+
+    eventSource.addEventListener("notificacion", (event) => {
+      const raw = JSON.parse((event as MessageEvent<string>).data) as NotificacionResumen;
+      const nueva: NotificacionResumen = { ...raw, createdAt: new Date(raw.createdAt) };
+
+      setNotificaciones((prev) => [nueva, ...prev].slice(0, MAX_NOTIFICACIONES_PANEL));
+      setUnreadCount((prev) => prev + 1);
+      toast(nueva.titulo, { description: nueva.mensaje });
+    });
+
+    return () => eventSource.close();
+  }, []);
 
   function marcarLeida(id: string) {
+    // Optimista: la campana no espera al roundtrip para dejar de marcar la
+    // notificación como no leída — router.refresh() igual resincroniza todo
+    // contra el servidor después.
+    setNotificaciones((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
+    setUnreadCount((prev) => Math.max(0, prev - 1));
     startTransition(async () => {
       await marcarLeidaAction(id);
       router.refresh();
@@ -46,6 +80,8 @@ export function NotificationBell({
   }
 
   function marcarTodas() {
+    setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
+    setUnreadCount(0);
     startTransition(async () => {
       await marcarTodasLeidasAction();
       router.refresh();

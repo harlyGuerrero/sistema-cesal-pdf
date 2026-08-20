@@ -1,3 +1,4 @@
+from app.extraction.invoice_number import detect_invoice_number
 from app.extraction.models import Table
 from app.extraction.parsing import is_numeric_cell, parse_number
 from app.extraction.pipeline import run_pipeline
@@ -27,6 +28,34 @@ def test_is_numeric_cell_distinguishes_numbers_from_text_containing_digits():
     assert is_numeric_cell("ESTABILIZADOR DE VOLTAJE 2000VA") is False
     assert is_numeric_cell("") is False
     assert is_numeric_cell(None) is False
+
+
+def test_detect_invoice_number_finds_serie_correlativo_near_label():
+    text = "FACTURA ELECTRONICA\nF001-00123\nCliente: ACME SAC"
+    assert detect_invoice_number(text) == "F001-00123"
+
+
+def test_detect_invoice_number_label_and_value_on_same_line():
+    text = "Comprobante: E001-12345678"
+    assert detect_invoice_number(text) == "E001-12345678"
+
+
+def test_detect_invoice_number_falls_back_without_label():
+    text = "Encabezado sin etiqueta reconocible\nB0A1-9\nResto del documento"
+    assert detect_invoice_number(text) == "B0A1-9"
+
+
+def test_detect_invoice_number_none_when_no_match():
+    assert detect_invoice_number("Documento sin numeración de comprobante") is None
+    assert detect_invoice_number("") is None
+
+
+def test_detect_invoice_number_prefers_match_near_label_over_earlier_noise():
+    """RUC (11 dígitos, sin guion) no matchea el patrón, pero un código de
+    proyecto con la misma forma sí podría aparecer antes en el documento —
+    la ventana de contexto junto a la etiqueta gana sobre el primer match."""
+    text = "Código de proyecto: PR01-99999\n...\nFactura N°: F001-00456"
+    assert detect_invoice_number(text) == "F001-00456"
 
 
 def test_is_numeric_cell_recognizes_trailing_currency_symbols():
@@ -159,6 +188,52 @@ def test_selects_product_table_over_decoy_info_table():
 
     assert selected is product_table
     assert header_idx == 0
+
+
+def test_resolves_unit_price_when_quantity_is_one_in_every_row():
+    """Bug real de producción: una factura con cantidad=1 en TODAS las filas
+    hace que precio_unitario y total sean numéricamente idénticos por fila,
+    así que cantidad*precio=total se cumple igual sin importar cuál columna
+    se llame cantidad y cuál precio. Sin desempate, el resultado dependía del
+    orden de iteración de itertools.permutations y unitPrice salía guardado
+    como 1 (el valor de la columna cantidad) en las 7 filas."""
+    table = Table(
+        page=1,
+        index=0,
+        rows=[
+            ["DESCRIPCIÓN", "PRECIO", "CANTIDAD", "TOTAL"],
+            ["Mouse", "25", "1", "25"],
+            ["Impresora Hp", "800", "1", "800"],
+            ["Proyector", "1,200", "1", "1,200"],
+            ["Mesa", "300", "1", "300"],
+            ["Sensor electrico", "150", "1", "150"],
+            ["camara fotografica", "800", "1", "800"],
+            ["camara de video", "2,500", "1", "2,500"],
+        ],
+    )
+
+    candidates, summary = run_pipeline([table])
+
+    assert summary[0]["isProductTable"] is True
+    assert len(candidates) == 7
+    by_name = {c.name: c for c in candidates}
+
+    assert by_name["Mouse"].quantity == 1
+    assert by_name["Mouse"].unitPrice == 25
+    assert by_name["Mouse"].totalPrice == 25
+
+    assert by_name["Proyector"].quantity == 1
+    assert by_name["Proyector"].unitPrice == 1200
+    assert by_name["Proyector"].totalPrice == 1200
+
+    assert by_name["camara de video"].quantity == 1
+    assert by_name["camara de video"].unitPrice == 2500
+    assert by_name["camara de video"].totalPrice == 2500
+
+    # La magnitud (cantidad ~1, precio/total en cientos) resuelve cuál
+    # columna es cantidad sin ambigüedad real, así que la confianza se
+    # mantiene alta pese al empate matemático de _score_triple.
+    assert all(c.confidence >= 0.9 for c in candidates)
 
 
 def test_key_value_table_yields_no_candidates():

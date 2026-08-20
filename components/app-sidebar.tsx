@@ -71,6 +71,7 @@ export function AppSidebar({
               <Image
                 src="/logo-mobile.svg"
                 alt="CESAL"
+                loading="eager"
                 width={32}
                 height={32}
                 className="
@@ -81,6 +82,7 @@ export function AppSidebar({
               <Image
                 src="/logo-desktop.svg"
                 alt="CESAL"
+                loading="eager"
                 width={132}
                 height={36}
                 className="
@@ -101,9 +103,9 @@ export function AppSidebar({
         <div className="flex items-center justify-between gap-2 rounded-lg p-2 group-data-[collapsible=icon]:hidden">
           <Label htmlFor="dark-mode" className="flex items-center gap-2 text-sm font-semibold text-gray-600 dark:text-blue-50">
             {isDarkMode ? (
-              <SunIcon className="size-4 text-muted-foreground" />
-            ) : (
               <MoonIcon className="size-4 text-muted-foreground" />
+            ) : (
+              <SunIcon className="size-4 text-amber-300" />
             )}
             Modo Oscuro
           </Label>

@@ -1,0 +1,12 @@
+{
+  "_note": "Fixture sintética generada por generate_synthetic_fixtures.py — reproduce el bug real de producción (Fase 49): cantidad=1 en todas las filas. Ground truth = los valores exactos con los que se generó el PDF.",
+  "products": [
+    { "name": "Mouse", "quantity": 1, "unitPrice": 25, "totalPrice": 25 },
+    { "name": "Impresora Hp", "quantity": 1, "unitPrice": 800, "totalPrice": 800 },
+    { "name": "Proyector", "quantity": 1, "unitPrice": 1200, "totalPrice": 1200 },
+    { "name": "Mesa", "quantity": 1, "unitPrice": 300, "totalPrice": 300 },
+    { "name": "Sensor electrico", "quantity": 1, "unitPrice": 150, "totalPrice": 150 },
+    { "name": "camara fotografica", "quantity": 1, "unitPrice": 800, "totalPrice": 800 },
+    { "name": "camara de video", "quantity": 1, "unitPrice": 2500, "totalPrice": 2500 }
+  ]
+}

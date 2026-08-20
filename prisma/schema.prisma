@@ -709,6 +709,13 @@ model ImportItem {
   totalPrice     Decimal? @db.Decimal(14, 2)
   currency       String?
 
+  // Confianza de EXTRACCIÓN (cantidad/precio/total), calculada en el
+  // Document Service (ver product_candidate.py _compute_confidence) — no
+  // confundir con relevanceConfidence/categoryConfidence, que son de
+  // clasificación. Sin method: la trazabilidad de qué motor extrajo la fila
+  // vive en ProcessingAttempt.engine/model, no por fila (Fase 49/50).
+  extractionConfidence Float?
+
   // Clasificación (ver skill product-classification). Relevance y tipo de
   // activo son decisiones independientes (Fase 6 y Fase 7 del pipeline) con
   // su propio método/confidence cada una — no un único par

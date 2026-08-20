@@ -25,7 +25,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
-      {isDark ? <SunIcon /> : <MoonIcon />}
+      {isDark ? <MoonIcon /> : <SunIcon className="size-4 text-amber-300" />}
     </Button>
   );
 }

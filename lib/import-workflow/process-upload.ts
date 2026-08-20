@@ -29,7 +29,6 @@ export interface UploadedFile {
   buffer: Buffer;
   filename: string;
   mimeType: string;
-  numeroFactura?: string | null;
 }
 
 export type ProcessUploadResult =
@@ -55,7 +54,6 @@ export async function processUpload(file: UploadedFile): Promise<ProcessUploadRe
       fileHash,
       fileSize: file.buffer.length,
       mimeType: file.mimeType,
-      numeroFactura: file.numeroFactura ?? null,
       status: "PROCESSING",
     },
   });
@@ -94,6 +92,12 @@ export async function processUpload(file: UploadedFile): Promise<ProcessUploadRe
           status: finalStatus,
           processedAt: now,
           completedAt: finalStatus === "COMPLETED" ? now : null,
+          // N° de factura: ya no se pide al subir el PDF (ver
+          // upload-import-dialog.tsx) — se detecta del propio documento
+          // (ver document-service/app/extraction/invoice_number.py). Mejor
+          // esfuerzo: queda editable a mano en /importaciones/[id] si la
+          // detección falla o no aplica (numero-factura-editor.tsx).
+          numeroFactura: itemsToCreate.invoiceNumber,
         },
       });
 
@@ -149,7 +153,11 @@ export async function processUpload(file: UploadedFile): Promise<ProcessUploadRe
 async function extractAndClassify(
   importId: string,
   file: UploadedFile
-): Promise<{ items: Prisma.ImportItemCreateManyInput[]; ollamaUsedCount: number }> {
+): Promise<{
+  items: Prisma.ImportItemCreateManyInput[];
+  ollamaUsedCount: number;
+  invoiceNumber: string | null;
+}> {
   const attemptStartedAt = new Date();
   let docResult;
   try {
@@ -222,6 +230,7 @@ async function extractAndClassify(
       unitPrice: normalized.normalizedUnitPrice,
       totalPrice: normalized.normalizedTotalPrice,
       currency: normalized.normalizedCurrency,
+      extractionConfidence: normalized.confidence,
       relevance: relevanceResult.relevance,
       relevanceMethod: relevanceResult.method,
       relevanceConfidence: relevanceResult.confidence,
@@ -232,5 +241,5 @@ async function extractAndClassify(
     });
   }
 
-  return { items, ollamaUsedCount };
+  return { items, ollamaUsedCount, invoiceNumber: docResult.document.invoiceNumber };
 }

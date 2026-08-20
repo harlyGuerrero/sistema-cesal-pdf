@@ -38,7 +38,7 @@ async def process_document(file: UploadFile) -> ProcessResponse:
 
     started_at = time.monotonic()
     try:
-        num_pages, tables = await asyncio.wait_for(
+        num_pages, tables, invoice_number = await asyncio.wait_for(
             asyncio.to_thread(extract, content, file.filename or "document.pdf"),
             timeout=config.PROCESSING_TIMEOUT_SECONDS,
         )
@@ -47,12 +47,18 @@ async def process_document(file: UploadFile) -> ProcessResponse:
     except Exception as error:  # Docling agrupa sus propios errores de conversión
         raise HTTPException(status_code=422, detail=f"No se pudo procesar el PDF: {error}") from error
 
-    products, tables_summary = run_pipeline(tables)
+    try:
+        products, tables_summary = run_pipeline(tables)
+    except Exception as error:
+        # Distinto del 422 de arriba: acá Docling ya convirtió el PDF sin
+        # problema, el error es nuestro (heurística de tabla/columnas), no
+        # del archivo de entrada.
+        raise HTTPException(status_code=500, detail=f"Error interno en la detección de productos: {error}") from error
 
     processing_time_ms = int((time.monotonic() - started_at) * 1000)
 
     return ProcessResponse(
-        document=DocumentInfo(pages=num_pages),
+        document=DocumentInfo(pages=num_pages, invoiceNumber=invoice_number),
         tables=tables_summary,
         products=products,
         metrics=ProcessMetrics(

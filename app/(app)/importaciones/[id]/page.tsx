@@ -67,6 +67,7 @@ export default async function ImportDetailPage({
     category: item.tipoActivo ? { id: item.tipoActivo.id, name: item.tipoActivo.name, code: item.tipoActivo.code } : null,
     categoryConfidence: item.categoryConfidence,
     relevanceConfidence: item.relevanceConfidence,
+    extractionConfidence: item.extractionConfidence,
   }));
 
   const statusMeta = IMPORT_STATUS_META[importRecord.status] ?? IMPORT_STATUS_META.UPLOADED;
