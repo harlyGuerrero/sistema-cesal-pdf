@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { ArchiveIcon, CheckCircle2Icon, Trash2Icon, UserIcon, WrenchIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { TIPO_ACTIVO_CODE_ORDER } from "@/lib/activos/labels";
 import { ActivosTable } from "./activos/activos-table";
 import { SedeBarChart, type SedeBarDatum } from "./sede-bar-chart";
-import { DonutChart, type DonutDatum } from "./donut-chart";
+import { TipoActivoPieCard, type TipoActivoPieDatum } from "./tipo-activo-pie-card";
 import { MovimientosFeed } from "./movimientos-feed";
 
 // Sin esto, Next.js prerenderiza esta página como estática en build time
@@ -68,13 +68,13 @@ export default async function DashboardPage() {
   const countByTipoActivoId = new Map(activoCountsByTipo.map((row) => [row.tipoActivoId, row._count]));
   const tipoActivoByCode = new Map(tiposActivo.map((tipo) => [tipo.code, tipo]));
 
-  const tipoData: DonutDatum[] = TIPO_ACTIVO_CODE_ORDER.map((code, index) => {
+  const tipoData: TipoActivoPieDatum[] = TIPO_ACTIVO_CODE_ORDER.map((code, index) => {
     const tipo = tipoActivoByCode.get(code);
     return {
       key: code,
       label: tipo?.name ?? code,
       value: tipo ? (countByTipoActivoId.get(tipo.id) ?? 0) : 0,
-      color: `var(--color-chart-${index + 1})`,
+      color: `var(--chart-${index + 1})`,
     };
   });
 
@@ -90,6 +90,10 @@ export default async function DashboardPage() {
     .map((sede) => ({ sede: sede.name, activos: sede._count.activos }))
     .sort((a, b) => b.activos - a.activos || a.sede.localeCompare(b.sede, "es"));
   const sedeTop = sedeData[0];
+  // Solo una parte del inventario tiene sede asignada: el gráfico tiene que
+  // decirlo, o las barras sugieren que las sedes tienen muy pocos bienes.
+  const activosConSede = sedeData.reduce((suma, sede) => suma + sede.activos, 0);
+  const activosSinSede = totalActivos - activosConSede;
 
   const porcentaje = (value: number) => (totalActivos > 0 ? `${Math.round((value / totalActivos) * 100)}% del total` : "Sin datos");
 
@@ -105,7 +109,7 @@ export default async function DashboardPage() {
           label="Total de activos"
           value={totalActivos}
           icon={ArchiveIcon}
-          color="var(--primary)"
+          color="var(--foreground)"
           hint="100% del patrimonio"
         />
         <StatCard
@@ -133,61 +137,46 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base font-semibold">Activos por tipo</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <DonutChart
-              data={tipoData}
-              total={totalActivos}
-              centerLabel={totalActivos === 1 ? "activo" : "activos"}
-            />
-            <ul className="space-y-2">
-              {tipoData.map((datum) => (
-                <li key={datum.key} className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2 truncate">
-                    <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: datum.color }} />
-                    <span className="truncate">{datum.label}</span>
-                  </span>
-                  <span className="shrink-0 tabular-nums text-muted-foreground">
-                    {datum.value.toLocaleString("es-PE")}
-                    {totalActivos > 0 && ` (${Math.round((datum.value / totalActivos) * 100)}%)`}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <TipoActivoPieCard data={tipoData} total={totalActivos} />
 
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Activos por sede</CardTitle>
-            <CardDescription>Cantidad de activos registrados en cada sede</CardDescription>
+            <CardDescription>
+              {activosConSede.toLocaleString("es-PE")} de {totalActivos.toLocaleString("es-PE")} activos con sede
+              asignada
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <SedeBarChart data={sedeData} activeIndex={0} />
           </CardContent>
-          {sedeTop && sedeTop.activos > 0 && (
-            <CardFooter className="flex-col items-start gap-1 text-sm">
-              <p className="font-medium">
-                {sedeTop.sede} concentra {sedeTop.activos.toLocaleString("es-PE")}{" "}
-                {sedeTop.activos === 1 ? "activo" : "activos"}
-              </p>
-              <p className="text-muted-foreground">
-                {Math.round((sedeTop.activos / totalActivos) * 100)}% del total, en {sedeData.length}{" "}
-                {sedeData.length === 1 ? "sede" : "sedes"}
-              </p>
+          {totalActivos > 0 && (
+            <CardFooter className="mt-auto flex-col items-start gap-1 text-sm">
+              {sedeTop && sedeTop.activos > 0 && (
+                <p className="font-medium">
+                  {sedeTop.sede} concentra {sedeTop.activos.toLocaleString("es-PE")}{" "}
+                  {sedeTop.activos === 1 ? "activo" : "activos"} (
+                  {Math.round((sedeTop.activos / totalActivos) * 100)}% del total)
+                </p>
+              )}
+              {activosSinSede > 0 && (
+                <Link href="/activos" className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline">
+                  {activosSinSede.toLocaleString("es-PE")} {activosSinSede === 1 ? "activo" : "activos"} sin sede
+                  asignada
+                </Link>
+              )}
             </CardFooter>
           )}
         </Card>
 
         <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardHeader>
             <CardTitle className="text-base font-semibold">Últimos movimientos</CardTitle>
-            <Link href="/movimientos" className="text-sm text-primary hover:underline">
-              Ver todos
-            </Link>
+            <CardAction>
+              <Link href="/movimientos" className="text-sm text-primary underline-offset-4 hover:underline">
+                Ver todos
+              </Link>
+            </CardAction>
           </CardHeader>
           <CardContent>
             <MovimientosFeed movimientos={movimientosRecientes} />
@@ -196,11 +185,13 @@ export default async function DashboardPage() {
       </div>
 
       <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardHeader>
           <CardTitle className="text-base font-semibold">Activos recientes</CardTitle>
-          <Link href="/activos" className="text-sm text-primary hover:underline">
-            Ver todos
-          </Link>
+          <CardAction>
+            <Link href="/activos" className="text-sm text-primary underline-offset-4 hover:underline">
+              Ver todos
+            </Link>
+          </CardAction>
         </CardHeader>
         <CardContent className="overflow-x-auto px-0">
           <ActivosTable activos={activosRecientes} emptyMessage="Sin activos todavía." />

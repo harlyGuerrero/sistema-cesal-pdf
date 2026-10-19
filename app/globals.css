@@ -74,8 +74,14 @@
   --input: oklch(0.922 0 0);
   --ring: #2a78d6;
   /* Paleta categórica (skill dataviz, references/palette.md, slots 1-7) —
-     validada con scripts/validate_palette.js para 7 series simultáneas
-     (los 7 tipos de activo oficiales, ver ARCHITECTURE.md 5.2).
+     validada con scripts/validate_palette.js para 6 series simultáneas.
+     El slot 7 (Mobiliario y enseres, último tipo oficial, ver
+     ARCHITECTURE.md 5.2) es negro por decisión del usuario, no el violeta
+     de la paleta; en oscuro pasa a gris claro para no perderse contra el
+     fondo de la tarjeta. Usar var(--chart-N) directo en estilos inline:
+     Tailwind 4 solo emite las --color-chart-N que alguna clase usa, y
+     --color-chart-7 no existía en runtime (el sector salía negro por
+     accidente).
      Antes chart-2..5 eran grises lisos (indistinguibles en una torta de
      más de una serie) — nunca se habían usado para una gráfica categórica
      de verdad hasta el dashboard de Activos por tipo. */
@@ -85,7 +91,7 @@
   --chart-4: #eda100;
   --chart-5: #e87ba4;
   --chart-6: #008300;
-  --chart-7: #6250d6;
+  --chart-7: #171717;
   /* Paleta de estado (skill dataviz, references/palette.md) — fija, no se
      tematiza: los mismos 4 valores en claro y oscuro. */
   --status-good: #0ca30c;
@@ -128,7 +134,7 @@
   --chart-4: #c98500;
   --chart-5: #d55181;
   --chart-6: #008300;
-  --chart-7: #9085e9;
+  --chart-7: #d4d4d4;
   --sidebar: #1a1a19;
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: #3987e5;

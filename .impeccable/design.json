@@ -1,0 +1,556 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-19T23:33:21.664784+00:00",
+  "title": "Design System: Sistema Patrimonial CESAL",
+  "extensions": {
+    "colorMeta": {
+      "azul-cesal": {
+        "role": "primary",
+        "displayName": "Azul CESAL",
+        "canonical": "oklch(0.575 0.163 255.5)",
+        "tonalRamp": [
+          "oklch(0.15 0.163 255.5)",
+          "oklch(0.26 0.163 255.5)",
+          "oklch(0.37 0.163 255.5)",
+          "oklch(0.48 0.163 255.5)",
+          "oklch(0.60 0.163 255.5)",
+          "oklch(0.72 0.163 255.5)",
+          "oklch(0.84 0.163 255.5)",
+          "oklch(0.95 0.163 255.5)"
+        ]
+      },
+      "azul-cesal-noche": {
+        "role": "primary",
+        "displayName": "Azul CESAL Noche",
+        "canonical": "oklch(0.622 0.161 255.1)",
+        "tonalRamp": [
+          "oklch(0.15 0.161 255.1)",
+          "oklch(0.26 0.161 255.1)",
+          "oklch(0.37 0.161 255.1)",
+          "oklch(0.48 0.161 255.1)",
+          "oklch(0.60 0.161 255.1)",
+          "oklch(0.72 0.161 255.1)",
+          "oklch(0.84 0.161 255.1)",
+          "oklch(0.95 0.161 255.1)"
+        ]
+      },
+      "tinta": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "oklch(0.145 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0.000 0.0)",
+          "oklch(0.26 0.000 0.0)",
+          "oklch(0.37 0.000 0.0)",
+          "oklch(0.48 0.000 0.0)",
+          "oklch(0.60 0.000 0.0)",
+          "oklch(0.72 0.000 0.0)",
+          "oklch(0.84 0.000 0.0)",
+          "oklch(0.95 0.000 0.0)"
+        ]
+      },
+      "tinta-suave": {
+        "role": "neutral",
+        "displayName": "Tinta Suave",
+        "canonical": "oklch(0.556 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0.000 0.0)",
+          "oklch(0.26 0.000 0.0)",
+          "oklch(0.37 0.000 0.0)",
+          "oklch(0.48 0.000 0.0)",
+          "oklch(0.60 0.000 0.0)",
+          "oklch(0.72 0.000 0.0)",
+          "oklch(0.84 0.000 0.0)",
+          "oklch(0.95 0.000 0.0)"
+        ]
+      },
+      "papel": {
+        "role": "neutral",
+        "displayName": "Papel",
+        "canonical": "oklch(1 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0.000 0.0)",
+          "oklch(0.26 0.000 0.0)",
+          "oklch(0.37 0.000 0.0)",
+          "oklch(0.48 0.000 0.0)",
+          "oklch(0.60 0.000 0.0)",
+          "oklch(0.72 0.000 0.0)",
+          "oklch(0.84 0.000 0.0)",
+          "oklch(0.95 0.000 0.0)"
+        ]
+      },
+      "papel-gris": {
+        "role": "neutral",
+        "displayName": "Papel Gris",
+        "canonical": "oklch(0.97 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0.000 0.0)",
+          "oklch(0.26 0.000 0.0)",
+          "oklch(0.37 0.000 0.0)",
+          "oklch(0.48 0.000 0.0)",
+          "oklch(0.60 0.000 0.0)",
+          "oklch(0.72 0.000 0.0)",
+          "oklch(0.84 0.000 0.0)",
+          "oklch(0.95 0.000 0.0)"
+        ]
+      },
+      "linea": {
+        "role": "neutral",
+        "displayName": "Línea",
+        "canonical": "oklch(0.922 0 0)",
+        "tonalRamp": [
+          "oklch(0.15 0.000 0.0)",
+          "oklch(0.26 0.000 0.0)",
+          "oklch(0.37 0.000 0.0)",
+          "oklch(0.48 0.000 0.0)",
+          "oklch(0.60 0.000 0.0)",
+          "oklch(0.72 0.000 0.0)",
+          "oklch(0.84 0.000 0.0)",
+          "oklch(0.95 0.000 0.0)"
+        ]
+      },
+      "noche-fondo": {
+        "role": "neutral",
+        "displayName": "Noche Fondo",
+        "canonical": "oklch(0.159 0.000 89.9)",
+        "tonalRamp": [
+          "oklch(0.15 0.000 89.9)",
+          "oklch(0.26 0.000 89.9)",
+          "oklch(0.37 0.000 89.9)",
+          "oklch(0.48 0.000 89.9)",
+          "oklch(0.60 0.000 89.9)",
+          "oklch(0.72 0.000 89.9)",
+          "oklch(0.84 0.000 89.9)",
+          "oklch(0.95 0.000 89.9)"
+        ]
+      },
+      "noche-tarjeta": {
+        "role": "neutral",
+        "displayName": "Noche Tarjeta",
+        "canonical": "oklch(0.217 0.002 106.6)",
+        "tonalRamp": [
+          "oklch(0.15 0.002 106.6)",
+          "oklch(0.26 0.002 106.6)",
+          "oklch(0.37 0.002 106.6)",
+          "oklch(0.48 0.002 106.6)",
+          "oklch(0.60 0.002 106.6)",
+          "oklch(0.72 0.002 106.6)",
+          "oklch(0.84 0.002 106.6)",
+          "oklch(0.95 0.002 106.6)"
+        ]
+      },
+      "brillo-azul": {
+        "role": "tertiary",
+        "displayName": "Brillo Azul (fondo de marca)",
+        "canonical": "oklch(0.508 0.124 243.4)",
+        "tonalRamp": [
+          "oklch(0.15 0.124 243.4)",
+          "oklch(0.26 0.124 243.4)",
+          "oklch(0.37 0.124 243.4)",
+          "oklch(0.48 0.124 243.4)",
+          "oklch(0.60 0.124 243.4)",
+          "oklch(0.72 0.124 243.4)",
+          "oklch(0.84 0.124 243.4)",
+          "oklch(0.95 0.124 243.4)"
+        ]
+      },
+      "brillo-amarillo": {
+        "role": "tertiary",
+        "displayName": "Brillo Amarillo (fondo de marca)",
+        "canonical": "oklch(0.895 0.195 110.1)",
+        "tonalRamp": [
+          "oklch(0.15 0.195 110.1)",
+          "oklch(0.26 0.195 110.1)",
+          "oklch(0.37 0.195 110.1)",
+          "oklch(0.48 0.195 110.1)",
+          "oklch(0.60 0.195 110.1)",
+          "oklch(0.72 0.195 110.1)",
+          "oklch(0.84 0.195 110.1)",
+          "oklch(0.95 0.195 110.1)"
+        ]
+      },
+      "rojo-error": {
+        "role": "status",
+        "displayName": "Rojo Error",
+        "canonical": "oklch(0.577 0.245 27.325)",
+        "tonalRamp": [
+          "oklch(0.15 0.200 27.3)",
+          "oklch(0.26 0.200 27.3)",
+          "oklch(0.37 0.200 27.3)",
+          "oklch(0.48 0.200 27.3)",
+          "oklch(0.60 0.200 27.3)",
+          "oklch(0.72 0.200 27.3)",
+          "oklch(0.84 0.200 27.3)",
+          "oklch(0.95 0.200 27.3)"
+        ]
+      },
+      "estado-disponible": {
+        "role": "status",
+        "displayName": "Disponible",
+        "canonical": "oklch(0.621 0.207 142.6)",
+        "tonalRamp": [
+          "oklch(0.15 0.200 142.6)",
+          "oklch(0.26 0.200 142.6)",
+          "oklch(0.37 0.200 142.6)",
+          "oklch(0.48 0.200 142.6)",
+          "oklch(0.60 0.200 142.6)",
+          "oklch(0.72 0.200 142.6)",
+          "oklch(0.84 0.200 142.6)",
+          "oklch(0.95 0.200 142.6)"
+        ]
+      },
+      "estado-mantenimiento": {
+        "role": "status",
+        "displayName": "Mantenimiento",
+        "canonical": "oklch(0.811 0.164 78.5)",
+        "tonalRamp": [
+          "oklch(0.15 0.164 78.5)",
+          "oklch(0.26 0.164 78.5)",
+          "oklch(0.37 0.164 78.5)",
+          "oklch(0.48 0.164 78.5)",
+          "oklch(0.60 0.164 78.5)",
+          "oklch(0.72 0.164 78.5)",
+          "oklch(0.84 0.164 78.5)",
+          "oklch(0.95 0.164 78.5)"
+        ]
+      },
+      "estado-baja": {
+        "role": "status",
+        "displayName": "Baja",
+        "canonical": "oklch(0.575 0.186 25.2)",
+        "tonalRamp": [
+          "oklch(0.15 0.186 25.2)",
+          "oklch(0.26 0.186 25.2)",
+          "oklch(0.37 0.186 25.2)",
+          "oklch(0.48 0.186 25.2)",
+          "oklch(0.60 0.186 25.2)",
+          "oklch(0.72 0.186 25.2)",
+          "oklch(0.84 0.186 25.2)",
+          "oklch(0.95 0.186 25.2)"
+        ]
+      },
+      "estado-neutro": {
+        "role": "status",
+        "displayName": "Neutro",
+        "canonical": "oklch(0.623 0.009 91.5)",
+        "tonalRamp": [
+          "oklch(0.15 0.009 91.5)",
+          "oklch(0.26 0.009 91.5)",
+          "oklch(0.37 0.009 91.5)",
+          "oklch(0.48 0.009 91.5)",
+          "oklch(0.60 0.009 91.5)",
+          "oklch(0.72 0.009 91.5)",
+          "oklch(0.84 0.009 91.5)",
+          "oklch(0.95 0.009 91.5)"
+        ]
+      },
+      "serie-1-azul": {
+        "role": "data",
+        "displayName": "Serie 1 · Azul",
+        "canonical": "oklch(0.575 0.163 255.5)",
+        "tonalRamp": [
+          "oklch(0.15 0.163 255.5)",
+          "oklch(0.26 0.163 255.5)",
+          "oklch(0.37 0.163 255.5)",
+          "oklch(0.48 0.163 255.5)",
+          "oklch(0.60 0.163 255.5)",
+          "oklch(0.72 0.163 255.5)",
+          "oklch(0.84 0.163 255.5)",
+          "oklch(0.95 0.163 255.5)"
+        ]
+      },
+      "serie-2-naranja": {
+        "role": "data",
+        "displayName": "Serie 2 · Naranja",
+        "canonical": "oklch(0.671 0.175 40.6)",
+        "tonalRamp": [
+          "oklch(0.15 0.175 40.6)",
+          "oklch(0.26 0.175 40.6)",
+          "oklch(0.37 0.175 40.6)",
+          "oklch(0.48 0.175 40.6)",
+          "oklch(0.60 0.175 40.6)",
+          "oklch(0.72 0.175 40.6)",
+          "oklch(0.84 0.175 40.6)",
+          "oklch(0.95 0.175 40.6)"
+        ]
+      },
+      "serie-3-aguamarina": {
+        "role": "data",
+        "displayName": "Serie 3 · Aguamarina",
+        "canonical": "oklch(0.669 0.141 162.1)",
+        "tonalRamp": [
+          "oklch(0.15 0.141 162.1)",
+          "oklch(0.26 0.141 162.1)",
+          "oklch(0.37 0.141 162.1)",
+          "oklch(0.48 0.141 162.1)",
+          "oklch(0.60 0.141 162.1)",
+          "oklch(0.72 0.141 162.1)",
+          "oklch(0.84 0.141 162.1)",
+          "oklch(0.95 0.141 162.1)"
+        ]
+      },
+      "serie-4-ambar": {
+        "role": "data",
+        "displayName": "Serie 4 · Ámbar",
+        "canonical": "oklch(0.764 0.161 75.1)",
+        "tonalRamp": [
+          "oklch(0.15 0.161 75.1)",
+          "oklch(0.26 0.161 75.1)",
+          "oklch(0.37 0.161 75.1)",
+          "oklch(0.48 0.161 75.1)",
+          "oklch(0.60 0.161 75.1)",
+          "oklch(0.72 0.161 75.1)",
+          "oklch(0.84 0.161 75.1)",
+          "oklch(0.95 0.161 75.1)"
+        ]
+      },
+      "serie-5-rosa": {
+        "role": "data",
+        "displayName": "Serie 5 · Rosa",
+        "canonical": "oklch(0.716 0.141 357.4)",
+        "tonalRamp": [
+          "oklch(0.15 0.141 357.4)",
+          "oklch(0.26 0.141 357.4)",
+          "oklch(0.37 0.141 357.4)",
+          "oklch(0.48 0.141 357.4)",
+          "oklch(0.60 0.141 357.4)",
+          "oklch(0.72 0.141 357.4)",
+          "oklch(0.84 0.141 357.4)",
+          "oklch(0.95 0.141 357.4)"
+        ]
+      },
+      "serie-6-verde": {
+        "role": "data",
+        "displayName": "Serie 6 · Verde",
+        "canonical": "oklch(0.529 0.180 142.5)",
+        "tonalRamp": [
+          "oklch(0.15 0.180 142.5)",
+          "oklch(0.26 0.180 142.5)",
+          "oklch(0.37 0.180 142.5)",
+          "oklch(0.48 0.180 142.5)",
+          "oklch(0.60 0.180 142.5)",
+          "oklch(0.72 0.180 142.5)",
+          "oklch(0.84 0.180 142.5)",
+          "oklch(0.95 0.180 142.5)"
+        ]
+      },
+      "serie-7-negro": {
+        "role": "data",
+        "displayName": "Serie 7 · Negro (Mobiliario y enseres)",
+        "canonical": "oklch(0.205 0.000 89.9)",
+        "tonalRamp": [
+          "oklch(0.15 0.000 89.9)",
+          "oklch(0.26 0.000 89.9)",
+          "oklch(0.37 0.000 89.9)",
+          "oklch(0.48 0.000 89.9)",
+          "oklch(0.60 0.000 89.9)",
+          "oklch(0.72 0.000 89.9)",
+          "oklch(0.84 0.000 89.9)",
+          "oklch(0.95 0.000 89.9)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Título de página, con descripción en Tinta Suave debajo."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Títulos de tarjeta y de sección."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Texto general, celdas y campos (16px en móvil)."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Etiquetas de filtro, stat cards, metadatos y leyendas."
+      },
+      "stat": {
+        "displayName": "Stat",
+        "purpose": "Cifras grandes de indicadores y centro de la dona."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Datos tabulares o códigos que lo requieran."
+      }
+    },
+    "shadows": [
+      {
+        "name": "reposo",
+        "value": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+        "purpose": "Todas las tarjetas, fichas de detalle, contenedores de formulario e ítem activo del menú."
+      },
+      {
+        "name": "flotante",
+        "value": "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+        "purpose": "Menús, selects, combobox, popovers, tooltips."
+      },
+      {
+        "name": "modal",
+        "value": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+        "purpose": "Diálogos."
+      }
+    ],
+    "motion": [
+      {
+        "name": "estado",
+        "value": "150ms ease (transition-colors/transition-all)",
+        "purpose": "Hover y foco de controles."
+      },
+      {
+        "name": "entrada-flotante",
+        "value": "100ms fade + zoom-in-95",
+        "purpose": "Apertura de menús, selects y popovers."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal de cada pantalla (Guardar, Filtrar, Nuevo activo).",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"M12 5v14\"/></svg>Nuevo activo</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; gap:6px; height:32px; padding:0 10px; border:1px solid transparent; border-radius:10px; background:var(--primary, #2a78d6); color:var(--primary-foreground, #fcfcfb); font:500 14px/1 system-ui, \"Segoe UI\", Roboto, sans-serif; cursor:pointer; transition:background .15s, transform .1s; } .ds-btn-primary:hover { background:color-mix(in oklch, var(--primary, #2a78d6) 80%, transparent); } .ds-btn-primary:focus-visible { outline:none; box-shadow:0 0 0 3px color-mix(in oklch, var(--ring, #2a78d6) 50%, transparent); } .ds-btn-primary:active { transform:translateY(1px); }"
+    },
+    {
+      "name": "Botón outline",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Acción secundaria por defecto (Cancelar, Limpiar, Ver campos).",
+      "html": "<button class=\"ds-btn-outline\">Limpiar filtros</button>",
+      "css": ".ds-btn-outline { height:32px; padding:0 10px; border:1px solid var(--border, oklch(0.922 0 0)); border-radius:10px; background:var(--background, #fff); color:var(--foreground, oklch(0.145 0 0)); font:500 14px/1 system-ui, \"Segoe UI\", Roboto, sans-serif; cursor:pointer; transition:background .15s; } .ds-btn-outline:hover { background:var(--muted, oklch(0.97 0 0)); } .ds-btn-outline:focus-visible { outline:none; border-color:var(--ring, #2a78d6); box-shadow:0 0 0 3px color-mix(in oklch, var(--ring, #2a78d6) 50%, transparent); }"
+    },
+    {
+      "name": "Campo de texto",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo estándar con etiqueta de 12px encima.",
+      "html": "<label class=\"ds-field\"><span>Nombre del activo</span><input class=\"ds-input\" placeholder=\"Ej. Laptop Lenovo ThinkPad\" /></label>",
+      "css": ".ds-field { display:grid; gap:4px; font:500 12px/1.3 system-ui, \"Segoe UI\", Roboto, sans-serif; color:var(--muted-foreground, oklch(0.556 0 0)); } .ds-input { height:32px; padding:4px 10px; border:1px solid var(--input, oklch(0.922 0 0)); border-radius:10px; background:transparent; color:var(--foreground, oklch(0.145 0 0)); font:400 14px/1.4 system-ui, \"Segoe UI\", Roboto, sans-serif; outline:none; transition:border-color .15s, box-shadow .15s; } .ds-input::placeholder { color:var(--muted-foreground, oklch(0.556 0 0)); } .ds-input:focus-visible { border-color:var(--ring, #2a78d6); box-shadow:0 0 0 3px color-mix(in oklch, var(--ring, #2a78d6) 50%, transparent); }"
+    },
+    {
+      "name": "Chip de estado",
+      "kind": "chip",
+      "refersTo": null,
+      "description": "Chip tintado: color de identidad al 15% con ícono y texto. Estado patrimonial, tipo, rol.",
+      "html": "<span class=\"ds-chip\" style=\"--c:#0ca30c\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/></svg>Disponible</span>",
+      "css": ".ds-chip { display:inline-flex; align-items:center; gap:4px; height:22px; padding:0 8px; border-radius:9999px; background:color-mix(in oklch, var(--c) 15%, transparent); color:var(--c); font:500 12px/1 system-ui, \"Segoe UI\", Roboto, sans-serif; }"
+    },
+    {
+      "name": "Stat card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Indicador del dashboard: etiqueta, cifra tabular, pista y chip de ícono.",
+      "html": "<div class=\"ds-stat\"><div><p class=\"ds-stat-label\">Disponibles</p><p class=\"ds-stat-value\">169</p><p class=\"ds-stat-hint\">67% del total</p></div><span class=\"ds-stat-icon\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/></svg></span></div>",
+      "css": ".ds-stat { display:flex; justify-content:space-between; gap:8px; width:220px; padding:16px; border-radius:14px; background:var(--card, #fff); box-shadow:0 0 0 1px color-mix(in oklch, var(--foreground, #000) 10%, transparent), 0 1px 3px 0 rgb(0 0 0 / .1); font-family:system-ui, \"Segoe UI\", Roboto, sans-serif; } .ds-stat p { margin:0; } .ds-stat-label, .ds-stat-hint { font-size:12px; color:var(--muted-foreground, oklch(0.556 0 0)); } .ds-stat-label { font-weight:500; } .ds-stat-value { margin-top:4px !important; font-size:24px; font-weight:600; font-variant-numeric:tabular-nums; color:var(--foreground, oklch(0.145 0 0)); } .ds-stat-icon { display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:9999px; color:#0ca30c; background:color-mix(in oklch, #0ca30c 15%, transparent); }"
+    },
+    {
+      "name": "FormSection",
+      "kind": "custom",
+      "refersTo": "form-section",
+      "description": "Bloque de formulario con borde propio y cabecera con chip de ícono.",
+      "html": "<section class=\"ds-section\"><header><span class=\"ds-section-icon\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/></svg></span><h2>Ubicación</h2></header><p>Sede, unidad operativa y ambiente.</p></section>",
+      "css": ".ds-section { display:grid; gap:16px; width:320px; padding:20px; border:1px solid var(--border, oklch(0.922 0 0)); border-radius:14px; font-family:system-ui, \"Segoe UI\", Roboto, sans-serif; } .ds-section header { display:flex; align-items:center; gap:8px; } .ds-section h2 { margin:0; font-size:14px; font-weight:600; color:var(--foreground, oklch(0.145 0 0)); } .ds-section p { margin:0; font-size:14px; color:var(--muted-foreground, oklch(0.556 0 0)); } .ds-section-icon { display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:8px; color:#0ca30c; background:color-mix(in oklch, #0ca30c 15%, transparent); }"
+    },
+    {
+      "name": "Ítem de navegación",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Menú lateral: reposo, hover y activo con el marcador azul de 5px.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item is-active\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/></svg>Dashboard</a><a class=\"ds-nav-item\" href=\"#\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m7.5 4.27 9 5.15\"/><path d=\"M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z\"/></svg>Activos</a></nav>",
+      "css": ".ds-nav { display:grid; gap:2px; width:220px; padding:8px; background:var(--sidebar, #fff); font-family:system-ui, \"Segoe UI\", Roboto, sans-serif; } .ds-nav-item { display:flex; align-items:center; gap:8px; padding:10px 8px; border-radius:14px; font-size:14px; font-weight:600; color:var(--sidebar-foreground, oklch(0.145 0 0)); text-decoration:none; transition:background .15s; } .ds-nav-item:hover { background:var(--sidebar-accent, oklch(0.97 0 0)); } .ds-nav-item.is-active { background:var(--card, #fff); color:var(--primary, #2a78d6); font-weight:600; border-left:5px solid var(--primary, #2a78d6); box-shadow:0 1px 3px 0 rgb(0 0 0 / .1), 0 1px 2px -1px rgb(0 0 0 / .1); } .ds-nav-item:focus-visible { outline:none; box-shadow:0 0 0 2px var(--ring, #2a78d6); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Libro de Inventario",
+    "overview": "El sistema es el registro oficial del patrimonio de CESAL, y se ve como tal: un libro de inventario bien llevado, donde cada bien tiene su línea, su código y su historia, y nada queda suelto. La estructura manda. Tablas con jerarquía clara, secciones agrupadas con su propio borde, números tabulares y alineados. El color nunca decora: identifica (qué tipo de bien es, en qué estado está, qué rol tiene un usuario).\n\nSobre esa sobriedad va una capa cálida e institucional. El fondo del modo claro lleva el brillo azul y amarillo de CESAL en las esquinas, y las tarjetas flotan sobre él en capas suaves. Así la herramienta se siente propia de la organización y no un software genérico. Los controles son amables y claros: estados de hover y foco visibles, etiquetas siempre presentes, íconos que acompañan al texto. Lo usa a diario un equipo administrativo, no especialistas técnicos.\n\nLa densidad es la de una herramienta de trabajo de escritorio: controles compactos de 32px, texto base de 14px y mucha información por pantalla. Todo debe seguir funcionando en un celular durante el inventario físico.",
+    "keyCharacteristics": [
+      "Un único acento, el Azul CESAL, para acción, foco y navegación activa.",
+      "Color de identidad por valor cerrado (tipo de activo, estado patrimonial, rol), siempre acompañado de ícono y texto.",
+      "El chip tintado: ícono de color sobre un fondo del mismo color al 15%.",
+      "Tarjetas en capas suaves sobre un fondo con el brillo de marca.",
+      "Tipografía del sistema operativo, números tabulares y formato `es-PE`.",
+      "Modo oscuro propio, no una inversión automática, y una impresión que siempre sale en claro."
+    ],
+    "rules": [
+      {
+        "name": "The Single Ink Rule",
+        "body": "El Azul CESAL es el único color de acción. Un botón, enlace o foco nunca usa otro tono.",
+        "section": "colors"
+      },
+      {
+        "name": "The Color Means Something Rule",
+        "body": "Todo color fuera de la base neutra codifica un valor cerrado (tipo, estado, rol o serie) y va siempre con ícono y texto. Si un color no responde a \"¿qué dato representa?\", sobra.",
+        "section": "colors"
+      },
+      {
+        "name": "The Reserved Status Rule",
+        "body": "Verde, ámbar y rojo de estado no se reusan como color de tipo, de sección ni de serie. Mezclarlos confundiría \"qué es\" con \"cómo está\".",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Toda cifra que se compara (cantidades, porcentajes, montos, códigos) usa numerales tabulares y se formatea con `toLocaleString(\"es-PE\")`.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Display Font Rule",
+        "body": "No hay tipografía de titulares aparte. Un título se distingue por peso y tamaño, nunca por una fuente decorativa.",
+        "section": "typography"
+      },
+      {
+        "name": "The Paper Stack Rule",
+        "body": "La profundidad es la de hojas apiladas: sombras cortas y neutras, nunca de color, nunca con glow. Si una sombra se nota antes que el contenido, es demasiado fuerte.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Print Is Flat Rule",
+        "body": "Al imprimir no hay sombras, fondos ni modo oscuro: solo blanco, bordes y texto.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Bookmark Rule",
+        "body": "El único borde grueso del sistema es el marcador azul del menú lateral. Ningún otro elemento usa bordes de acento de más de 1px.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "**Do** usar el Azul CESAL (#2a78d6) para toda acción primaria, foco y navegación activa, y ningún otro color para eso.",
+      "**Do** acompañar cada color de identidad con ícono y texto (chip tintado al 15%), tomándolos del mapa `*_META` correspondiente.",
+      "**Do** formatear cifras con `es-PE` y numerales tabulares.",
+      "**Do** separar planos con anillo fino y la sombra Reposo, y reservar sombras mayores para lo que flota.",
+      "**Do** escribir toda la interfaz en español, con el vocabulario oficial de CESAL: sede, ambiente, responsable, código patrimonial, los 7 tipos con su nombre exacto.",
+      "**Do** probar cada pantalla en modo oscuro e impresión: el oscuro tiene sus propios valores y la impresión siempre sale clara."
+    ],
+    "donts": [
+      "**Don't** parecer software contable antiguo: nada de grises planos sin jerarquía, tablas sin agrupación ni íconos de otra época.",
+      "**Don't** parecer una startup SaaS genérica: nada de degradados morados, ilustraciones 3D, glassmorphism ni frases de marketing.",
+      "**Don't** parecer Excel en el navegador: nada de rejillas densas sin secciones, sin color de identidad ni jerarquía visual.",
+      "**Don't** reusar los colores de estado (#0ca30c, #fab219, #d03b3b) como color de tipo, de sección o de serie.",
+      "**Don't** poner el brillo azul y amarillo de marca en componentes. Vive solo en el fondo de página del modo claro.",
+      "**Don't** usar bordes de acento de más de 1px, salvo el marcador del menú lateral.",
+      "**Don't** generar un color nuevo para un tipo de activo. Los 7 slots son fijos y siguen el orden oficial."
+    ]
+  }
+}

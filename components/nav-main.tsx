@@ -72,7 +72,7 @@ export function NavMain({
                 className={cn(
                   "relative rounded-xl py-5 transition-colors text-gray-600 font-semibold dark:text-blue-50",
                   isActive &&
-                    "bg-card font-semibold text-primary shadow-sm hover:bg-card dark:text-blue-700 border-l-5 border-l-blue-700 hover:text-primary data-active:bg-card data-active:text-primary"
+                    "bg-card font-semibold text-primary shadow-sm hover:bg-card dark:text-primary border-l-5 border-l-primary hover:text-primary data-active:bg-card data-active:text-primary"
                 )}
               >
                 <item.icon className={isActive ? "text-primary" : undefined} />
