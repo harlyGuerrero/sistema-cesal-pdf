@@ -5,14 +5,17 @@ import type { Prisma, TipoActivoCode } from "@/lib/generated/prisma/client";
 // INF-LA-26-0001 para un "Laptop" de Equipos informáticos, 2026,
 // correlativo 1). Se genera una sola vez al crear el Activo y queda fijo
 // (nadie lo edita después, ver activo-form.tsx) porque termina impreso en
-// una etiqueta física — cambiarlo rompería esa referencia.
+// una etiqueta física — cambiarlo rompería esa referencia. Por eso los
+// prefijos se mantuvieron al renombrar los tipos en Fase 55 (ej.
+// Edificaciones sigue en INM, Mobiliario y enseres en MOB).
 export const PREFIJO_TIPO_ACTIVO: Record<TipoActivoCode, string> = {
   EQUIPOS_INFORMATICOS: "INF",
   EQUIPOS_DE_OFICINA: "OFF",
-  MUEBLES_DE_OFICINA: "MOB",
-  BIENES_VEHICULARES: "VEH",
-  EQUIPOS_DE_MAQUINARIA: "MAQ",
-  BIENES_INMUEBLES: "INM",
+  MOBILIARIO_Y_ENSERES: "MOB",
+  VEHICULOS_Y_MEDIOS_DE_TRANSPORTE: "VEH",
+  MAQUINARIA_Y_EQUIPOS: "MAQ",
+  EDIFICACIONES: "INM",
+  ACTIVOS_INTANGIBLES_INFORMATICOS: "INT",
 };
 
 // Primeras 2 letras del nombre completo (decisión explícita del usuario:

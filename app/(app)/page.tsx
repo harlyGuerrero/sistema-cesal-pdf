@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { ArchiveIcon, CheckCircle2Icon, Trash2Icon, UserIcon, WrenchIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { TIPO_ACTIVO_CODE_ORDER } from "@/lib/activos/labels";
-import type { Region } from "@/lib/generated/prisma/client";
 import { ActivosTable } from "./activos/activos-table";
-import { CategoryBarChart, type CategoryBarDatum } from "./category-bar-chart";
+import { SedeBarChart, type SedeBarDatum } from "./sede-bar-chart";
 import { DonutChart, type DonutDatum } from "./donut-chart";
 import { MovimientosFeed } from "./movimientos-feed";
 
@@ -22,12 +21,6 @@ const RECENT_ACTIVOS_TAKE = 6;
 // importación (ImportItemStatus) — Activos es el módulo central del
 // sistema, no el pipeline de PDFs. Colores de estado fijos (skill dataviz),
 // asignados directo en cada StatCard más abajo.
-const REGION_LABELS: Record<Region, string> = {
-  COSTA: "Costa",
-  SIERRA: "Sierra",
-  SELVA: "Selva",
-};
-const REGION_ORDER: Region[] = ["COSTA", "SIERRA", "SELVA"];
 
 export default async function DashboardPage() {
   const [
@@ -43,7 +36,7 @@ export default async function DashboardPage() {
     prisma.activo.groupBy({ by: ["tipoActivoId"], _count: true }),
     prisma.activo.groupBy({ by: ["estadoPatrimonial"], _count: true }),
     prisma.activo.count(),
-    prisma.sede.findMany({ select: { region: true, _count: { select: { activos: true } } } }),
+    prisma.sede.findMany({ select: { name: true, _count: { select: { activos: true } } } }),
     prisma.movimiento.findMany({
       orderBy: { fecha: "desc" },
       take: RECENT_MOVEMENTS_TAKE,
@@ -91,14 +84,12 @@ export default async function DashboardPage() {
   const mantenimiento = countByEstado.get("MANTENIMIENTO") ?? 0;
   const baja = countByEstado.get("BAJA") ?? 0;
 
-  const countByRegion = new Map<Region, number>();
-  for (const sede of sedesConConteo) {
-    countByRegion.set(sede.region, (countByRegion.get(sede.region) ?? 0) + sede._count.activos);
-  }
-  const regionData: CategoryBarDatum[] = REGION_ORDER.map((region) => ({
-    name: REGION_LABELS[region],
-    count: countByRegion.get(region) ?? 0,
-  }));
+  // Orden descendente: la sede con más activos queda primera y es la barra
+  // destacada del gráfico (índice 0).
+  const sedeData: SedeBarDatum[] = sedesConConteo
+    .map((sede) => ({ sede: sede.name, activos: sede._count.activos }))
+    .sort((a, b) => b.activos - a.activos || a.sede.localeCompare(b.sede, "es"));
+  const sedeTop = sedeData[0];
 
   const porcentaje = (value: number) => (totalActivos > 0 ? `${Math.round((value / totalActivos) * 100)}% del total` : "Sin datos");
 
@@ -171,11 +162,24 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Activos por región</CardTitle>
+            <CardTitle className="text-base font-semibold">Activos por sede</CardTitle>
+            <CardDescription>Cantidad de activos registrados en cada sede</CardDescription>
           </CardHeader>
           <CardContent>
-            <CategoryBarChart data={regionData} />
+            <SedeBarChart data={sedeData} activeIndex={0} />
           </CardContent>
+          {sedeTop && sedeTop.activos > 0 && (
+            <CardFooter className="flex-col items-start gap-1 text-sm">
+              <p className="font-medium">
+                {sedeTop.sede} concentra {sedeTop.activos.toLocaleString("es-PE")}{" "}
+                {sedeTop.activos === 1 ? "activo" : "activos"}
+              </p>
+              <p className="text-muted-foreground">
+                {Math.round((sedeTop.activos / totalActivos) * 100)}% del total, en {sedeData.length}{" "}
+                {sedeData.length === 1 ? "sede" : "sedes"}
+              </p>
+            </CardFooter>
+          )}
         </Card>
 
         <Card>

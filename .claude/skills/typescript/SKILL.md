@@ -17,4 +17,4 @@ Implementado en `lib/document-service/contract.ts` (`processResponseSchema`, `pr
 
 ## Enums cerrados
 
-`relevance` (`PRODUCT`/`CONSUMABLE`/`SERVICE`/`OTHER`) y `category` (las 6 categorías patrimoniales) se modelan como union types literales o enum de Zod, nunca como `string` libre.
+`relevance` (`PRODUCT`/`CONSUMABLE`/`SERVICE`/`OTHER`) y `category` (las 7 categorías patrimoniales) se modelan como union types literales o enum de Zod, nunca como `string` libre.

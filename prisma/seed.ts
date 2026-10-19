@@ -5,14 +5,18 @@ import { slugify } from "../lib/activos/slug";
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
-// Los 6 tipos de activo patrimonial, cerrados (ver ARCHITECTURE.md 5.2). No agregar OTROS.
+// Los 7 tipos de activo oficiales de CESAL, cerrados (ver ARCHITECTURE.md 5.2).
+// No agregar OTROS. Estos nombres son la denominación oficial del inventario
+// de la organización (Fase 55) — no reemplazarlos por genéricos tipo
+// "Bienes Inmuebles" o "Muebles de Oficina".
 const TIPOS_ACTIVO: { code: TipoActivoCode; name: string }[] = [
-  { code: TipoActivoCode.EQUIPOS_INFORMATICOS, name: "Equipos Informáticos" },
-  { code: TipoActivoCode.EQUIPOS_DE_OFICINA, name: "Equipos de Oficina" },
-  { code: TipoActivoCode.MUEBLES_DE_OFICINA, name: "Muebles de Oficina" },
-  { code: TipoActivoCode.BIENES_VEHICULARES, name: "Bienes Vehiculares" },
-  { code: TipoActivoCode.EQUIPOS_DE_MAQUINARIA, name: "Equipos de Maquinaria" },
-  { code: TipoActivoCode.BIENES_INMUEBLES, name: "Bienes Inmuebles" },
+  { code: TipoActivoCode.EDIFICACIONES, name: "Edificaciones" },
+  { code: TipoActivoCode.VEHICULOS_Y_MEDIOS_DE_TRANSPORTE, name: "Vehículos y medios de transporte" },
+  { code: TipoActivoCode.EQUIPOS_INFORMATICOS, name: "Equipos informáticos" },
+  { code: TipoActivoCode.EQUIPOS_DE_OFICINA, name: "Equipos de oficina" },
+  { code: TipoActivoCode.ACTIVOS_INTANGIBLES_INFORMATICOS, name: "Activos intangibles informáticos" },
+  { code: TipoActivoCode.MAQUINARIA_Y_EQUIPOS, name: "Maquinaria y equipos" },
+  { code: TipoActivoCode.MOBILIARIO_Y_ENSERES, name: "Mobiliario y enseres" },
 ];
 
 // Sedes reales de la organización, a nivel ciudad (Fase 5 de Activos).
@@ -38,7 +42,7 @@ const UNIDADES_OPERATIVAS: { sedeName: string; name: string }[] = [
 ];
 
 // Taxonomía inicial (Fase 3 de Activos, planificación §5): Categoría ->
-// Subcategoría por tipo de activo. Bienes Inmuebles queda con menos detalle
+// Subcategoría por tipo de activo. Edificaciones queda con menos detalle
 // a propósito — la hoja original tiene muy pocos registros y CESAL todavía
 // no validó esos campos (ver planificación de Activos, decisiones abiertas).
 const TAXONOMIA: {
@@ -60,7 +64,7 @@ const TAXONOMIA: {
     ],
   },
   {
-    tipoCode: TipoActivoCode.BIENES_VEHICULARES,
+    tipoCode: TipoActivoCode.VEHICULOS_Y_MEDIOS_DE_TRANSPORTE,
     categorias: [
       { nombre: "Vehículos terrestres", subcategorias: ["Camioneta", "Motocicleta"] },
       { nombre: "Embarcaciones", subcategorias: ["Bote", "Embarcación fluvial"] },
@@ -68,7 +72,7 @@ const TAXONOMIA: {
     ],
   },
   {
-    tipoCode: TipoActivoCode.MUEBLES_DE_OFICINA,
+    tipoCode: TipoActivoCode.MOBILIARIO_Y_ENSERES,
     categorias: [
       {
         nombre: "Almacenamiento",
@@ -101,7 +105,7 @@ const TAXONOMIA: {
     ],
   },
   {
-    tipoCode: TipoActivoCode.EQUIPOS_DE_MAQUINARIA,
+    tipoCode: TipoActivoCode.MAQUINARIA_Y_EQUIPOS,
     categorias: [
       {
         nombre: "Maquinaria textil",
@@ -126,12 +130,10 @@ const TAXONOMIA: {
     ],
   },
   {
-    tipoCode: TipoActivoCode.BIENES_INMUEBLES,
-    categorias: [
-      { nombre: "Terrenos", subcategorias: [] },
-      { nombre: "Edificaciones", subcategorias: ["Oficina", "Local", "Centro de atención"] },
-      { nombre: "Otros inmuebles", subcategorias: [] },
-    ],
+    tipoCode: TipoActivoCode.EDIFICACIONES,
+    // Fase 55: "Terrenos" y "Otros inmuebles" se eliminaron — no son
+    // edificaciones y el catálogo oficial no tiene un tipo para ellos.
+    categorias: [{ nombre: "Edificaciones", subcategorias: ["Oficina", "Local", "Centro de atención"] }],
   },
 ];
 

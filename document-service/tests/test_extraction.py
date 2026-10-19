@@ -71,6 +71,19 @@ def test_detect_invoice_number_prefers_match_near_label_over_earlier_noise():
     assert detect_invoice_number(text) == "F001-00456"
 
 
+def test_detect_invoice_number_falls_back_to_generic_hyphenated_token():
+    """Bug real (Fase 54): una numeración interna que no sigue el formato
+    SUNAT (serie de 4 caracteres) no matcheaba nada — CESAL usa
+    "FACTURA-55-01898", no "F001-00123"."""
+    text = "FACTURA ELECTRONICA\nFACTURA-55-01898\nCliente: ACME SAC"
+    assert detect_invoice_number(text) == "FACTURA-55-01898"
+
+
+def test_detect_invoice_number_generic_fallback_skips_dates_near_label():
+    text = "Fecha de factura: 20-08-2026\nMonto: S/ 1,500.00"
+    assert detect_invoice_number(text) is None
+
+
 def test_is_numeric_cell_recognizes_trailing_currency_symbols():
     """Bug real: facturas con precio formateado como '1500 €' (símbolo de
     moneda al final, no código ISO) no eran reconocidas como columna numérica

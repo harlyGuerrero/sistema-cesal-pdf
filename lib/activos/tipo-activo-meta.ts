@@ -2,6 +2,7 @@ import {
   ArmchairIcon,
   Building2Icon,
   CarIcon,
+  DiscIcon,
   MonitorIcon,
   PrinterIcon,
   SettingsIcon,
@@ -15,15 +16,16 @@ import type { TipoActivoCode } from "@/lib/generated/prisma/client";
 // Deliberadamente NO se adivina un ícono a partir del nombre del producto
 // (ej. "router" -> ícono de wifi): eso requeriría una lista de palabras
 // clave por producto, justo lo que CLAUDE.md prohíbe para la detección
-// estructural del sistema (regla 3) — 6 categorías cerradas, 6 íconos fijos.
+// estructural del sistema (regla 3) — 7 tipos cerrados, 7 íconos fijos.
 // Los colores evitan good/warning/critical a propósito: esos ya identifican
 // el Estado patrimonial en la misma fila (columna Estado) y reusarlos acá
 // mezclaría "qué tipo de bien es" con "en qué estado está".
 export const TIPO_ACTIVO_META: Record<TipoActivoCode, { icon: LucideIcon; color: string }> = {
   EQUIPOS_INFORMATICOS: { icon: MonitorIcon, color: "var(--primary)" },
   EQUIPOS_DE_OFICINA: { icon: PrinterIcon, color: "var(--color-chart-2)" },
-  MUEBLES_DE_OFICINA: { icon: ArmchairIcon, color: "var(--color-chart-5)" },
-  BIENES_VEHICULARES: { icon: CarIcon, color: "var(--color-chart-3)" },
-  EQUIPOS_DE_MAQUINARIA: { icon: SettingsIcon, color: "var(--color-neutral)" },
-  BIENES_INMUEBLES: { icon: Building2Icon, color: "var(--color-chart-2)" },
+  MOBILIARIO_Y_ENSERES: { icon: ArmchairIcon, color: "var(--color-chart-5)" },
+  VEHICULOS_Y_MEDIOS_DE_TRANSPORTE: { icon: CarIcon, color: "var(--color-chart-3)" },
+  MAQUINARIA_Y_EQUIPOS: { icon: SettingsIcon, color: "var(--color-neutral)" },
+  EDIFICACIONES: { icon: Building2Icon, color: "var(--color-chart-2)" },
+  ACTIVOS_INTANGIBLES_INFORMATICOS: { icon: DiscIcon, color: "var(--color-chart-4)" },
 };

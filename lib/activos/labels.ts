@@ -1,3 +1,5 @@
+import type { TipoActivoCode } from "@/lib/generated/prisma/client";
+
 // Etiquetas de TipoDato compartidas entre las pantallas de Campos y Catálogos
 // (Fase 4 de Activos).
 
@@ -122,14 +124,17 @@ export const TIPO_MOVIMIENTO_TAG_LABELS: Record<string, string> = {
   REACTIVACION: "Reactivación",
 };
 
-// Orden canónico de las 6 categorías patrimoniales (ver ARCHITECTURE.md 5.2).
+// Orden canónico de los 7 tipos de activo oficiales de CESAL (ver
+// ARCHITECTURE.md 5.2), el mismo del inventario de la organización.
 // Compartido entre el Dashboard y el reporte de inventario (Fase 12) para no
-// repetir el mismo orden fijo en dos lugares.
+// repetir el mismo orden fijo en dos lugares. Los nombres visibles NO van
+// acá: salen de la tabla "categories" (TipoActivo.name).
 export const TIPO_ACTIVO_CODE_ORDER = [
+  "EDIFICACIONES",
+  "VEHICULOS_Y_MEDIOS_DE_TRANSPORTE",
   "EQUIPOS_INFORMATICOS",
   "EQUIPOS_DE_OFICINA",
-  "MUEBLES_DE_OFICINA",
-  "BIENES_VEHICULARES",
-  "EQUIPOS_DE_MAQUINARIA",
-  "BIENES_INMUEBLES",
-] as const;
+  "ACTIVOS_INTANGIBLES_INFORMATICOS",
+  "MAQUINARIA_Y_EQUIPOS",
+  "MOBILIARIO_Y_ENSERES",
+] as const satisfies readonly TipoActivoCode[];

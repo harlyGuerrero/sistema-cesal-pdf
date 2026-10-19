@@ -1,6 +1,6 @@
 ---
 name: product-classification
-description: Reglas de clasificación de relevancia y categoría patrimonial — las 6 categorías cerradas, umbral de confidence, disparo de Human Review. Usar al implementar las etapas Relevance Classification/Patrimonial Classification/Confidence/Human Review.
+description: Reglas de clasificación de relevancia y categoría patrimonial — las 7 categorías cerradas, umbral de confidence, disparo de Human Review. Usar al implementar las etapas Relevance Classification/Patrimonial Classification/Confidence/Human Review.
 ---
 
 # Product Classification
@@ -26,18 +26,19 @@ El listado de patrones en `CONSUMABLE_PATTERNS`/`SERVICE_PATTERNS` es clasificac
 
 Tests en `tests/relevance.test.ts`.
 
-## Categorías patrimoniales (exactamente 6, cerradas)
+## Categorías patrimoniales (exactamente 7, cerradas)
 
 ```
-EQUIPOS_INFORMATICOS
-EQUIPOS_DE_OFICINA
-MUEBLES_DE_OFICINA
-BIENES_VEHICULARES
-EQUIPOS_DE_MAQUINARIA
-BIENES_INMUEBLES
+EDIFICACIONES                       Edificaciones
+VEHICULOS_Y_MEDIOS_DE_TRANSPORTE    Vehículos y medios de transporte
+EQUIPOS_INFORMATICOS                Equipos informáticos
+EQUIPOS_DE_OFICINA                  Equipos de oficina
+ACTIVOS_INTANGIBLES_INFORMATICOS    Activos intangibles informáticos
+MAQUINARIA_Y_EQUIPOS                Maquinaria y equipos
+MOBILIARIO_Y_ENSERES                Mobiliario y enseres
 ```
 
-Nunca crear `OTROS`. Un `PRODUCT` que no encaja con confianza suficiente en ninguna de las 6 va a Human Review, no se fuerza a la categoría más probable sin marcarlo como incierto.
+Nunca crear `OTROS`. Un `PRODUCT` que no encaja con confianza suficiente en ninguna de las 7 va a Human Review, no se fuerza a la categoría más probable sin marcarlo como incierto.
 
 ### Implementación (Fase 7) — Clasificación híbrida
 

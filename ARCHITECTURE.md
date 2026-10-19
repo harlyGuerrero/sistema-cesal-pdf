@@ -78,7 +78,7 @@ Product Candidate          (fila normalizada: raw text + campos parseados)
  ↓
 Relevance Classification   (PRODUCT / CONSUMABLE / SERVICE / OTHER)
  ↓
-Patrimonial Classification (una de las 6 categorías, solo si relevance = PRODUCT)
+Patrimonial Classification (una de las 7 categorías, solo si relevance = PRODUCT)
  ↓
 Confidence                 (score de la clasificación)
  ↓
@@ -118,20 +118,23 @@ OTHER        → no clasificable como los anteriores → se ignora salvo revisi�
 
 Solo los ítems `PRODUCT` avanzan a clasificación patrimonial.
 
-### 5.2 Tipos de activo / categorías patrimoniales (exactamente 6, cerradas)
+### 5.2 Tipos de activo / categorías patrimoniales (exactamente 7, cerradas)
 
 Modeladas como `TipoActivo`/`TipoActivoCode` en el schema (antes `Category`/`CategoryCode` — mismo dato, tabla renombrada al fusionarse `Product` con el módulo patrimonial de Activos).
 
 ```
-EQUIPOS_INFORMATICOS
-EQUIPOS_DE_OFICINA
-MUEBLES_DE_OFICINA
-BIENES_VEHICULARES
-EQUIPOS_DE_MAQUINARIA
-BIENES_INMUEBLES
+EDIFICACIONES                       Edificaciones
+VEHICULOS_Y_MEDIOS_DE_TRANSPORTE    Vehículos y medios de transporte
+EQUIPOS_INFORMATICOS                Equipos informáticos
+EQUIPOS_DE_OFICINA                  Equipos de oficina
+ACTIVOS_INTANGIBLES_INFORMATICOS    Activos intangibles informáticos
+MAQUINARIA_Y_EQUIPOS                Maquinaria y equipos
+MOBILIARIO_Y_ENSERES                Mobiliario y enseres
 ```
 
-No existe categoría `OTROS`. Si un `PRODUCT` no encaja con confianza suficiente en ninguna de las 6, va a **Human Review**, no a una categoría cajón de sastre.
+No existe categoría `OTROS`. Si un `PRODUCT` no encaja con confianza suficiente en ninguna de las 7, va a **Human Review**, no a una categoría cajón de sastre.
+
+`ACTIVOS_INTANGIBLES_INFORMATICOS` (licencias perpetuas, sistemas a medida) no es una unidad física: se registra como Activo igual (sede/ubicación son opcionales), pero la relevancia sigue marcando LICENCIA/SUSCRIPCIÓN como `SERVICE`, así que no se clasifica automáticamente desde una factura — se asigna a mano.
 
 ## 6. Modelo de datos conceptual
 

@@ -1,15 +1,8 @@
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { GroupedCombobox } from "@/components/grouped-combobox";
+import { subcategoriaGroups } from "@/lib/activos/subcategoria-groups";
 import { CampoList } from "./campo-list";
 
 // Fase 4 de Activos: campos de especificación técnica por subcategoría (ej.
@@ -58,25 +51,14 @@ export default async function CamposPage({
       </div>
 
       <form method="get" className="flex flex-wrap gap-2">
-        <Select name="subcategoriaId" defaultValue={subcategoriaId}>
-          <SelectTrigger className="w-96 bg-white">
-            <SelectValue placeholder="Selecciona una subcategoría" />
-          </SelectTrigger>
-          <SelectContent>
-            {tiposActivo.map((tipo) => (
-              <SelectGroup key={tipo.id}>
-                <SelectLabel>{tipo.name}</SelectLabel>
-                {tipo.categorias.flatMap((categoria) =>
-                  categoria.subcategorias.map((subcategoria) => (
-                    <SelectItem key={subcategoria.id} value={subcategoria.id}>
-                      {categoria.nombre} › {subcategoria.nombre}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectGroup>
-            ))}
-          </SelectContent>
-        </Select>
+        <GroupedCombobox
+          name="subcategoriaId"
+          groups={subcategoriaGroups(tiposActivo)}
+          defaultValue={subcategoriaId}
+          placeholder="Busca una subcategoría"
+          emptyMessage="Ninguna subcategoría coincide."
+          className="w-96 bg-white"
+        />
         <Button type="submit" variant="outline">
           Ver campos
         </Button>

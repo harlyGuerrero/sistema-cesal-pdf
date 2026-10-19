@@ -25,13 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { GroupedCombobox } from "@/components/grouped-combobox";
 import { IMPORT_ITEM_STATUS_LABELS, IMPORT_ITEM_STATUS_META } from "@/lib/import-workflow/labels";
 import { TIPO_ACTIVO_META } from "@/lib/activos/tipo-activo-meta";
 import type { TipoActivoCode } from "@/lib/generated/prisma/client";
@@ -263,18 +257,20 @@ function ReviewRow({ item, categories }: { item: ReviewItem; categories: ReviewC
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor={`category-${item.id}`}>Categoría</Label>
-                    <Select name="categoryId" defaultValue={item.categoryId ?? undefined}>
-                      <SelectTrigger id={`category-${item.id}`} className="w-full">
-                        <SelectValue placeholder="Selecciona una categoría" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <GroupedCombobox
+                      id={`category-${item.id}`}
+                      name="categoryId"
+                      groups={[
+                        {
+                          label: "Categorías patrimoniales",
+                          items: categories.map((category) => ({ value: category.id, label: category.name })),
+                        },
+                      ]}
+                      defaultValue={item.categoryId ?? undefined}
+                      placeholder="Busca una categoría"
+                      emptyMessage="Ninguna categoría coincide."
+                      className="w-full"
+                    />
                   </div>
                   {item.extractionConfidence != null && (
                     <div className="space-y-1">

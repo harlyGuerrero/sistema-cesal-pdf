@@ -6,13 +6,14 @@ import { categoryCodeSchema, type CategoryClassificationInput, type CategoryCode
 // ollama: no es el parser principal, no se usa para tapar errores de
 // extracción — solo clasificación en casos ambiguos).
 
-const SYSTEM_PROMPT = `Clasificas nombres de productos de facturas en exactamente una categoria patrimonial. Categorias y ejemplos:
+const SYSTEM_PROMPT = `Clasificas nombres de productos de facturas en exactamente un tipo de activo patrimonial. Categorias y ejemplos:
 EQUIPOS_INFORMATICOS: laptop, computadora, monitor, impresora, servidor, router, teclado, mouse, tablet, proyector.
 EQUIPOS_DE_OFICINA: fotocopiadora, telefono fijo, calculadora, aire acondicionado, fax, friobar, frigobar, refrigeradora, calefactor, ventilador, microondas, hervidor, dispensador de agua, cafetera, balanza, horno.
-MUEBLES_DE_OFICINA: escritorio, silla, archivador, estante, mesa, libreros.
-BIENES_VEHICULARES: camioneta, automovil, camion, motocicleta, furgon, bus.
-EQUIPOS_DE_MAQUINARIA: generador, compresora, montacargas, excavadora, tractor, soldadora, maquina de coser.
-BIENES_INMUEBLES: terreno, edificio, local comercial, predio, almacen, nave industrial.
+MOBILIARIO_Y_ENSERES: escritorio, silla, archivador, estante, mesa, libreros.
+VEHICULOS_Y_MEDIOS_DE_TRANSPORTE: camioneta, automovil, camion, motocicleta, furgon, bus.
+MAQUINARIA_Y_EQUIPOS: generador, compresora, montacargas, excavadora, tractor, soldadora, maquina de coser.
+EDIFICACIONES: edificio, local comercial, oficina, almacen, nave industrial.
+ACTIVOS_INTANGIBLES_INFORMATICOS: licencia de software perpetua, sistema informatico desarrollado a medida.
 Responde solo JSON con category y confidence (0 a 1).`;
 
 // Espejo del schema de validación de abajo — Ollama exige el JSON Schema

@@ -19,14 +19,16 @@ datasource db {
 // Enums
 // ---------------------------------------------------------------------------
 
-// Categorías patrimoniales cerradas (ver ARCHITECTURE.md 5.2). No agregar OTROS.
+// Los 7 tipos de activo oficiales de CESAL, cerrados (ver ARCHITECTURE.md 5.2).
+// No agregar OTROS. Renombrados en Fase 55 con RENAME VALUE (sin perder filas).
 enum TipoActivoCode {
   EQUIPOS_INFORMATICOS
   EQUIPOS_DE_OFICINA
-  MUEBLES_DE_OFICINA
-  BIENES_VEHICULARES
-  EQUIPOS_DE_MAQUINARIA
-  BIENES_INMUEBLES
+  MOBILIARIO_Y_ENSERES
+  VEHICULOS_Y_MEDIOS_DE_TRANSPORTE
+  MAQUINARIA_Y_EQUIPOS
+  EDIFICACIONES
+  ACTIVOS_INTANGIBLES_INFORMATICOS
 }
 
 // Relevancia: distinta del tipo de activo (ver skill product-classification).

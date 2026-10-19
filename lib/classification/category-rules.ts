@@ -43,7 +43,7 @@ const CATEGORY_PATTERNS: Record<CategoryCode, RegExp[]> = {
     /\bBALANZAS?\b/,
     /\bHORNOS?\b/,
   ],
-  MUEBLES_DE_OFICINA: [
+  MOBILIARIO_Y_ENSERES: [
     /\bESCRITORIOS?\b/,
     /\bSILLAS?\b/,
     /\bARCHIVADOR(ES)?\b/,
@@ -53,7 +53,7 @@ const CATEGORY_PATTERNS: Record<CategoryCode, RegExp[]> = {
     /\bCREDENZA\b/,
     /\bPIZARRAS?\b/,
   ],
-  BIENES_VEHICULARES: [
+  VEHICULOS_Y_MEDIOS_DE_TRANSPORTE: [
     /\bCAMIONETAS?\b/,
     /\bAUTOM[OÓ]VIL(ES)?\b/,
     /\bCAMI[OÓ]N(ES)?\b/,
@@ -62,7 +62,7 @@ const CATEGORY_PATTERNS: Record<CategoryCode, RegExp[]> = {
     /\bFURG[OÓ]N(ES)?\b/,
     /\bBUS(ES)?\b/,
   ],
-  EQUIPOS_DE_MAQUINARIA: [
+  MAQUINARIA_Y_EQUIPOS: [
     /\bMAQUINARIA\b/,
     /\bGENERADOR(ES)?\b/,
     /\bCOMPRESORAS?\b/,
@@ -74,11 +74,13 @@ const CATEGORY_PATTERNS: Record<CategoryCode, RegExp[]> = {
     /\bGR[UÚ]AS?\b/,
     /\bCOSTURA\b|\bM[AÁ]QUINA(S)? DE COSER\b/,
   ],
-  BIENES_INMUEBLES: [
-    /\bTERRENOS?\b/,
+  // Sin reglas a propósito: la etapa de relevancia ya marca LICENCIA y
+  // SUSCRIPCIÓN como SERVICE (lib/classification/relevance.ts), así que un
+  // intangible nunca llega a esta etapa desde una factura. Se asigna a mano.
+  ACTIVOS_INTANGIBLES_INFORMATICOS: [],
+  EDIFICACIONES: [
     /\bEDIFICIOS?\b/,
     /\bLOCAL(ES)? COMERCIAL(ES)?\b/,
-    /\bPREDIOS?\b/,
     /\bINMUEBLES?\b/,
     /\bALMAC[EÉ]N(ES)?\b/,
     /\bNAVE INDUSTRIAL\b/,

@@ -19,13 +19,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { FormSection } from "@/components/form-section";
+import { GroupedCombobox } from "@/components/grouped-combobox";
+import { subcategoriaGroups } from "@/lib/activos/subcategoria-groups";
 import { CONDICION_FISICA_OPTIONS, ESTADO_PATRIMONIAL_OPTIONS } from "@/lib/activos/labels";
 import { CampoEspecificacionInput, type CampoEspecificacionOption } from "./campo-especificacion-input";
 import { createActivoAction, updateActivoAction } from "./actions";
@@ -238,25 +238,16 @@ export function ActivoForm({
           </div>
           <div className="space-y-1">
             <Label htmlFor="subcategoriaId">Subcategoría</Label>
-            <Select name="subcategoriaId" value={subcategoriaId} onValueChange={(v) => setSubcategoriaId(v ?? "")}>
-              <SelectTrigger id="subcategoriaId" className="w-full">
-                <SelectValue placeholder="Selecciona una subcategoría" />
-              </SelectTrigger>
-              <SelectContent>
-                {tiposActivo.map((tipo) => (
-                  <SelectGroup key={tipo.id}>
-                    <SelectLabel>{tipo.name}</SelectLabel>
-                    {tipo.categorias.flatMap((categoria) =>
-                      categoria.subcategorias.map((subcategoria) => (
-                        <SelectItem key={subcategoria.id} value={subcategoria.id}>
-                          {categoria.nombre} › {subcategoria.nombre}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectGroup>
-                ))}
-              </SelectContent>
-            </Select>
+            <GroupedCombobox
+              id="subcategoriaId"
+              name="subcategoriaId"
+              groups={subcategoriaGroups(tiposActivo)}
+              value={subcategoriaId}
+              onValueChange={setSubcategoriaId}
+              placeholder="Busca una subcategoría"
+              emptyMessage="Ninguna subcategoría coincide."
+              className="w-full"
+            />
           </div>
           <div className="space-y-1">
             <Label>Código patrimonial</Label>
