@@ -24,6 +24,7 @@ export const productCandidateSchema = z.object({
 export const documentInfoSchema = z.object({
   pages: z.number().int(),
   invoiceNumber: z.string().nullable(),
+  invoiceTotal: z.number().nullable(),
 });
 
 export const processMetricsSchema = z.object({

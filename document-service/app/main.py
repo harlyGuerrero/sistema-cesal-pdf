@@ -38,7 +38,7 @@ async def process_document(file: UploadFile) -> ProcessResponse:
 
     started_at = time.monotonic()
     try:
-        num_pages, tables, invoice_number = await asyncio.wait_for(
+        num_pages, tables, invoice_number, invoice_total = await asyncio.wait_for(
             asyncio.to_thread(extract, content, file.filename or "document.pdf"),
             timeout=config.PROCESSING_TIMEOUT_SECONDS,
         )
@@ -58,7 +58,7 @@ async def process_document(file: UploadFile) -> ProcessResponse:
     processing_time_ms = int((time.monotonic() - started_at) * 1000)
 
     return ProcessResponse(
-        document=DocumentInfo(pages=num_pages, invoiceNumber=invoice_number),
+        document=DocumentInfo(pages=num_pages, invoiceNumber=invoice_number, invoiceTotal=invoice_total),
         tables=tables_summary,
         products=products,
         metrics=ProcessMetrics(

@@ -21,6 +21,7 @@ from docling.datamodel.pipeline_options import (
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
 from .invoice_number import detect_invoice_number
+from .invoice_total import detect_invoice_total
 from .models import Table
 
 _converter: DocumentConverter | None = None
@@ -61,9 +62,9 @@ def _get_converter() -> DocumentConverter:
     return _converter
 
 
-def extract(content: bytes, filename: str) -> tuple[int, list[Table], str | None]:
-    """Devuelve (num_páginas, tablas, n° de factura detectado) a partir de los
-    bytes de un PDF."""
+def extract(content: bytes, filename: str) -> tuple[int, list[Table], str | None, float | None]:
+    """Devuelve (num_páginas, tablas, n° de factura detectado, importe total
+    detectado) a partir de los bytes de un PDF."""
     source = DocumentStream(name=filename, stream=io.BytesIO(content))
     result = _get_converter().convert(source)
     document = result.document
@@ -77,9 +78,11 @@ def extract(content: bytes, filename: str) -> tuple[int, list[Table], str | None
         if grid:
             tables.append(Table(page=page_no, index=index, rows=grid))
 
-    invoice_number = detect_invoice_number(document.export_to_text())
+    text = document.export_to_text()
+    invoice_number = detect_invoice_number(text)
+    invoice_total = detect_invoice_total(text)
 
-    return num_pages, tables, invoice_number
+    return num_pages, tables, invoice_number, invoice_total
 
 
 def _table_item_to_grid(table_item) -> list[list[str]]:

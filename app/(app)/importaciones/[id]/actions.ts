@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { createActivosFromImportItem } from "@/lib/import-workflow/activo-creation";
 import { requireSessionUsuario } from "@/lib/auth/session";
+import { IGV_TRATAMIENTO_OPTIONS } from "@/lib/activos/igv";
+import type { IgvTratamiento } from "@/lib/generated/prisma/client";
 
 // Acciones de revisión humana (Fase 9). A diferencia de Fase 8 (auto-confirma
 // solo cuando method === "RULE"), estas siempre llevan reviewedAt — alguien
@@ -16,9 +18,20 @@ export async function updateNumeroFacturaAction(importId: string, formData: Form
   const numeroFactura = (formData.get("numeroFactura") as string | null)?.trim() || null;
   const numeroFC = (formData.get("numeroFC") as string | null)?.trim() || null;
 
+  const totalRaw = (formData.get("totalFactura") as string | null)?.trim();
+  const totalFactura = totalRaw ? Number(totalRaw) : null;
+  if (totalFactura !== null && (!Number.isFinite(totalFactura) || totalFactura < 0)) {
+    throw new Error('"Total de la factura" debe ser un número mayor o igual a 0.');
+  }
+
+  const igvRaw = (formData.get("igvTratamiento") as string | null) || null;
+  const igvTratamiento = IGV_TRATAMIENTO_OPTIONS.some((option) => option.value === igvRaw)
+    ? (igvRaw as IgvTratamiento)
+    : null;
+
   await prisma.import.update({
     where: { id: importId },
-    data: { numeroFactura, numeroFC },
+    data: { numeroFactura, numeroFC, totalFactura, igvTratamiento },
   });
 
   revalidatePath(`/importaciones/${importId}`);

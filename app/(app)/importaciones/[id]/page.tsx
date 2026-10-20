@@ -112,6 +112,9 @@ export default async function ImportDetailPage({
               importId={importRecord.id}
               numeroFactura={importRecord.numeroFactura}
               numeroFC={importRecord.numeroFC}
+              totalFactura={importRecord.totalFactura ? Number(importRecord.totalFactura) : null}
+              igvTratamiento={importRecord.igvTratamiento}
+              currency={importRecord.items.find((item) => item.currency)?.currency ?? null}
             />
           </div>
         </CardContent>

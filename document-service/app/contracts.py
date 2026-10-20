@@ -31,6 +31,9 @@ class DocumentInfo(BaseModel):
     # forma. Mejor esfuerzo: Next.js lo usa para precargar Import.numeroFactura,
     # pero sigue siendo editable a mano si la detección falla o se equivoca.
     invoiceNumber: str | None = None
+    # Importe total del comprobante (ver extraction/invoice_total.py), mismo
+    # criterio: precarga Import.totalFactura y sigue siendo editable a mano.
+    invoiceTotal: float | None = None
 
 
 class ProcessMetrics(BaseModel):

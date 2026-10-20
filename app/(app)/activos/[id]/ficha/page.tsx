@@ -8,6 +8,7 @@ import {
 import { PrintButton } from "@/components/print-button";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { nombreCompleto } from "@/lib/nombre-completo";
+import { formatMonto, preciosConIgv } from "@/lib/activos/igv";
 import { Section, Field } from "./field";
 import { HistorialSection } from "./historial-section";
 import { DocumentosSection } from "./documentos-section";
@@ -70,6 +71,13 @@ export default async function FichaActivoPage({
       ambiente: true,
       proveedor: true,
       responsableActual: true,
+      importItem: {
+        select: {
+          unitPrice: true,
+          currency: true,
+          import: { select: { totalFactura: true, igvTratamiento: true } },
+        },
+      },
       especificaciones: {
         orderBy: [{ campo: { orden: "asc" } }, { campo: { nombre: "asc" } }],
         include: { campo: true, valorCatalogoValor: true },
@@ -95,6 +103,16 @@ export default async function FichaActivoPage({
   if (!activo) {
     notFound();
   }
+
+  // Fase 57: precios de la factura de origen. Solo existen para activos que
+  // nacieron de una importación; uno creado a mano solo tiene su costo.
+  const factura = activo.importItem;
+  const moneda = factura?.currency ?? null;
+  const precioFactura = factura?.unitPrice != null ? Number(factura.unitPrice) : null;
+  const igvTratamiento = factura?.import.igvTratamiento ?? null;
+  const precios = precioFactura !== null ? preciosConIgv(precioFactura, igvTratamiento) : null;
+  const totalFactura = factura?.import.totalFactura != null ? Number(factura.import.totalFactura) : null;
+  const igvSinDefinir = precioFactura !== null && igvTratamiento === null;
 
   return (
     <>
@@ -140,6 +158,35 @@ export default async function FichaActivoPage({
         <Field label="Fecha de adquisición" value={formatDate(activo.fechaAdquisicion)} />
         <Field label="Proveedor" value={activo.proveedor?.razonSocial} />
         <Field label="N° de factura" value={activo.numeroFactura} />
+        <Field label="Total de la factura" value={formatMonto(totalFactura, moneda)} />
+        <Field
+          label="Precio unitario (sin IGV)"
+          value={
+            igvSinDefinir ? (
+              <>
+                {formatMonto(precioFactura, moneda)}{" "}
+                <span className="font-normal text-muted-foreground">(IGV sin definir)</span>
+              </>
+            ) : (
+              formatMonto(precios?.sinIgv ?? null, moneda)
+            )
+          }
+        />
+        <Field
+          label="Precio unitario con IGV"
+          value={
+            igvSinDefinir ? (
+              <span className="font-normal text-muted-foreground">Definir el IGV en la importación</span>
+            ) : igvTratamiento === "EXONERADO" ? (
+              <>
+                {formatMonto(precios?.conIgv ?? null, moneda)}{" "}
+                <span className="font-normal text-muted-foreground">(exonerada)</span>
+              </>
+            ) : (
+              formatMonto(precios?.conIgv ?? null, moneda)
+            )
+          }
+        />
         <Field label="Código de proyecto" value={activo.codigoProyecto} />
         <Field label="Costo de adquisición" value={formatMoney(activo.costoAdquisicion)} />
         <Field label="Valor contable" value={formatMoney(activo.valorContable)} />

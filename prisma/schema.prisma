@@ -31,6 +31,14 @@ enum TipoActivoCode {
   ACTIVOS_INTANGIBLES_INFORMATICOS
 }
 
+// Fase 57: cómo vienen los precios unitarios de una factura respecto del
+// IGV (ver Import.igvTratamiento, lib/activos/igv.ts).
+enum IgvTratamiento {
+  SIN_IGV
+  CON_IGV
+  EXONERADO
+}
+
 // Relevancia: distinta del tipo de activo (ver skill product-classification).
 enum Relevance {
   PRODUCT
@@ -684,6 +692,14 @@ model Import {
   // Fase 52: correlativo interno de CESAL para esta factura (ver comentario
   // en Activo.numeroFC) — siempre manual, nunca se intenta autodetectar.
   numeroFC      String?
+  // Fase 57: importe total del comprobante — se precarga con lo que detecta
+  // el Document Service (invoice_total.py) y se corrige a mano en la
+  // revisión. Misma moneda que los ítems (ImportItem.currency).
+  totalFactura  Decimal?        @db.Decimal(14, 2)
+  // Si los precios de la factura vienen con o sin IGV, o exonerada (ej.
+  // compras en la Amazonía). Lo decide una persona en la revisión: el
+  // extractor no puede saberlo. null = todavía sin definir.
+  igvTratamiento IgvTratamiento?
   status        ImportStatus @default(UPLOADED)
   errorMessage  String?
 

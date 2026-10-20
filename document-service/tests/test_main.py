@@ -22,7 +22,7 @@ def test_run_pipeline_failure_returns_controlled_500_not_a_crash():
     Docling convirtió el PDF sin problema; el error es nuestro (heurística),
     no del archivo de entrada, así que debe distinguirse del 422 de arriba."""
     with (
-        patch("app.main.extract", return_value=(1, [], None)),
+        patch("app.main.extract", return_value=(1, [], None, None)),
         patch("app.main.run_pipeline", side_effect=RuntimeError("boom")),
     ):
         response = _upload()

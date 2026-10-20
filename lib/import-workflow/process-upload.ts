@@ -98,6 +98,8 @@ export async function processUpload(file: UploadedFile): Promise<ProcessUploadRe
           // esfuerzo: queda editable a mano en /importaciones/[id] si la
           // detección falla o no aplica (numero-factura-editor.tsx).
           numeroFactura: itemsToCreate.invoiceNumber,
+          // Fase 57: mismo criterio para el importe total (invoice_total.py).
+          totalFactura: itemsToCreate.invoiceTotal,
         },
       });
 
@@ -157,6 +159,7 @@ async function extractAndClassify(
   items: Prisma.ImportItemCreateManyInput[];
   ollamaUsedCount: number;
   invoiceNumber: string | null;
+  invoiceTotal: number | null;
 }> {
   const attemptStartedAt = new Date();
   let docResult;
@@ -241,5 +244,10 @@ async function extractAndClassify(
     });
   }
 
-  return { items, ollamaUsedCount, invoiceNumber: docResult.document.invoiceNumber };
+  return {
+    items,
+    ollamaUsedCount,
+    invoiceNumber: docResult.document.invoiceNumber,
+    invoiceTotal: docResult.document.invoiceTotal,
+  };
 }

@@ -1,4 +1,5 @@
 from app.extraction.invoice_number import detect_invoice_number
+from app.extraction.invoice_total import detect_invoice_total
 from app.extraction.models import Table
 from app.extraction.parsing import is_numeric_cell, parse_number
 from app.extraction.pipeline import run_pipeline
@@ -277,3 +278,36 @@ def test_key_value_table_yields_no_candidates():
     candidates, _ = run_pipeline([decoy])
 
     assert candidates == []
+
+
+def test_detect_invoice_total_prefers_importe_total_over_subtotals():
+    text = (
+        "Op. Gravada S/ 1,000.00\n"
+        "Sub Total S/ 1,000.00\n"
+        "IGV 18% S/ 180.00\n"
+        "Importe Total S/ 1,180.00\n"
+        "SON: MIL CIENTO OCHENTA CON 00/100 SOLES"
+    )
+    assert detect_invoice_total(text) == 1180.0
+
+
+def test_detect_invoice_total_plain_total_label_and_value_on_next_line():
+    text = "Laptop 2 3,000.00\nTOTAL\n3.540,00"
+    assert detect_invoice_total(text) == 3540.0
+
+
+def test_detect_invoice_total_ignores_total_igv_and_gravada():
+    text = "Total Op. Gravadas 500.00\nTotal IGV 90.00\nTotal a pagar 590.00"
+    assert detect_invoice_total(text) == 590.0
+
+
+def test_detect_invoice_total_none_without_total_label():
+    assert detect_invoice_total("Laptop 2 3000.00\nCliente: ACME") is None
+
+
+def test_detect_invoice_total_letter_spaced_total_after_blank_lines():
+    """Caso real (fixture factura-estudio-shonos.pdf): el total viene
+    espaciado letra por letra y el subtotal deja su monto tras una línea en
+    blanco."""
+    text = "Subtotal:\n\n$23,000\n\nImpuesto 10%:\n\n$2,300\n\nT O T A L :   $ 2 5 , 3 0 0"
+    assert detect_invoice_total(text) == 25300.0
