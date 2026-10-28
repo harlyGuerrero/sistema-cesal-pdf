@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import {
+  ArchiveXIcon,
   IdCardIcon,
   MapPinIcon,
   ShieldCheckIcon,
@@ -11,6 +12,7 @@ import { prisma } from "@/lib/db";
 import {
   CONDICION_FISICA_LABELS,
   ESTADO_PATRIMONIAL_LABELS,
+  MOTIVO_BAJA_LABELS,
 } from "@/lib/activos/labels";
 import { PrintButton } from "@/components/print-button";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
@@ -170,6 +172,15 @@ export default async function FichaActivoPage({
         <Field label="Responsable actual" value={activo.responsableActual ? nombreCompleto(activo.responsableActual) : null} />
         <Field label="Descripción" value={activo.descripcion} span2 />
       </Section>
+
+      {/* Fase 66: datos de la baja vigente. */}
+      {activo.estadoPatrimonial === "BAJA" && (
+        <Section title="Baja" icon={ArchiveXIcon} color="var(--color-critical)">
+          <Field label="Fecha de baja" value={activo.fechaBaja ? formatFecha(activo.fechaBaja) : null} />
+          <Field label="Motivo" value={activo.motivoBaja ? MOTIVO_BAJA_LABELS[activo.motivoBaja] : "Sin registrar"} />
+          <Field label="Observaciones" value={activo.observacionesBaja} span2 />
+        </Section>
+      )}
 
       <Section title="Ubicación" icon={MapPinIcon} color="var(--color-good)">
         <Field label="Sede" value={activo.sede?.name} />

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { FileTextIcon, HistoryIcon, PackageIcon, TrendingDownIcon, UserIcon } from "lucide-react";
+import { ArchiveXIcon, FileTextIcon, HistoryIcon, PackageIcon, TrendingDownIcon, UserIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { FormPageHeader } from "@/components/form-page-header";
@@ -15,6 +15,16 @@ import { DepreciacionActivoContent } from "./depreciacion-section";
 import { cargarDepreciacionActivo } from "@/lib/depreciacion/detalle";
 import { agregarHistorial, formatPeriodo } from "@/lib/depreciacion/calculo";
 import { MovimientosTabla } from "../../movimientos/movimientos-tabla";
+import { DarDeBajaButton, ReactivarActivoButton } from "../baja-activo-dialogs";
+import { getSessionUsuario } from "@/lib/auth/session";
+import {
+  aActivoEliminable,
+  CONTEO_ELIMINACION,
+  motivoNoEliminable,
+  puedeEliminarActivos,
+} from "@/lib/activos/eliminacion";
+import { MOTIVO_BAJA_LABELS } from "@/lib/activos/labels";
+import { formatFecha } from "@/lib/depreciacion/calculo";
 
 function toDateInputValue(date: Date | null): string {
   return date ? date.toISOString().slice(0, 10) : "";
@@ -31,7 +41,7 @@ export default async function ActivoDetailPage({
 }) {
   const { id } = await params;
 
-  const [activo, { tiposActivo, sedes }, responsables, depreciacion] = await Promise.all([
+  const [activo, { tiposActivo, sedes }, responsables, depreciacion, usuario] = await Promise.all([
     prisma.activo.findUnique({
       where: { id },
       include: {
@@ -64,7 +74,7 @@ export default async function ActivoDetailPage({
             ambienteNuevo: true,
           },
         },
-        _count: { select: { documentos: { where: { estado: true } }, depreciaciones: true } },
+        _count: { select: CONTEO_ELIMINACION },
       },
     }),
     getActivoFormData(),
@@ -73,6 +83,7 @@ export default async function ActivoDetailPage({
       orderBy: [{ nombres: "asc" }, { apellidos: "asc" }],
     }),
     cargarDepreciacionActivo(prisma, id),
+    getSessionUsuario(),
   ]);
 
   if (!activo || !depreciacion) {
@@ -102,6 +113,8 @@ export default async function ActivoDetailPage({
         break;
     }
   }
+
+  const dadoDeBaja = activo.estadoPatrimonial === "BAJA";
 
   const initial: ActivoFormInitial = {
     nombreActivo: activo.nombreActivo,
@@ -136,25 +149,57 @@ export default async function ActivoDetailPage({
             title={activo.nombreActivo}
             description={`Código patrimonial: ${activo.codigoPatrimonial}`}
             actions={
-              <Button
-                size="sm"
-                variant="outline"
-                render={<Link href={`/activos/${activo.id}/ficha`} />}
-                nativeButton={false}
-              >
-                <FileTextIcon />
-                Ver ficha técnica
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  render={<Link href={`/activos/${activo.id}/ficha`} />}
+                  nativeButton={false}
+                >
+                  <FileTextIcon />
+                  Ver ficha técnica
+                </Button>
+                {/* Fase 66: la acción frecuente va arriba; eliminar queda al pie. */}
+                {dadoDeBaja ? (
+                  <ReactivarActivoButton activoId={activo.id} nombreActivo={activo.nombreActivo} />
+                ) : (
+                  <DarDeBajaButton activoId={activo.id} nombreActivo={activo.nombreActivo} />
+                )}
+              </div>
             }
           />
 
+          {dadoDeBaja && (
+            <div className="flex items-start gap-3 border-b bg-destructive/5 px-4 py-3 sm:px-6" role="status">
+              <ArchiveXIcon className="mt-0.5 size-4 shrink-0 text-destructive" />
+              <div className="min-w-0 text-sm">
+                <p className="font-medium">
+                  Dado de baja
+                  {activo.fechaBaja ? ` el ${formatFecha(activo.fechaBaja)}` : ""}
+                  {" · "}
+                  Motivo: {activo.motivoBaja ? MOTIVO_BAJA_LABELS[activo.motivoBaja] : "Sin registrar"}
+                </p>
+                {activo.observacionesBaja && (
+                  <p className="wrap-break-word text-muted-foreground">{activo.observacionesBaja}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Los datos quedan de solo lectura. Para editarlo o asignarlo, reactívalo.
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-5 p-4 sm:p-6 pb-0">
             <FormSection icon={UserIcon} title="Responsable" color="var(--color-chart-2)">
-              <ResponsableSection
-                activoId={activo.id}
-                responsableActualId={activo.responsableActualId}
-                responsables={responsables}
-              />
+              {dadoDeBaja ? (
+                <p className="text-sm text-muted-foreground">Un activo dado de baja no tiene responsable.</p>
+              ) : (
+                <ResponsableSection
+                  activoId={activo.id}
+                  responsableActualId={activo.responsableActualId}
+                  responsables={responsables}
+                />
+              )}
             </FormSection>
 
             <FormSection icon={FileTextIcon} title={`Documentos (${activo.documentos.length})`} color="var(--color-chart-3)">
@@ -194,20 +239,22 @@ export default async function ActivoDetailPage({
             sedes={sedes}
             esDeImportacion={activo.importItemId != null}
             documentosFirma={activo.documentos.map((documento) => documento.id).join(",")}
+            soloLectura={dadoDeBaja}
             historialDepreciacion={agregarHistorial(depreciacion.historial)}
             ultimoPeriodoDepreciado={
               depreciacion.resumen.ultimoPeriodo ? formatPeriodo(depreciacion.resumen.ultimoPeriodo) : null
             }
           />
 
-          <div className="border-t p-4 sm:p-6">
-            <DeleteActivoButton
-              activoId={activo.id}
-              hasHistory={
-                activo.importItemId !== null || activo._count.documentos > 0 || activo._count.depreciaciones > 0
-              }
-            />
-          </div>
+          {puedeEliminarActivos(usuario?.rol) && (
+            <div className="border-t p-4 sm:p-6">
+              <DeleteActivoButton
+                activoId={activo.id}
+                nombreActivo={activo.nombreActivo}
+                motivoBloqueo={motivoNoEliminable(aActivoEliminable(activo))}
+              />
+            </div>
+          )}
         </div>
       </main>
     </>

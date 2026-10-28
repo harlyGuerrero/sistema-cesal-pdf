@@ -291,6 +291,13 @@ export async function parseActivosWorkbook(buffer: Buffer): Promise<ActivoImport
       if (!resuelto) errores.push(`"Estado patrimonial" no reconocido: "${estadoTexto}".`);
       else estadoPatrimonial = resuelto as EstadoPatrimonial;
     }
+    // Fase 66: la baja pide motivo y fecha, así que no entra por Excel; y un
+    // activo dado de baja no se modifica hasta reactivarlo desde su ficha.
+    if (esActualizacion && existente!.estadoPatrimonial === "BAJA") {
+      errores.push("El activo está dado de baja: reactívalo desde su ficha antes de actualizarlo.");
+    } else if (estadoPatrimonial === "BAJA") {
+      errores.push('La baja se registra desde la ficha del activo (botón "Dar de baja"), no desde el Excel.');
+    }
 
     const condicionTexto = texto(col("condicionFisica", row));
     let condicionFisica: CondicionFisica | null = esActualizacion ? existente!.condicionFisica : null;

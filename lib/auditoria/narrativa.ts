@@ -116,12 +116,16 @@ export function narrarAuditoria(entidad: string, accion: string, detalleRaw: unk
         break;
       case "DAR_DE_BAJA":
         titulo = "Dio de baja un activo";
+        if (str(d.motivo)) resumen.push(`Motivo: ${str(d.motivo)}`);
         break;
       case "ELIMINAR":
         titulo = "Eliminó un activo";
         break;
       case "ACTUALIZAR":
-        if (d.motivo === "desasignar_responsable") {
+        if (d.motivo === "reactivar_activo") {
+          titulo = "Reactivó un activo dado de baja";
+          if (str(d.motivoReactivacion)) resumen.push(`Motivo: ${str(d.motivoReactivacion)}`);
+        } else if (d.motivo === "desasignar_responsable") {
           titulo = str(d.responsableAnterior)
             ? `Retiró la asignación de un activo a ${str(d.responsableAnterior)}`
             : "Retiró la asignación de un activo";

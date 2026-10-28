@@ -34,9 +34,12 @@ const COLUMN_COUNT = 7;
 export function ActivosTable({
   activos,
   emptyMessage = "No hay activos que coincidan con el filtro.",
+  puedeEliminar = false,
 }: {
   activos: ActivoTableRow[];
   emptyMessage?: string;
+  // Fase 66: solo SUPER_ADMIN ve "Eliminar" en el menú de cada fila.
+  puedeEliminar?: boolean;
 }) {
   return (
     <>
@@ -63,7 +66,12 @@ export function ActivosTable({
                   {activo.responsableActual ? nombreCompleto(activo.responsableActual) : "Sin asignar"}
                 </p>
               </div>
-              <ActivoRowActions activoId={activo.id} nombreActivo={activo.nombreActivo} />
+              <ActivoRowActions
+                activoId={activo.id}
+                nombreActivo={activo.nombreActivo}
+                estadoPatrimonial={activo.estadoPatrimonial}
+                puedeEliminar={puedeEliminar}
+              />
             </div>
           </li>
         ))}
@@ -126,7 +134,12 @@ export function ActivosTable({
                 {activo.numeroFC && <p className="text-xs">FC {activo.numeroFC}</p>}
               </TableCell>
               <TableCell className="pr-6">
-                <ActivoRowActions activoId={activo.id} nombreActivo={activo.nombreActivo} />
+                <ActivoRowActions
+                activoId={activo.id}
+                nombreActivo={activo.nombreActivo}
+                estadoPatrimonial={activo.estadoPatrimonial}
+                puedeEliminar={puedeEliminar}
+              />
               </TableCell>
             </TableRow>
           ))}

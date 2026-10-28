@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -209,6 +210,7 @@ export function ActivoForm({
   historialDepreciacion = HISTORIAL_VACIO,
   ultimoPeriodoDepreciado = null,
   documentosFirma = "",
+  soloLectura = false,
 }: {
   activoId?: string;
   initial?: ActivoFormInitial;
@@ -229,6 +231,9 @@ export function ActivoForm({
   // uno cuenta como cambio de la edición: habilita "Guardar" igual que
   // editar un campo.
   documentosFirma?: string;
+  // Fase 66: un activo dado de baja se muestra sin poder editarse hasta
+  // reactivarlo (el servidor también lo rechaza, ver updateActivoAction).
+  soloLectura?: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -350,6 +355,7 @@ export function ActivoForm({
       onKeyUp={verificarCambios}
       className="space-y-5 p-4 sm:p-6"
     >
+      <fieldset disabled={soloLectura} className="min-w-0 space-y-5">
       <FormSection icon={IdCardIcon} title="Identificación" color="var(--primary)">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1">
@@ -590,7 +596,8 @@ export function ActivoForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {ESTADO_PATRIMONIAL_OPTIONS.map((option) => (
+                {/* Fase 66: la baja va por su propio diálogo (motivo y fecha), no por acá. */}
+                {ESTADO_PATRIMONIAL_OPTIONS.filter((option) => soloLectura || option.value !== "BAJA").map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -626,9 +633,10 @@ export function ActivoForm({
           placeholder="Ingrese observaciones adicionales sobre el activo..."
         />
       </FormSection>
+      </fieldset>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <div className="flex flex-col items-center justify-center gap-1.5">
+      <div className={cn("flex flex-col items-center justify-center gap-1.5", soloLectura && "hidden")}>
         <Button
           type="submit"
           disabled={isPending || (Boolean(activoId) && !hayCambiosPorGuardar)}

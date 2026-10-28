@@ -182,9 +182,24 @@ describe("activos que no se pueden depreciar", () => {
     expect(resumirDepreciacion(a, HISTORIAL_VACIO, AHORA).estado).toBe("CONFIGURACION_PENDIENTE");
   });
 
-  it("dado de baja: se omite", () => {
+  it("dado de baja sin fecha registrada: se omite", () => {
     const plan = planificarDepreciacion(activo({ estadoPatrimonial: "BAJA" }), HISTORIAL_VACIO, { anio: 2026, trimestre: 4 }, AHORA);
     expect(plan).toEqual({ tipo: "omitido", motivo: "DADO_DE_BAJA" });
+  });
+
+  it("dado de baja con fecha: se deprecia hasta el trimestre de la baja inclusive", () => {
+    const a = activo({ estadoPatrimonial: "BAJA", fechaBaja: new Date("2026-08-15") });
+    const plan = planificarDepreciacion(a, HISTORIAL_VACIO, { anio: 2026, trimestre: 4 }, AHORA);
+    expect(plan.tipo === "pendiente" && plan.periodos.map((p) => `${p.anio}-T${p.trimestre}`)).toEqual([
+      "2026-T2",
+      "2026-T3",
+    ]);
+
+    const historial = agregarHistorial(planCompleto(activo(), { anio: 2026, trimestre: 3 }));
+    expect(planificarDepreciacion(a, historial, { anio: 2026, trimestre: 4 }, AHORA)).toEqual({
+      tipo: "omitido",
+      motivo: "DADO_DE_BAJA",
+    });
   });
 
   it("adquirido después del trimestre procesado: se omite", () => {

@@ -52,6 +52,8 @@ export interface ActivoDepreciable {
   costoAdquisicion: string | null;
   fechaAdquisicion: Date | null;
   estadoPatrimonial: EstadoPatrimonial;
+  // Fase 66: fecha de la baja vigente (solo con estadoPatrimonial = BAJA).
+  fechaBaja?: Date | null;
   // null = el tipo de activo no tiene TasaDepreciacion activa.
   tasaAnual: string | null;
 }
@@ -416,16 +418,24 @@ export function planificarDepreciacion(
     return { tipo: "omitido", motivo: "TOTALMENTE_DEPRECIADO" };
   }
   // Decisión de Fase 58: un activo dado de baja deja de depreciarse; su
-  // historial queda como está.
+  // historial queda como está. Fase 66: con fecha de baja registrada se
+  // deprecia hasta el trimestre de la baja inclusive (el bien se usó ese
+  // trimestre) y se detiene desde el siguiente. Una baja sin fecha (anterior
+  // a Fase 66) se sigue omitiendo entera.
+  let tope = objetivo;
   if (activo.estadoPatrimonial === "BAJA") {
-    return { tipo: "omitido", motivo: "DADO_DE_BAJA" };
+    const trimestreBaja = activo.fechaBaja ? trimestreDeFecha(activo.fechaBaja) : null;
+    const yaCubierto =
+      trimestreBaja !== null && historial.ultimoIndex !== null && historial.ultimoIndex >= periodoIndex(trimestreBaja);
+    if (!trimestreBaja || yaCubierto) return { tipo: "omitido", motivo: "DADO_DE_BAJA" };
+    if (compararPeriodos(trimestreBaja, objetivo) < 0) tope = trimestreBaja;
   }
   if (!validacion.datos) {
     return { tipo: "error", problemas: [...validacion.problemasDatos, ...validacion.problemasConfiguracion] };
   }
 
   const { costoCentavos, primerPeriodo, tasaTrimestral } = validacion.datos;
-  if (compararPeriodos(primerPeriodo, objetivo) > 0) {
+  if (compararPeriodos(primerPeriodo, tope) > 0) {
     return { tipo: "omitido", motivo: "ADQUIRIDO_DESPUES" };
   }
 
@@ -436,7 +446,7 @@ export function planificarDepreciacion(
   let index = historial.ultimoIndex !== null ? historial.ultimoIndex + 1 : periodoIndex(primerPeriodo);
   const periodos: PeriodoCalculado[] = [];
 
-  while (index <= periodoIndex(objetivo) && acumulado < costoCentavos) {
+  while (index <= periodoIndex(tope) && acumulado < costoCentavos) {
     const importe = Math.min(teorica, costoCentavos - acumulado);
     acumulado += importe;
     periodos.push({
@@ -450,6 +460,9 @@ export function planificarDepreciacion(
     index++;
   }
 
-  return periodos.length === 0 ? { tipo: "al_dia" } : { tipo: "pendiente", periodos };
+  if (periodos.length === 0) {
+    return activo.estadoPatrimonial === "BAJA" ? { tipo: "omitido", motivo: "DADO_DE_BAJA" } : { tipo: "al_dia" };
+  }
+  return { tipo: "pendiente", periodos };
 }
 

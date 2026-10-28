@@ -30,6 +30,7 @@ export function toActivoDepreciable(
     costoAdquisicion: { toString(): string } | null;
     fechaAdquisicion: Date | null;
     estadoPatrimonial: EstadoPatrimonial;
+    fechaBaja?: Date | null;
   },
   tasas: Map<string, string>
 ): ActivoDepreciable {
@@ -37,6 +38,7 @@ export function toActivoDepreciable(
     costoAdquisicion: activo.costoAdquisicion?.toString() ?? null,
     fechaAdquisicion: activo.fechaAdquisicion,
     estadoPatrimonial: activo.estadoPatrimonial,
+    fechaBaja: activo.fechaBaja ?? null,
     tasaAnual: tasas.get(activo.tipoActivoId) ?? null,
   };
 }

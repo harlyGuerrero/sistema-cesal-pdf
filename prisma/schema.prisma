@@ -101,6 +101,19 @@ enum EstadoPatrimonial {
   BAJA
 }
 
+// Fase 66: por qué se dio de baja un Activo. Lista cerrada — "OTRO" exige
+// observación (lo valida darDeBajaActivoAction).
+enum MotivoBaja {
+  OBSOLESCENCIA
+  DETERIORO_IRREPARABLE
+  ROBO_O_PERDIDA
+  SINIESTRO
+  DONACION
+  VENTA
+  TRANSFERENCIA_EXTERNA
+  OTRO
+}
+
 // Estado físico observado del Activo. Nulo hasta que alguien lo registre.
 enum CondicionFisica {
   NUEVO
@@ -723,6 +736,13 @@ model Activo {
   condicionFisica   CondicionFisica?
 
   observaciones String?
+
+  // Fase 66: datos de la baja vigente. Solo se llenan con estadoPatrimonial
+  // = BAJA (darDeBajaActivoAction) y se limpian al reactivar; el historial
+  // de bajas/reactivaciones anteriores queda en Movimiento.
+  fechaBaja         DateTime?   @db.Date
+  motivoBaja        MotivoBaja?
+  observacionesBaja String?
 
   // Trazabilidad opcional hacia el pipeline de PDFs: un Activo puede nacer
   // de una fila de importación confirmada, o crearse manualmente (migración

@@ -77,6 +77,7 @@ export async function planificarTrimestre(client: Client, objetivo: Periodo, aho
         costoAdquisicion: true,
         fechaAdquisicion: true,
         estadoPatrimonial: true,
+        fechaBaja: true,
       },
       orderBy: { codigoPatrimonial: "asc" },
     }),

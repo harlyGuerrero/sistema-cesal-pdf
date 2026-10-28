@@ -75,7 +75,10 @@ export function describirDetalleAuditoria(entidad: string, accion: string, detal
       const contexto = join([tipo, sede && `sede ${sede}`]);
       return `Se dio de alta el activo «${nombreActivo}»${codigoSufijo}${contexto ? ` — ${contexto}` : ""}.`;
     }
-    if (accion === "DAR_DE_BAJA") return `Se dio de baja el activo «${nombreActivo}»${codigoSufijo}.`;
+    if (accion === "DAR_DE_BAJA") {
+      const motivo = str(d.motivo);
+      return `Se dio de baja el activo «${nombreActivo}»${codigoSufijo}${motivo ? ` — motivo: ${motivo}` : ""}.`;
+    }
     if (accion === "TRANSFERIR") return `Se transfirió «${nombreActivo}»${codigoSufijo} a otra sede.`;
     if (accion === "ASIGNAR") {
       const responsable = str(d.responsable);
@@ -83,6 +86,9 @@ export function describirDetalleAuditoria(entidad: string, accion: string, detal
     }
     if (accion === "ELIMINAR") return `Se eliminó el activo «${nombreActivo}»${codigoSufijo}.`;
     if (accion === "ACTUALIZAR") {
+      if (d.motivo === "reactivar_activo") {
+        return `Se reactivó el activo «${nombreActivo}»${codigoSufijo}, que estaba dado de baja.`;
+      }
       if (d.motivo === "desasignar_responsable") {
         const responsableAnterior = str(d.responsableAnterior);
         return `Se desasignó a ${responsableAnterior ?? "el responsable"} de «${nombreActivo}»${codigoSufijo}.`;

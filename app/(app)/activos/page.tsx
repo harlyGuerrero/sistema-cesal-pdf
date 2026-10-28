@@ -8,6 +8,8 @@ import type { Prisma } from "@/lib/generated/prisma/client";
 import { buildActivosWhere } from "@/lib/activos/filtros";
 import { ActivosFilters } from "./activos-filters";
 import { ActivosTable } from "./activos-table";
+import { getSessionUsuario } from "@/lib/auth/session";
+import { puedeEliminarActivos } from "@/lib/activos/eliminacion";
 import { ImportExportActivosBar } from "./import-export-activos-bar";
 
 const PAGE_SIZE = 10;
@@ -37,6 +39,7 @@ export default async function ActivosPage({
   const orderBy: Prisma.ActivoOrderByWithRelationInput =
     sort === "antiguos" ? { updatedAt: "asc" } : sort === "nombre" ? { nombreActivo: "asc" } : { updatedAt: "desc" };
 
+  const usuario = await getSessionUsuario();
   const [activos, total, tiposActivo, sedes, totalGlobal, countsPorEstado] = await Promise.all([
     prisma.activo.findMany({
       where,
@@ -123,7 +126,7 @@ export default async function ActivosPage({
           <p className="text-sm font-medium">Activos encontrados ({total.toLocaleString("es-PE")})</p>
         </CardHeader>
         <CardContent className="overflow-x-auto px-0">
-          <ActivosTable activos={activos} />
+          <ActivosTable activos={activos} puedeEliminar={puedeEliminarActivos(usuario?.rol)} />
         </CardContent>
       </Card>
 

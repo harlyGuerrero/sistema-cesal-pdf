@@ -13,12 +13,14 @@ import {
 } from "@/lib/activos/movimientos";
 import { registrarAuditoria } from "@/lib/auditoria/registrar";
 import { archivarDocumentosActivo } from "@/lib/documentos/storage";
+import { aActivoEliminable, CONTEO_ELIMINACION, motivoNoEliminable, puedeEliminarActivos } from "@/lib/activos/eliminacion";
 import { assertSinCambiosDepreciables } from "@/lib/depreciacion/proteccion";
 import { sincronizarValoresContables } from "@/lib/depreciacion/valores-contables";
 import { crearNotificacionDesdeMovimiento } from "@/lib/notificaciones/crear";
 import { requireSessionUsuario } from "@/lib/auth/session";
 import { nombreCompleto } from "@/lib/nombre-completo";
-import type { CondicionFisica, EstadoPatrimonial } from "@/lib/generated/prisma/client";
+import { MOTIVO_BAJA_LABELS } from "@/lib/activos/labels";
+import type { CondicionFisica, EstadoPatrimonial, MotivoBaja } from "@/lib/generated/prisma/client";
 
 // Fase 6 de Activos: alta/edición/eliminación de Activo, integrando la
 // ubicación (Fase 5) y los campos dinámicos de su subcategoría (Fase 4).
@@ -148,6 +150,9 @@ async function readActivoInput(formData: FormData) {
 export async function createActivoAction(formData: FormData): Promise<void> {
   const actor = await requireSessionUsuario();
   const { especificaciones, ...data } = await readActivoInput(formData);
+  if (data.estadoPatrimonial === "BAJA") {
+    throw new Error("Un activo nuevo no puede registrarse dado de baja.");
+  }
 
   const activo = await prisma.$transaction(async (tx) => {
     const tipoActivo = await tx.tipoActivo.findUniqueOrThrow({ where: { id: data.tipoActivoId } });
@@ -201,6 +206,14 @@ export async function updateActivoAction(activoId: string, formData: FormData): 
 
   await prisma.$transaction(async (tx) => {
     const anterior = await tx.activo.findUniqueOrThrow({ where: { id: activoId } });
+    // Fase 66: la baja y la reactivación tienen su propio flujo (con motivo y
+    // fecha); un activo dado de baja no se edita hasta reactivarlo.
+    if (anterior.estadoPatrimonial === "BAJA") {
+      throw new Error("El activo está dado de baja: reactívalo para poder editarlo.");
+    }
+    if (data.estadoPatrimonial === "BAJA") {
+      throw new Error('Para dar de baja un activo usa el botón "Dar de baja".');
+    }
     // Fase 58: con depreciación registrada, costo/fecha/tipo quedan fijos.
     await assertSinCambiosDepreciables(tx, anterior, data);
 
@@ -319,6 +332,9 @@ export async function desasignarResponsableAction(activoId: string): Promise<voi
   const actor = await requireSessionUsuario();
   await prisma.$transaction(async (tx) => {
     const activo = await tx.activo.findUniqueOrThrow({ where: { id: activoId } });
+    // Desasignar deja el activo DISPONIBLE: sobre uno dado de baja sería una
+    // reactivación encubierta (Fase 66).
+    if (activo.estadoPatrimonial === "BAJA") throw new Error("El activo está dado de baja.");
     const responsableAnterior = activo.responsableActualId
       ? await tx.responsable.findUnique({ where: { id: activo.responsableActualId } })
       : null;
@@ -371,31 +387,20 @@ export async function desasignarResponsableAction(activoId: string): Promise<voi
 
 export async function deleteActivoAction(activoId: string): Promise<void> {
   const actor = await requireSessionUsuario();
+  if (!puedeEliminarActivos(actor.rol)) {
+    throw new Error("Solo un Super Administrador puede eliminar activos.");
+  }
   const activo = await prisma.activo.findUniqueOrThrow({
     where: { id: activoId },
-    include: {
-      _count: { select: { documentos: { where: { estado: true } }, depreciaciones: true } },
-    },
+    include: { _count: { select: CONTEO_ELIMINACION } },
   });
 
-  // Fase 58: el historial de depreciación es un registro contable — un
-  // activo con trimestres registrados no se borra (la FK además es Restrict).
-  if (activo._count.depreciaciones > 0) {
-    throw new Error("No se puede eliminar: tiene depreciación registrada (mantiene el historial contable).");
-  }
-
-  // Eliminación controlada: un activo que viene de una importación no se
-  // borra — rompería la trazabilidad Activo -> ImportItem -> Import (mismo
-  // criterio que app/productos/actions.ts, Fase 1).
-  if (activo.importItemId) {
-    throw new Error("No se puede eliminar: proviene de una importación (mantiene trazabilidad).");
-  }
-
-  // Solo bloquean los documentos vigentes: los que el usuario ya quitó de la
-  // ficha (estado = false) no cuentan (Fase 65). Sus filas caen por el
-  // Cascade y los archivos se archivan abajo en vez de quedar huérfanos.
-  if (activo._count.documentos > 0) {
-    throw new Error("No se puede eliminar: tiene documentos adjuntos.");
+  // Fase 66 (ver lib/activos/eliminacion.ts). Los documentos ya quitados de
+  // la ficha (estado = false) no bloquean: sus filas caen por el Cascade y
+  // los archivos se archivan abajo en vez de quedar huérfanos (Fase 65).
+  const motivo = motivoNoEliminable(aActivoEliminable(activo));
+  if (motivo) {
+    throw new Error(`No se puede eliminar: ${motivo}. Si el bien ya no está en uso, dalo de baja.`);
   }
 
   await prisma.$transaction(async (tx) => {
@@ -420,4 +425,146 @@ export async function deleteActivoAction(activoId: string): Promise<void> {
 
   revalidatePath("/activos");
   redirect("/activos");
+}
+
+// ---------------------------------------------------------------------------
+// Fase 66: baja y reactivación
+// ---------------------------------------------------------------------------
+
+const MOTIVOS_BAJA = new Set(Object.keys(MOTIVO_BAJA_LABELS));
+
+// Fecha de hoy en Lima (UTC-5, sin horario de verano) como "AAAA-MM-DD".
+function hoyEnLima(): string {
+  return new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+export interface DarDeBajaInput {
+  motivo: string;
+  fecha: string;
+  observaciones: string;
+}
+
+// La baja nunca borra: deja el activo en BAJA con su motivo y fecha, le
+// quita el responsable y registra el Movimiento. La depreciación se detiene
+// después del trimestre de la baja (ver planificarDepreciacion).
+export async function darDeBajaActivoAction(activoId: string, input: DarDeBajaInput): Promise<void> {
+  const actor = await requireSessionUsuario();
+  const motivo = input.motivo;
+  const observaciones = input.observaciones.trim() || null;
+  if (!MOTIVOS_BAJA.has(motivo)) throw new Error("Elige el motivo de la baja.");
+  if (motivo === "OTRO" && !observaciones) {
+    throw new Error('Con el motivo "Otro" las observaciones son obligatorias.');
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.fecha) || Number.isNaN(new Date(input.fecha).getTime())) {
+    throw new Error("Indica una fecha de baja válida.");
+  }
+  if (input.fecha > hoyEnLima()) throw new Error("La fecha de baja no puede ser futura.");
+  const fechaBaja = new Date(input.fecha);
+
+  await prisma.$transaction(async (tx) => {
+    const activo = await tx.activo.findUniqueOrThrow({ where: { id: activoId } });
+    if (activo.estadoPatrimonial === "BAJA") throw new Error("El activo ya está dado de baja.");
+    if (activo.fechaAdquisicion && fechaBaja < activo.fechaAdquisicion) {
+      throw new Error("La fecha de baja no puede ser anterior a la fecha de adquisición.");
+    }
+
+    await tx.activo.update({
+      where: { id: activoId },
+      data: {
+        estadoPatrimonial: "BAJA",
+        responsableActualId: null,
+        fechaBaja,
+        motivoBaja: motivo as MotivoBaja,
+        observacionesBaja: observaciones,
+      },
+    });
+    await tx.movimiento.create({
+      data: {
+        activoId,
+        usuarioId: actor.id,
+        tipo: "BAJA",
+        responsableAnteriorId: activo.responsableActualId,
+        responsableNuevoId: null,
+        estadoAnterior: activo.estadoPatrimonial,
+        estadoNuevo: "BAJA",
+        motivo: MOTIVO_BAJA_LABELS[motivo],
+        observaciones,
+      },
+    });
+    await sincronizarValoresContables(tx, [activoId]);
+    await crearNotificacionDesdeMovimiento(
+      {
+        tipoMovimiento: "BAJA",
+        activo: { id: activoId, nombreActivo: activo.nombreActivo, codigoPatrimonial: activo.codigoPatrimonial },
+        actorId: actor.id,
+      },
+      tx
+    );
+    await registrarAuditoria(
+      {
+        accion: "DAR_DE_BAJA",
+        entidad: "Activo",
+        entidadId: activoId,
+        detalle: {
+          nombreActivo: activo.nombreActivo,
+          codigoPatrimonial: activo.codigoPatrimonial,
+          motivo: MOTIVO_BAJA_LABELS[motivo],
+          fechaBaja: input.fecha,
+        },
+        usuarioId: actor.id,
+      },
+      tx
+    );
+  });
+
+  revalidatePath(`/activos/${activoId}`);
+  revalidatePath("/activos");
+}
+
+// Revierte una baja registrada por error (o un bien recuperado): vuelve a
+// DISPONIBLE sin responsable y limpia los datos de la baja vigente. La baja
+// anterior sigue visible en el historial de movimientos.
+export async function reactivarActivoAction(activoId: string, motivo: string): Promise<void> {
+  const actor = await requireSessionUsuario();
+  const motivoLimpio = motivo.trim();
+  if (!motivoLimpio) throw new Error("Indica el motivo de la reactivación.");
+
+  await prisma.$transaction(async (tx) => {
+    const activo = await tx.activo.findUniqueOrThrow({ where: { id: activoId } });
+    if (activo.estadoPatrimonial !== "BAJA") throw new Error("El activo no está dado de baja.");
+
+    await tx.activo.update({
+      where: { id: activoId },
+      data: { estadoPatrimonial: "DISPONIBLE", fechaBaja: null, motivoBaja: null, observacionesBaja: null },
+    });
+    await tx.movimiento.create({
+      data: {
+        activoId,
+        usuarioId: actor.id,
+        tipo: "REACTIVACION",
+        estadoAnterior: "BAJA",
+        estadoNuevo: "DISPONIBLE",
+        motivo: motivoLimpio,
+      },
+    });
+    await sincronizarValoresContables(tx, [activoId]);
+    await registrarAuditoria(
+      {
+        accion: "ACTUALIZAR",
+        entidad: "Activo",
+        entidadId: activoId,
+        detalle: {
+          motivo: "reactivar_activo",
+          nombreActivo: activo.nombreActivo,
+          codigoPatrimonial: activo.codigoPatrimonial,
+          motivoReactivacion: motivoLimpio,
+        },
+        usuarioId: actor.id,
+      },
+      tx
+    );
+  });
+
+  revalidatePath(`/activos/${activoId}`);
+  revalidatePath("/activos");
 }

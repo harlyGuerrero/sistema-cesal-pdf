@@ -55,6 +55,22 @@ export const ESTADO_PATRIMONIAL_COLOR_VAR: Record<string, string> = {
   BAJA: "var(--color-critical)",
 };
 
+// Fase 66: motivos de baja (enum MotivoBaja). "OTRO" exige observación.
+export const MOTIVO_BAJA_OPTIONS = [
+  { value: "OBSOLESCENCIA", label: "Obsolescencia" },
+  { value: "DETERIORO_IRREPARABLE", label: "Deterioro irreparable" },
+  { value: "ROBO_O_PERDIDA", label: "Robo o pérdida" },
+  { value: "SINIESTRO", label: "Siniestro" },
+  { value: "DONACION", label: "Donación" },
+  { value: "VENTA", label: "Venta" },
+  { value: "TRANSFERENCIA_EXTERNA", label: "Transferencia a otra entidad" },
+  { value: "OTRO", label: "Otro" },
+] as const;
+
+export const MOTIVO_BAJA_LABELS: Record<string, string> = Object.fromEntries(
+  MOTIVO_BAJA_OPTIONS.map((option) => [option.value, option.label])
+);
+
 export const CONDICION_FISICA_OPTIONS = [
   { value: "NUEVO", label: "Nuevo" },
   { value: "BUENO", label: "Bueno" },
