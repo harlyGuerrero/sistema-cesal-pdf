@@ -8,8 +8,12 @@ export const runtime = "nodejs";
 // por ruta directa (document-storage/ no está en public/, ver
 // lib/documentos/storage.ts). Un documento "eliminado" (soft-delete) no se
 // puede descargar, aunque el archivo siga existiendo en disco.
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+// Fase 63: con ?vista=1 se sirve "inline" para la vista previa (PDF o imagen
+// dentro de la página). El tipo ya se validó por firma al subir, y nosniff
+// impide que el navegador lo reinterprete como otra cosa.
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const vistaPrevia = new URL(request.url).searchParams.get("vista") === "1";
 
   const documento = await prisma.documento.findUnique({ where: { id } });
 
@@ -27,8 +31,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": documento.mimeType,
-      "Content-Disposition": `attachment; filename="${encodeURIComponent(documento.nombreOriginal)}"`,
+      "Content-Disposition": `${vistaPrevia ? "inline" : "attachment"}; filename="${encodeURIComponent(documento.nombreOriginal)}"`,
       "Content-Length": String(buffer.length),
+      "X-Content-Type-Options": "nosniff",
     },
   });
 }

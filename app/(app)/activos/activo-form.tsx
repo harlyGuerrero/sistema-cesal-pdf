@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -90,6 +90,15 @@ function isNextRedirectError(error: unknown): boolean {
     "digest" in error &&
     typeof error.digest === "string" &&
     error.digest.startsWith("NEXT_REDIRECT")
+  );
+}
+
+// Foto de todos los valores del formulario, para saber si hay cambios sin
+// guardar. Se lee del DOM (FormData) y no del estado de React porque varios
+// campos son no controlados, incluidos los inputs ocultos de los Select.
+function snapshotFormulario(form: HTMLFormElement): string {
+  return JSON.stringify(
+    [...new FormData(form).entries()].map(([key, value]) => [key, typeof value === "string" ? value : value.name])
   );
 }
 
@@ -219,6 +228,29 @@ export function ActivoForm({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  // Fase 62: al editar, "Guardar" solo se habilita si algo cambió respecto
+  // de lo último guardado; tras guardar vuelve a bloquearse, y deshacer un
+  // cambio también lo bloquea. Base UI no dispara eventos nativos al elegir
+  // en un Select, así que se re-compara después de cada interacción con el
+  // formulario (los eventos del popup llegan por el árbol de React aunque se
+  // rendericen en un portal).
+  const formRef = useRef<HTMLFormElement>(null);
+  const baselineRef = useRef<string | null>(null);
+  const [hayCambios, setHayCambios] = useState(false);
+  const verificarCambios = useCallback(() => {
+    setTimeout(() => {
+      const form = formRef.current;
+      if (!form || baselineRef.current === null) return;
+      setHayCambios(snapshotFormulario(form) !== baselineRef.current);
+    }, 0);
+  }, []);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (formRef.current) baselineRef.current = snapshotFormulario(formRef.current);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   const [tipoActivoId, setTipoActivoId] = useState(initial?.tipoActivoId ?? "");
   const [subcategoriaId, setSubcategoriaId] = useState(initial?.subcategoriaId ?? "");
   const [sedeId, setSedeId] = useState(initial?.sedeId ?? "");
@@ -275,6 +307,7 @@ export function ActivoForm({
     event.preventDefault();
     setError(null);
     const formData = new FormData(event.currentTarget);
+    const snapshotEnviado = snapshotFormulario(event.currentTarget);
     for (const key of ["unidadOperativaId", "ambienteId", "condicionFisica"]) {
       if (formData.get(key) === SIN_SELECCION) formData.set(key, "");
     }
@@ -283,6 +316,9 @@ export function ActivoForm({
       try {
         if (activoId) {
           await updateActivoAction(activoId, formData);
+          baselineRef.current = snapshotEnviado;
+          setHayCambios(false);
+          verificarCambios();
           toast.success("Activo actualizado.");
           router.push(`/activos/${activoId}`);
         } else {
@@ -296,7 +332,15 @@ export function ActivoForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 p-4 sm:p-6">
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      onInput={verificarCambios}
+      onChange={verificarCambios}
+      onClick={verificarCambios}
+      onKeyUp={verificarCambios}
+      className="space-y-5 p-4 sm:p-6"
+    >
       <FormSection icon={IdCardIcon} title="Identificación" color="var(--primary)">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1">
@@ -575,11 +619,18 @@ export function ActivoForm({
       </FormSection>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <div className="flex justify-center items-center">
-        <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+      <div className="flex flex-col items-center justify-center gap-1.5">
+        <Button
+          type="submit"
+          disabled={isPending || (Boolean(activoId) && !hayCambios)}
+          className="w-full sm:w-auto"
+        >
           <SaveIcon />
           {activoId ? "Guardar" : "Crear activo"}
         </Button>
+        {activoId && !hayCambios && !isPending && (
+          <p className="text-xs text-muted-foreground">Sin cambios por guardar.</p>
+        )}
       </div>
     </form>
   );

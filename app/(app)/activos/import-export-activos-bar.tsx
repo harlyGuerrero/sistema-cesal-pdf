@@ -211,8 +211,8 @@ function ImportActivosDialog() {
                     {preview.filas.map((fila) => (
                       <TableRow key={fila.rowNumber}>
                         <TableCell className="text-xs text-muted-foreground">{fila.rowNumber}</TableCell>
-                        <TableCell className="text-sm">{fila.nombreActivo}</TableCell>
-                        <TableCell className="text-xs">
+                        <TableCell className="text-sm whitespace-normal wrap-break-word">{fila.nombreActivo}</TableCell>
+                        <TableCell className="text-xs whitespace-normal wrap-break-word">
                           {fila.status === "error" ? (
                             <ul className="space-y-0.5 text-destructive">
                               {fila.errores.map((err, i) => (
