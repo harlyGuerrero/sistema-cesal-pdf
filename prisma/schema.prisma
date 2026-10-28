@@ -678,12 +678,12 @@ model Activo {
   tipoActivoId String
   tipoActivo   TipoActivo @relation(fields: [tipoActivoId], references: [id])
 
-  // Denormalizado desde subcategoria.categoria.tipoActivo cuando existe — se
-  // deriva en el server action, nunca se elige por separado (ver
-  // app/activos/actions.ts). Opcional: un Activo recién creado por el
+  // Si existe, su categoría pertenece a tipoActivoId — lo valida el server
+  // action (ver app/activos/actions.ts). Opcional: un Activo recién creado por el
   // pipeline de PDFs solo trae tipoActivoId, no la subcategoría fina — eso
-  // requiere un humano. El alta manual (Fase 6) sí la exige a nivel de
-  // formulario, aunque la columna lo permita null.
+  // requiere un humano. Desde Fase 61 también es opcional en el alta y la
+  // edición manual: ahí el tipo se elige directo en el formulario y, si
+  // además hay subcategoría, debe pertenecer a ese tipo.
   subcategoriaId String?
   subcategoria   SubcategoriaActivo? @relation(fields: [subcategoriaId], references: [id])
 

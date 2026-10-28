@@ -41,6 +41,7 @@ export function GroupedCombobox({
   emptyMessage = "Sin resultados.",
   required,
   disabled,
+  clearable,
   className,
 }: {
   groups: ComboboxOptionGroup[];
@@ -53,6 +54,8 @@ export function GroupedCombobox({
   emptyMessage?: string;
   required?: boolean;
   disabled?: boolean;
+  // Muestra una "x" para quitar la selección (campos opcionales).
+  clearable?: boolean;
   className?: string;
 }) {
   const optionByValue = useMemo(
@@ -80,7 +83,12 @@ export function GroupedCombobox({
       itemToStringValue={(option) => option.value}
       isItemEqualToValue={(option, selected) => option.value === selected.value}
     >
-      <ComboboxInput placeholder={placeholder} disabled={disabled} className={className} />
+      <ComboboxInput
+        placeholder={placeholder}
+        disabled={disabled}
+        showClear={clearable && optionByValue.has(value ?? defaultValue ?? "")}
+        className={className}
+      />
       <ComboboxContent>
         <ComboboxEmpty>{emptyMessage}</ComboboxEmpty>
         <ComboboxList>

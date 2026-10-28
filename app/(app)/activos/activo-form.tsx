@@ -60,6 +60,7 @@ export interface SedeOption {
 export interface ActivoFormInitial {
   nombreActivo: string;
   descripcion: string;
+  tipoActivoId: string;
   subcategoriaId: string;
   codigoPatrimonial: string;
   sedeId: string;
@@ -97,6 +98,7 @@ function flattenSubcategorias(tiposActivo: TipoActivoTree[]) {
     tipo.categorias.flatMap((categoria) =>
       categoria.subcategorias.map((subcategoria) => ({
         ...subcategoria,
+        tipoActivoId: tipo.id,
         tipoTasaAnual: tipo.tasaAnual,
         tipoActivoNombre: tipo.name,
         categoriaNombre: categoria.nombre,
@@ -217,12 +219,31 @@ export function ActivoForm({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  const [tipoActivoId, setTipoActivoId] = useState(initial?.tipoActivoId ?? "");
   const [subcategoriaId, setSubcategoriaId] = useState(initial?.subcategoriaId ?? "");
   const [sedeId, setSedeId] = useState(initial?.sedeId ?? "");
   const [unidadOperativaId, setUnidadOperativaId] = useState(initial?.unidadOperativaId || SIN_SELECCION);
 
   const subcategorias = flattenSubcategorias(tiposActivo);
   const subcategoriaSeleccionada = subcategorias.find((s) => s.id === subcategoriaId);
+  const tipoSeleccionado = tiposActivo.find((tipo) => tipo.id === tipoActivoId);
+  // La subcategoría es opcional: el tipo de activo sí es obligatorio (define
+  // el prefijo del código patrimonial y la tasa de depreciación). Con un tipo
+  // elegido, el buscador solo ofrece sus subcategorías.
+  const tiposParaSubcategoria = tipoSeleccionado ? [tipoSeleccionado] : tiposActivo;
+
+  function handleTipoActivoChange(value: string) {
+    setTipoActivoId(value);
+    if (subcategoriaSeleccionada && subcategoriaSeleccionada.tipoActivoId !== value) {
+      setSubcategoriaId("");
+    }
+  }
+
+  function handleSubcategoriaChange(value: string) {
+    setSubcategoriaId(value);
+    const subcategoria = subcategorias.find((s) => s.id === value);
+    if (subcategoria) setTipoActivoId(subcategoria.tipoActivoId);
+  }
 
   // Fase 60: valor contable y valor actual. Con costo, fecha y una tasa
   // válidos (depreciación definida), los dos son el valor neto y se muestran
@@ -235,7 +256,7 @@ export function ActivoForm({
         costoAdquisicion: costo.trim() || null,
         fechaAdquisicion: fecha ? new Date(fecha) : null,
         estadoPatrimonial: "DISPONIBLE",
-        tasaAnual: subcategoriaSeleccionada?.tipoTasaAnual ?? null,
+        tasaAnual: tipoSeleccionado?.tasaAnual ?? null,
       },
       historialDepreciacion
     )
@@ -289,15 +310,31 @@ export function ActivoForm({
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor="subcategoriaId">Subcategoría</Label>
+            <Label htmlFor="tipoActivoId">Tipo de activo</Label>
+            <Select name="tipoActivoId" value={tipoActivoId} onValueChange={(v) => handleTipoActivoChange(v ?? "")}>
+              <SelectTrigger id="tipoActivoId" className="w-full">
+                <SelectValue placeholder="Selecciona un tipo de activo" />
+              </SelectTrigger>
+              <SelectContent>
+                {tiposActivo.map((tipo) => (
+                  <SelectItem key={tipo.id} value={tipo.id}>
+                    {tipo.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="subcategoriaId">Subcategoría (opcional)</Label>
             <GroupedCombobox
               id="subcategoriaId"
               name="subcategoriaId"
-              groups={subcategoriaGroups(tiposActivo)}
+              groups={subcategoriaGroups(tiposParaSubcategoria)}
               value={subcategoriaId}
-              onValueChange={setSubcategoriaId}
+              onValueChange={handleSubcategoriaChange}
               placeholder="Busca una subcategoría"
               emptyMessage="Ninguna subcategoría coincide."
+              clearable
               className="w-full"
             />
           </div>

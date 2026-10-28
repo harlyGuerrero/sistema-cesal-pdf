@@ -21,8 +21,9 @@ import type { CondicionFisica, EstadoPatrimonial } from "@/lib/generated/prisma/
 
 // Fase 6 de Activos: alta/edición/eliminación de Activo, integrando la
 // ubicación (Fase 5) y los campos dinámicos de su subcategoría (Fase 4).
-// tipoActivoId nunca se recibe del formulario: se deriva de subcategoriaId
-// (ver schema.prisma, comentario en Activo).
+// Fase 61: la subcategoría pasa a ser opcional, así que tipoActivoId se
+// recibe del formulario. Si además viene una subcategoría, debe pertenecer a
+// ese tipo (ver schema.prisma, comentario en Activo).
 
 function parseDecimal(formData: FormData, key: string, label: string): number | null {
   const raw = (formData.get(key) as string | null)?.trim();
@@ -73,22 +74,34 @@ async function resolveUbicacion(
 
 async function readActivoInput(formData: FormData) {
   const nombreActivo = (formData.get("nombreActivo") as string).trim();
-  const subcategoriaId = formData.get("subcategoriaId") as string;
-  if (!nombreActivo || !subcategoriaId) {
-    throw new Error("Nombre y subcategoría son obligatorios.");
+  const tipoActivoId = (formData.get("tipoActivoId") as string | null) || null;
+  const subcategoriaId = (formData.get("subcategoriaId") as string | null) || null;
+  if (!nombreActivo || !tipoActivoId) {
+    throw new Error("Nombre y tipo de activo son obligatorios.");
   }
 
-  const subcategoria = await prisma.subcategoriaActivo.findUnique({
-    where: { id: subcategoriaId },
-    include: { categoria: true, campos: { where: { estado: true } } },
-  });
-  if (!subcategoria) {
+  const tipoActivo = await prisma.tipoActivo.findUnique({ where: { id: tipoActivoId } });
+  if (!tipoActivo) {
+    throw new Error("Tipo de activo inválido.");
+  }
+
+  const subcategoria = subcategoriaId
+    ? await prisma.subcategoriaActivo.findUnique({
+        where: { id: subcategoriaId },
+        include: { categoria: true, campos: { where: { estado: true } } },
+      })
+    : null;
+  if (subcategoriaId && !subcategoria) {
     throw new Error("Subcategoría inválida.");
+  }
+  if (subcategoria && subcategoria.categoria.tipoActivoId !== tipoActivoId) {
+    throw new Error("La subcategoría elegida no pertenece al tipo de activo.");
   }
 
   const { sedeId, unidadOperativaId, ambienteId } = await resolveUbicacion(formData);
   const proveedorId = await resolveProveedorId(formData);
-  const especificaciones = readEspecificaciones(subcategoria.campos, formData);
+  // Sin subcategoría no hay campos de especificación que leer.
+  const especificaciones = subcategoria ? readEspecificaciones(subcategoria.campos, formData) : [];
 
   const fechaAdquisicionRaw = (formData.get("fechaAdquisicion") as string | null) || null;
   const condicionFisicaRaw = (formData.get("condicionFisica") as string | null) || null;
@@ -98,7 +111,7 @@ async function readActivoInput(formData: FormData) {
     nombreNormalizado: normalizeName(nombreActivo) ?? nombreActivo,
     descripcion: (formData.get("descripcion") as string | null)?.trim() || null,
     subcategoriaId,
-    tipoActivoId: subcategoria.categoria.tipoActivoId,
+    tipoActivoId,
     sedeId,
     unidadOperativaId,
     ambienteId,

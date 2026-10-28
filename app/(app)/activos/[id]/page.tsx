@@ -106,6 +106,7 @@ export default async function ActivoDetailPage({
   const initial: ActivoFormInitial = {
     nombreActivo: activo.nombreActivo,
     descripcion: activo.descripcion ?? "",
+    tipoActivoId: activo.tipoActivoId,
     subcategoriaId: activo.subcategoriaId ?? "",
     codigoPatrimonial: activo.codigoPatrimonial ?? "",
     sedeId: activo.sedeId ?? "",
