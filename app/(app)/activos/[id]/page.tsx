@@ -64,7 +64,7 @@ export default async function ActivoDetailPage({
             ambienteNuevo: true,
           },
         },
-        _count: { select: { documentos: true, depreciaciones: true } },
+        _count: { select: { documentos: { where: { estado: true } }, depreciaciones: true } },
       },
     }),
     getActivoFormData(),
@@ -193,6 +193,7 @@ export default async function ActivoDetailPage({
             tiposActivo={tiposActivo}
             sedes={sedes}
             esDeImportacion={activo.importItemId != null}
+            documentosFirma={activo.documentos.map((documento) => documento.id).join(",")}
             historialDepreciacion={agregarHistorial(depreciacion.historial)}
             ultimoPeriodoDepreciado={
               depreciacion.resumen.ultimoPeriodo ? formatPeriodo(depreciacion.resumen.ultimoPeriodo) : null

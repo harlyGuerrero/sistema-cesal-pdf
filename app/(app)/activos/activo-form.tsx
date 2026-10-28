@@ -208,6 +208,7 @@ export function ActivoForm({
   esDeImportacion = false,
   historialDepreciacion = HISTORIAL_VACIO,
   ultimoPeriodoDepreciado = null,
+  documentosFirma = "",
 }: {
   activoId?: string;
   initial?: ActivoFormInitial;
@@ -223,6 +224,11 @@ export function ActivoForm({
   // servidor.
   historialDepreciacion?: HistorialAgregado;
   ultimoPeriodoDepreciado?: string | null;
+  // Fase 65: ids de los documentos vigentes del activo. Los documentos se
+  // guardan al subirlos (fuera de este formulario), pero subir o eliminar
+  // uno cuenta como cambio de la edición: habilita "Guardar" igual que
+  // editar un campo.
+  documentosFirma?: string;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -237,6 +243,8 @@ export function ActivoForm({
   const formRef = useRef<HTMLFormElement>(null);
   const baselineRef = useRef<string | null>(null);
   const [hayCambios, setHayCambios] = useState(false);
+  const [documentosFirmaGuardada, setDocumentosFirmaGuardada] = useState(documentosFirma);
+  const hayCambiosPorGuardar = hayCambios || documentosFirma !== documentosFirmaGuardada;
   const verificarCambios = useCallback(() => {
     setTimeout(() => {
       const form = formRef.current;
@@ -318,6 +326,7 @@ export function ActivoForm({
           await updateActivoAction(activoId, formData);
           baselineRef.current = snapshotEnviado;
           setHayCambios(false);
+          setDocumentosFirmaGuardada(documentosFirma);
           verificarCambios();
           toast.success("Activo actualizado.");
           router.push(`/activos/${activoId}`);
@@ -622,13 +631,13 @@ export function ActivoForm({
       <div className="flex flex-col items-center justify-center gap-1.5">
         <Button
           type="submit"
-          disabled={isPending || (Boolean(activoId) && !hayCambios)}
+          disabled={isPending || (Boolean(activoId) && !hayCambiosPorGuardar)}
           className="w-full sm:w-auto"
         >
           <SaveIcon />
           {activoId ? "Guardar" : "Crear activo"}
         </Button>
-        {activoId && !hayCambios && !isPending && (
+        {activoId && !hayCambiosPorGuardar && !isPending && (
           <p className="text-xs text-muted-foreground">Sin cambios por guardar.</p>
         )}
       </div>

@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { DownloadIcon, FileSpreadsheetIcon, UploadIcon } from "lucide-react";
+import { CircleAlertIcon, DownloadIcon, FileSpreadsheetIcon, UploadIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,10 +14,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface ExportQuery {
   q?: string;
@@ -48,6 +47,43 @@ interface PreviewResponse {
   actualizar: number;
   conError: number;
   filas: PreviewRow[];
+}
+
+// Mismos límites que valida el servidor (lib/security/excel-validation.ts);
+// acá solo sirven para avisar antes de subir.
+const MAX_EXCEL_BYTES = 5 * 1024 * 1024;
+
+function formatTamano(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatFecha(ms: number): string {
+  return new Date(ms).toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function validarExcelEnCliente(file: File): string | null {
+  if (!file.name.toLowerCase().endsWith(".xlsx")) return "Solo se aceptan archivos .xlsx (Excel).";
+  if (file.size > MAX_EXCEL_BYTES) return "El archivo supera el máximo de 5 MB.";
+  if (file.size === 0) return "El archivo está vacío.";
+  return null;
+}
+
+// Lee la respuesta JSON de /api/activos/import. Sin sesión, proxy.ts
+// redirige a /login y fetch devuelve esa página HTML: se traduce a un
+// mensaje entendible en vez del error de parseo de JSON.
+async function leerRespuesta(response: Response, mensajeError: string) {
+  if (new URL(response.url).pathname.startsWith("/login")) {
+    throw new Error("Tu sesión expiró. Vuelve a iniciar sesión.");
+  }
+  let result;
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error(mensajeError);
+  }
+  if (!response.ok) throw new Error(result.error ?? mensajeError);
+  return result;
 }
 
 function buildExportHref(query: ExportQuery): string {
@@ -87,6 +123,18 @@ function ImportActivosDialog() {
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [arrastrando, setArrastrando] = useState(false);
+  // Error de formato/tamaño detectado antes de subir: ese archivo no se puede validar.
+  const archivoInvalido = file !== null && validarExcelEnCliente(file) !== null;
+
+  function elegir(lista: FileList | null) {
+    const elegido = lista?.[0];
+    if (!elegido) return;
+    if (lista.length > 1) toast.info("Se importa un archivo a la vez: se tomó el primero.");
+    setFile(elegido);
+    setPreview(null);
+    setError(validarExcelEnCliente(elegido));
+  }
 
   function reset() {
     setFile(null);
@@ -104,8 +152,7 @@ function ImportActivosDialog() {
       formData.set("file", file);
       formData.set("mode", "preview");
       const response = await fetch("/api/activos/import", { method: "POST", body: formData });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error ?? "No se pudo validar el archivo.");
+      const result = await leerRespuesta(response, "No se pudo validar el archivo.");
       setPreview(result as PreviewResponse);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo validar el archivo.");
@@ -123,8 +170,7 @@ function ImportActivosDialog() {
       formData.set("file", file);
       formData.set("mode", "commit");
       const response = await fetch("/api/activos/import", { method: "POST", body: formData });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error ?? "No se pudo importar el archivo.");
+      const result = await leerRespuesta(response, "No se pudo importar el archivo.");
       const omitidos = result.omitidos > 0 ? `, ${result.omitidos} omitidas por error` : "";
       toast.success(`Importación completa: ${result.creados} creados, ${result.actualizados} actualizados${omitidos}.`);
       setOpen(false);
@@ -153,33 +199,97 @@ function ImportActivosDialog() {
         <DialogHeader>
           <DialogTitle>Importar activos desde Excel</DialogTitle>
           <DialogDescription>
-            Sube un .xlsx con las columnas de la plantilla. Una fila sin código patrimonial crea un activo
-            nuevo; una fila con un código existente actualiza ese activo (las celdas vacías no cambian ese
-            campo).{" "}
-            <a href="/api/activos/import-template" className="underline underline-offset-2 hover:text-foreground">
-              Descargar plantilla
-            </a>
-            .
+            Una fila sin código patrimonial crea un activo nuevo; una fila con un código existente actualiza ese
+            activo (las celdas vacías no cambian ese campo).
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="import-file">Archivo .xlsx</Label>
-            <Input
-              id="import-file"
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              onChange={(event) => {
-                setPreview(null);
-                setError(null);
-                setFile(event.target.files?.[0] ?? null);
+          {/* Fase 64: mismo diseño de carga que Documentos e Importaciones. */}
+          {!file ? (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setArrastrando(true);
               }}
-            />
-          </div>
-
-          {error && <p className="text-sm text-destructive">{error}</p>}
+              onDragLeave={() => setArrastrando(false)}
+              onDrop={(event) => {
+                event.preventDefault();
+                setArrastrando(false);
+                elegir(event.dataTransfer.files);
+              }}
+              className={cn(
+                "flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors outline-none hover:border-primary/50 hover:bg-primary/5 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+                arrastrando ? "border-primary bg-primary/5" : "border-input"
+              )}
+            >
+              <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <UploadIcon className="size-4.5" />
+              </span>
+              <span className="text-sm font-medium">
+                Arrastra el Excel aquí o <span className="text-primary underline-offset-4 hover:underline">examina</span>
+              </span>
+              <span className="text-xs text-muted-foreground">Formato .xlsx · hasta 5 MB y 2000 filas</span>
+            </button>
+          ) : (
+            <div className="min-w-0 rounded-lg border p-3">
+              <div className="flex min-w-0 items-start gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <FileSpreadsheetIcon className="size-4.5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium" title={file.name}>
+                    {file.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground tabular-nums">
+                    {formatFecha(file.lastModified)} · {formatTamano(file.size)}
+                  </p>
+                  {error ? (
+                    <p className="mt-1 flex items-start gap-1 text-xs font-medium text-destructive">
+                      <CircleAlertIcon className="mt-px size-3.5 shrink-0" />
+                      {error}
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {isPending ? "Revisando las filas…" : preview ? "Archivo validado" : "Listo para validar"}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  disabled={isPending}
+                  onClick={reset}
+                  aria-label={`Quitar ${file.name}`}
+                >
+                  <XIcon className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            className="hidden"
+            onChange={(event) => {
+              elegir(event.target.files);
+              event.target.value = "";
+            }}
+          />
+          <a
+            href="/api/activos/import-template"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <FileSpreadsheetIcon className="size-3.5 text-primary" />
+            <span>
+              <span className="font-medium text-primary underline-offset-4 hover:underline">Descargar plantilla</span>{" "}
+              con las columnas que espera la importación
+            </span>
+          </a>
 
           {preview && (
             <div className="space-y-3">
@@ -243,8 +353,19 @@ function ImportActivosDialog() {
         </div>
 
         <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isPending}
+            onClick={() => {
+              setOpen(false);
+              reset();
+            }}
+          >
+            Cancelar
+          </Button>
           {!preview ? (
-            <Button type="button" disabled={!file || isPending} onClick={handleValidar}>
+            <Button type="button" disabled={!file || archivoInvalido || isPending} onClick={handleValidar}>
               <FileSpreadsheetIcon />
               {isPending ? "Validando..." : "Validar archivo"}
             </Button>

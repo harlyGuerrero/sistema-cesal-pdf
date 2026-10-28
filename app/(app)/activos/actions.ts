@@ -12,6 +12,7 @@ import {
   movimientoTipoAAccionAuditoria,
 } from "@/lib/activos/movimientos";
 import { registrarAuditoria } from "@/lib/auditoria/registrar";
+import { archivarDocumentosActivo } from "@/lib/documentos/storage";
 import { assertSinCambiosDepreciables } from "@/lib/depreciacion/proteccion";
 import { sincronizarValoresContables } from "@/lib/depreciacion/valores-contables";
 import { crearNotificacionDesdeMovimiento } from "@/lib/notificaciones/crear";
@@ -372,7 +373,9 @@ export async function deleteActivoAction(activoId: string): Promise<void> {
   const actor = await requireSessionUsuario();
   const activo = await prisma.activo.findUniqueOrThrow({
     where: { id: activoId },
-    include: { _count: { select: { documentos: true, depreciaciones: true } } },
+    include: {
+      _count: { select: { documentos: { where: { estado: true } }, depreciaciones: true } },
+    },
   });
 
   // Fase 58: el historial de depreciación es un registro contable — un
@@ -388,9 +391,9 @@ export async function deleteActivoAction(activoId: string): Promise<void> {
     throw new Error("No se puede eliminar: proviene de una importación (mantiene trazabilidad).");
   }
 
-  // Documento tiene onDelete: Cascade sobre activoId — sin este guard, borrar
-  // el Activo borra la fila Documento pero deja el archivo físico huérfano
-  // en document-storage/ (Fase 10), inalcanzable para siempre.
+  // Solo bloquean los documentos vigentes: los que el usuario ya quitó de la
+  // ficha (estado = false) no cuentan (Fase 65). Sus filas caen por el
+  // Cascade y los archivos se archivan abajo en vez de quedar huérfanos.
   if (activo._count.documentos > 0) {
     throw new Error("No se puede eliminar: tiene documentos adjuntos.");
   }
@@ -408,6 +411,12 @@ export async function deleteActivoAction(activoId: string): Promise<void> {
       tx
     );
   });
+
+  try {
+    await archivarDocumentosActivo(activoId);
+  } catch (error) {
+    console.error(`No se pudo archivar la carpeta de documentos del activo ${activoId}`, error);
+  }
 
   revalidatePath("/activos");
   redirect("/activos");

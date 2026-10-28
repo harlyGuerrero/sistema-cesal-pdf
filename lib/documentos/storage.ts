@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
@@ -30,6 +30,19 @@ export async function guardarDocumento(
   await mkdir(dir, { recursive: true });
   await writeFile(path.join(dir, nombreArchivo), buffer);
   return nombreArchivo;
+}
+
+// Fase 65: al eliminar un activo, la carpeta con sus archivos (los documentos
+// que ya se habían quitado de la ficha) no se borra: se mueve a
+// document-storage/eliminados/ para que no quede huérfana ni se pierda.
+export async function archivarDocumentosActivo(activoId: string): Promise<void> {
+  const destino = path.join(STORAGE_ROOT, "eliminados", `${activoId}-${Date.now()}`);
+  await mkdir(path.dirname(destino), { recursive: true });
+  try {
+    await rename(activoDir(activoId), destino);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
 }
 
 export async function leerDocumento(activoId: string, nombreArchivo: string): Promise<Buffer> {
