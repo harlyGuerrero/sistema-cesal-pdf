@@ -1,6 +1,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, TipoActivoCode, Region } from "../lib/generated/prisma/client";
 import { slugify } from "../lib/activos/slug";
+import { TASAS_OFICIALES_CESAL } from "../lib/depreciacion/tasas";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -143,6 +144,17 @@ async function main() {
       where: { code: tipoActivo.code },
       update: { name: tipoActivo.name },
       create: tipoActivo,
+    });
+  }
+
+  // Fase 58: tasas de depreciación. update vacío a propósito: si alguien ya
+  // ajustó una tasa en la tabla, volver a correr el seed no la pisa.
+  for (const tipoActivo of TIPOS_ACTIVO) {
+    const { id } = await prisma.tipoActivo.findUniqueOrThrow({ where: { code: tipoActivo.code } });
+    await prisma.tasaDepreciacion.upsert({
+      where: { tipoActivoId: id },
+      update: {},
+      create: { tipoActivoId: id, tasaAnual: TASAS_OFICIALES_CESAL[tipoActivo.code] },
     });
   }
 

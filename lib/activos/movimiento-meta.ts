@@ -23,7 +23,9 @@ import type { TipoMovimiento } from "@/lib/generated/prisma/client";
 // la referencia misma (ej. Reasignación/Transferencia comparten azul).
 export const MOVIMIENTO_META: Record<TipoMovimiento, { icon: LucideIcon; color: string }> = {
   ALTA: { icon: PlusCircleIcon, color: "var(--color-good)" },
-  ASIGNACION: { icon: UserPlusIcon, color: "var(--color-good)" },
+  // Fase 59: Azul CESAL, el color de "Asignado" en DESIGN.md — distinto del
+  // verde del alta, y el mismo que usa ASIGNAR en Auditoría.
+  ASIGNACION: { icon: UserPlusIcon, color: "var(--primary)" },
   REASIGNACION: { icon: ArrowLeftRightIcon, color: "var(--color-chart-1)" },
   CAMBIO_RESPONSABLE: { icon: UserCogIcon, color: "var(--color-chart-2)" },
   TRANSFERENCIA: { icon: Building2Icon, color: "var(--color-chart-1)" },

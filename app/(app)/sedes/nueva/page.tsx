@@ -8,14 +8,14 @@ export default function NewSedePage() {
   return (
     <>
       <PageBreadcrumb items={[{ label: "Nueva sede" }]} />
-      <main className="p-6">
+      <main className="p-4 sm:p-6">
         <div className="mx-auto max-w-xl overflow-hidden rounded-2xl border bg-card shadow-sm">
           <FormPageHeader
             icon={Building2Icon}
             title="Nueva sede"
             description="Registra una nueva sede institucional."
           />
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <FormSection icon={MapPinIcon} title="Datos de la sede" color="var(--color-good)">
               <NewSedeForm />
             </FormSection>

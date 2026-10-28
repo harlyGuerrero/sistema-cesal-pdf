@@ -8,6 +8,12 @@ import {
   movimientoTipoAAccionAuditoria,
 } from "./movimientos";
 import { registrarAuditoria } from "@/lib/auditoria/registrar";
+import { sincronizarValoresContables } from "@/lib/depreciacion/valores-contables";
+import {
+  assertSinCambiosDepreciables,
+  cambiosBloqueadosPorDepreciacion,
+  mensajeCambiosBloqueados,
+} from "@/lib/depreciacion/proteccion";
 import { ACTIVO_EXCEL_COLUMNS, normalizarEncabezado } from "./excel-columns";
 import { ESTADO_PATRIMONIAL_OPTIONS, CONDICION_FISICA_OPTIONS } from "./labels";
 import { MAX_EXCEL_ROWS } from "@/lib/security/excel-validation";
@@ -170,7 +176,10 @@ export async function parseActivosWorkbook(buffer: Buffer): Promise<ActivoImport
     prisma.sede.findMany({ include: { unidadesOperativas: true, ambientes: true } }),
     prisma.proveedor.findMany(),
     codigosEnArchivo.length > 0
-      ? prisma.activo.findMany({ where: { codigoPatrimonial: { in: codigosEnArchivo } } })
+      ? prisma.activo.findMany({
+          where: { codigoPatrimonial: { in: codigosEnArchivo } },
+          include: { _count: { select: { depreciaciones: true } } },
+        })
       : Promise.resolve([]),
   ]);
 
@@ -291,6 +300,16 @@ export async function parseActivosWorkbook(buffer: Buffer): Promise<ActivoImport
       else condicionFisica = resuelto as CondicionFisica;
     }
 
+    // Fase 58: con depreciación registrada, costo/fecha/tipo quedan fijos.
+    if (esActualizacion && existente!._count.depreciaciones > 0) {
+      const bloqueados = cambiosBloqueadosPorDepreciacion(existente!, {
+        costoAdquisicion: Number.isNaN(costo) ? undefined : (costo ?? undefined),
+        fechaAdquisicion: fechaAdquisicion ?? undefined,
+        tipoActivoId: tipoActivoId ?? undefined,
+      });
+      if (bloqueados.length > 0) errores.push(mensajeCambiosBloqueados(bloqueados));
+    }
+
     if (errores.length > 0) {
       conError++;
       filas.push({ rowNumber, status: "error", nombreActivo: nombreActivo ?? "(sin nombre)", errores });
@@ -364,6 +383,7 @@ export async function commitActivosImport(
   return prisma.$transaction(async (tx) => {
     let creados = 0;
     let actualizados = 0;
+    const idsTocados: string[] = [];
 
     for (const fila of validas) {
       const { data } = fila;
@@ -395,6 +415,7 @@ export async function commitActivosImport(
             observaciones: data.observaciones,
           },
         });
+        idsTocados.push(created.id);
         await tx.movimiento.create({
           data: { activoId: created.id, usuarioId, ...buildMovimientoDeAlta(created, "Alta por importación de Excel") },
         });
@@ -411,6 +432,13 @@ export async function commitActivosImport(
         creados++;
       } else {
         const anterior = await tx.activo.findUniqueOrThrow({ where: { id: data.activoId! } });
+        // Defensa en profundidad: pudo depreciarse entre la vista previa y
+        // la confirmación.
+        await assertSinCambiosDepreciables(tx, anterior, {
+          costoAdquisicion: data.costoAdquisicion ?? undefined,
+          fechaAdquisicion: data.fechaAdquisicion,
+          tipoActivoId: data.tipoActivoId,
+        });
         await tx.activo.update({
           where: { id: data.activoId! },
           data: {
@@ -434,6 +462,7 @@ export async function commitActivosImport(
           },
         });
 
+        idsTocados.push(data.activoId!);
         const movimiento = buildMovimientoDeEdicion(anterior, data);
         if (movimiento) {
           await tx.movimiento.create({ data: { activoId: data.activoId!, usuarioId, ...movimiento } });
@@ -451,6 +480,10 @@ export async function commitActivosImport(
         actualizados++;
       }
     }
+
+    // Fase 60: los activos con depreciación definida toman su valor neto
+    // como valor contable / actual, aunque la celda del Excel diga otra cosa.
+    await sincronizarValoresContables(tx, idsTocados);
 
     return { creados, actualizados };
   });

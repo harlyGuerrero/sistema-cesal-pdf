@@ -38,6 +38,10 @@ La config del CLI (datasource URL, path de migraciones, comando de seed) vive en
 
 `ImportItem` **no** tiene un único par `classificationMethod`/`confidence` — tiene `relevanceMethod`/`relevanceConfidence` y `categoryMethod`/`categoryConfidence` por separado (migración `split-classification-fields`, Fase 8). Motivo: relevancia (Fase 6) y categoría (Fase 7) son clasificaciones independientes, cada una puede venir de `RULE` u `OLLAMA` con su propia confianza — un solo campo perdía cuál de las dos usó el fallback semántico y con qué confianza. Si se necesita ampliar esto a más etapas clasificadas, seguir el mismo patrón (prefijo por etapa), no volver a un par genérico.
 
+## Depreciación (Fase 58)
+
+`TasaDepreciacion`, `DepreciacionPeriodo` y `ProcesamientoDepreciacion` (reglas en `ARCHITECTURE.md`, sección 6). Montos en `Decimal(14,2)` y tasas en `Decimal(7,4)` en porcentaje; nunca `Float`. `DepreciacionPeriodo.activoId` usa `onDelete: Restrict`: el historial contable no se borra en cascada. La migración `fase58_depreciacion` agrega a mano, documentados en el mismo archivo, los `CHECK` que Prisma no expresa (trimestre 1..4, importes positivos, acumulado ≤ costo, valor neto = costo − acumulado) y el `INSERT` idempotente de las tasas oficiales.
+
 ## Migraciones
 
 Toda migración se genera con el CLI de Prisma (`prisma migrate dev`), nunca se edita SQL de migración generado a mano salvo corrección de un problema puntual y documentado.

@@ -39,7 +39,7 @@ export default async function ResponsableDetailPage({
   return (
     <>
       <PageBreadcrumb items={[{ label: nombreCompleto(responsable) }]} />
-      <main className="p-6">
+      <main className="p-4 sm:p-6">
       <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border bg-card shadow-sm">
         <FormPageHeader
           icon={UsersIcon}
@@ -47,7 +47,7 @@ export default async function ResponsableDetailPage({
           description={responsable.email}
         />
 
-        <div className="space-y-5 p-6">
+        <div className="space-y-5 p-4 sm:p-6">
           <FormSection icon={IdCardIcon} title="Datos del responsable" color="var(--color-chart-2)">
             <ResponsableEditForm
               responsableId={responsable.id}
@@ -92,7 +92,7 @@ export default async function ResponsableDetailPage({
           </FormSection>
         </div>
 
-        <div className="border-t p-6">
+        <div className="border-t p-4 sm:p-6">
           <DeleteResponsableButton responsableId={responsable.id} hasActivos={responsable.activos.length > 0} />
         </div>
       </div>

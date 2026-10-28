@@ -22,6 +22,12 @@ const RECENT_ACTIVOS_TAKE = 6;
 // sistema, no el pipeline de PDFs. Colores de estado fijos (skill dataviz),
 // asignados directo en cada StatCard más abajo.
 
+// Medianoche de hoy en Lima (UTC-5 todo el año), para "movimientos hoy".
+function inicioDeHoyEnLima(): Date {
+  const ahoraLima = new Date(Date.now() - 5 * 60 * 60 * 1000);
+  return new Date(Date.UTC(ahoraLima.getUTCFullYear(), ahoraLima.getUTCMonth(), ahoraLima.getUTCDate(), 5));
+}
+
 export default async function DashboardPage() {
   const [
     tiposActivo,
@@ -31,6 +37,7 @@ export default async function DashboardPage() {
     sedesConConteo,
     movimientosRecientes,
     activosRecientes,
+    movimientosHoy,
   ] = await Promise.all([
     prisma.tipoActivo.findMany(),
     prisma.activo.groupBy({ by: ["tipoActivoId"], _count: true }),
@@ -41,7 +48,8 @@ export default async function DashboardPage() {
       orderBy: { fecha: "desc" },
       take: RECENT_MOVEMENTS_TAKE,
       include: {
-        activo: { select: { id: true, nombreActivo: true } },
+        activo: { select: { id: true, nombreActivo: true, codigoPatrimonial: true } },
+        usuario: { select: { nombres: true, apellidos: true } },
         responsableAnterior: true,
         responsableNuevo: true,
         sedeAnterior: true,
@@ -63,6 +71,7 @@ export default async function DashboardPage() {
         responsableActual: true,
       },
     }),
+    prisma.movimiento.count({ where: { fecha: { gte: inicioDeHoyEnLima() } } }),
   ]);
 
   const countByTipoActivoId = new Map(activoCountsByTipo.map((row) => [row.tipoActivoId, row._count]));
@@ -98,7 +107,7 @@ export default async function DashboardPage() {
   const porcentaje = (value: number) => (totalActivos > 0 ? `${Math.round((value / totalActivos) * 100)}% del total` : "Sin datos");
 
   return (
-    <main className="space-y-6 p-6">
+    <main className="space-y-6 p-4 sm:p-6">
       <div>
         <h1 className="text-xl font-medium">Dashboard</h1>
         <p className="text-sm text-muted-foreground">Resumen general del patrimonio institucional.</p>
@@ -172,6 +181,11 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-semibold">Últimos movimientos</CardTitle>
+            <CardDescription>
+              {movimientosHoy === 0
+                ? "Ningún movimiento hoy"
+                : `${movimientosHoy.toLocaleString("es-PE")} ${movimientosHoy === 1 ? "movimiento" : "movimientos"} hoy`}
+            </CardDescription>
             <CardAction>
               <Link href="/movimientos" className="text-sm text-primary underline-offset-4 hover:underline">
                 Ver todos

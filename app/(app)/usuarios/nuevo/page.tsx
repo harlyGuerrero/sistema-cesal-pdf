@@ -10,14 +10,14 @@ export default async function NewUsuarioPage() {
   return (
     <>
       <PageBreadcrumb items={[{ label: "Nuevo usuario" }]} />
-      <main className="p-6">
+      <main className="p-4 sm:p-6">
         <div className="mx-auto max-w-xl overflow-hidden rounded-2xl border bg-card shadow-sm">
           <FormPageHeader
             icon={UserCogIcon}
             title="Nuevo usuario"
             description="Crea una cuenta con acceso al sistema."
           />
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <FormSection icon={UserCogIcon} title="Datos de la cuenta" color="var(--color-chart-5)">
               <NewUsuarioForm />
             </FormSection>

@@ -29,10 +29,20 @@ import { subcategoriaGroups } from "@/lib/activos/subcategoria-groups";
 import { CONDICION_FISICA_OPTIONS, ESTADO_PATRIMONIAL_OPTIONS } from "@/lib/activos/labels";
 import { CampoEspecificacionInput, type CampoEspecificacionOption } from "./campo-especificacion-input";
 import { createActivoAction, updateActivoAction } from "./actions";
+import {
+  HISTORIAL_VACIO,
+  formatSoles,
+  resumirDepreciacion,
+  valorContableCalculado,
+  type HistorialAgregado,
+} from "@/lib/depreciacion/calculo";
 
 export interface TipoActivoTree {
   id: string;
   name: string;
+  // Fase 60: tasa anual de depreciación activa del tipo (ej. "25.0000"), o
+  // null si no tiene una configurada.
+  tasaAnual: string | null;
   categorias: {
     id: string;
     nombre: string;
@@ -87,6 +97,7 @@ function flattenSubcategorias(tiposActivo: TipoActivoTree[]) {
     tipo.categorias.flatMap((categoria) =>
       categoria.subcategorias.map((subcategoria) => ({
         ...subcategoria,
+        tipoTasaAnual: tipo.tasaAnual,
         tipoActivoNombre: tipo.name,
         categoriaNombre: categoria.nombre,
       }))
@@ -134,10 +145,12 @@ function CurrencyInput({
   id,
   name,
   defaultValue,
+  onValueChange,
 }: {
   id: string;
   name: string;
   defaultValue?: string;
+  onValueChange?: (value: string) => void;
 }) {
   return (
     <div className="relative">
@@ -151,8 +164,23 @@ function CurrencyInput({
         step="0.01"
         min="0"
         defaultValue={defaultValue}
+        onChange={onValueChange ? (event) => onValueChange(event.target.value) : undefined}
         className="pl-8"
       />
+    </div>
+  );
+}
+
+// Fase 60: valor calculado por la depreciación, de solo lectura — mismo
+// estilo que los campos heredados de una importación (N° de factura, N° FC).
+// No lleva `name`: no viaja en el formulario, el servidor lo recalcula.
+function ValorCalculado({ label, valor }: { label: string; valor: number }) {
+  return (
+    <div className="space-y-1">
+      <Label>{label}</Label>
+      <p className="flex h-8 items-center rounded-lg border border-input bg-muted/40 px-2.5 text-sm font-medium tabular-nums">
+        {formatSoles(valor)}
+      </p>
     </div>
   );
 }
@@ -167,6 +195,8 @@ export function ActivoForm({
   tiposActivo,
   sedes,
   esDeImportacion = false,
+  historialDepreciacion = HISTORIAL_VACIO,
+  ultimoPeriodoDepreciado = null,
 }: {
   activoId?: string;
   initial?: ActivoFormInitial;
@@ -177,6 +207,11 @@ export function ActivoForm({
   // para no invitar a pisarlo a mano; el alta manual (sin PDF de por medio)
   // sigue mostrándolo porque ahí no hay Import del que heredarlo.
   esDeImportacion?: boolean;
+  // Fase 60: depreciación ya registrada del activo (vacía en un alta), para
+  // calcular en vivo el valor contable / actual con la misma función que el
+  // servidor.
+  historialDepreciacion?: HistorialAgregado;
+  ultimoPeriodoDepreciado?: string | null;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -188,6 +223,23 @@ export function ActivoForm({
 
   const subcategorias = flattenSubcategorias(tiposActivo);
   const subcategoriaSeleccionada = subcategorias.find((s) => s.id === subcategoriaId);
+
+  // Fase 60: valor contable y valor actual. Con costo, fecha y una tasa
+  // válidos (depreciación definida), los dos son el valor neto y se muestran
+  // calculados y bloqueados; si no, siguen siendo campos manuales.
+  const [costo, setCosto] = useState(initial?.costoAdquisicion ?? "");
+  const [fecha, setFecha] = useState(initial?.fechaAdquisicion ?? "");
+  const valorCalculado = valorContableCalculado(
+    resumirDepreciacion(
+      {
+        costoAdquisicion: costo.trim() || null,
+        fechaAdquisicion: fecha ? new Date(fecha) : null,
+        estadoPatrimonial: "DISPONIBLE",
+        tasaAnual: subcategoriaSeleccionada?.tipoTasaAnual ?? null,
+      },
+      historialDepreciacion
+    )
+  );
 
   const sedeSeleccionada = sedes.find((s) => s.id === sedeId);
   const unidadesDisponibles = sedeSeleccionada?.unidadesOperativas ?? [];
@@ -223,7 +275,7 @@ export function ActivoForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 p-6">
+    <form onSubmit={handleSubmit} className="space-y-5 p-4 sm:p-6">
       <FormSection icon={IdCardIcon} title="Identificación" color="var(--primary)">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="space-y-1">
@@ -361,6 +413,7 @@ export function ActivoForm({
               name="fechaAdquisicion"
               type="date"
               defaultValue={initial?.fechaAdquisicion}
+              onChange={(event) => setFecha(event.target.value)}
             />
           </div>
           <div className="space-y-1">
@@ -404,17 +457,38 @@ export function ActivoForm({
           </div>
           <div className="space-y-1">
             <Label htmlFor="costoAdquisicion">Costo de adquisición</Label>
-            <CurrencyInput id="costoAdquisicion" name="costoAdquisicion" defaultValue={initial?.costoAdquisicion} />
+            <CurrencyInput
+              id="costoAdquisicion"
+              name="costoAdquisicion"
+              defaultValue={initial?.costoAdquisicion}
+              onValueChange={setCosto}
+            />
           </div>
-          <div className="space-y-1">
-            <Label htmlFor="valorContable">Valor contable</Label>
-            <CurrencyInput id="valorContable" name="valorContable" defaultValue={initial?.valorContable} />
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="valorActual">Valor actual</Label>
-            <CurrencyInput id="valorActual" name="valorActual" defaultValue={initial?.valorActual} />
-          </div>
+          {valorCalculado !== null ? (
+            <>
+              <ValorCalculado label="Valor contable" valor={valorCalculado} />
+              <ValorCalculado label="Valor actual" valor={valorCalculado} />
+            </>
+          ) : (
+            <>
+              <div className="space-y-1">
+                <Label htmlFor="valorContable">Valor contable</Label>
+                <CurrencyInput id="valorContable" name="valorContable" defaultValue={initial?.valorContable} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="valorActual">Valor actual</Label>
+                <CurrencyInput id="valorActual" name="valorActual" defaultValue={initial?.valorActual} />
+              </div>
+            </>
+          )}
         </div>
+        <p className="text-xs text-muted-foreground">
+          {valorCalculado === null
+            ? "El valor contable y el valor actual se calculan solos cuando el activo tiene costo, fecha de adquisición y un tipo con tasa de depreciación."
+            : historialDepreciacion.cantidad > 0
+              ? `Valor contable y valor actual = costo menos la depreciación registrada hasta el ${ultimoPeriodoDepreciado ?? "último trimestre procesado"}. Se actualizan al procesar cada trimestre.`
+              : "Valor contable y valor actual = costo de adquisición, porque todavía no se procesó ningún trimestre. Bajarán al procesar la depreciación."}
+        </p>
       </FormSection>
 
       <FormSection icon={ShieldIcon} title="Estado" color="var(--color-warning)">

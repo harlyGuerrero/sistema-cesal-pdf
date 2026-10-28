@@ -17,7 +17,7 @@ export function FormPageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4 border-b p-6">
+    <div className="flex flex-wrap items-start justify-between gap-4 border-b p-4 sm:p-6">
       <div className="flex items-center gap-3">
         <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="size-5" />

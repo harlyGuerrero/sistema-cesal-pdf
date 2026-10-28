@@ -12,6 +12,8 @@ import {
   movimientoTipoAAccionAuditoria,
 } from "@/lib/activos/movimientos";
 import { registrarAuditoria } from "@/lib/auditoria/registrar";
+import { assertSinCambiosDepreciables } from "@/lib/depreciacion/proteccion";
+import { sincronizarValoresContables } from "@/lib/depreciacion/valores-contables";
 import { crearNotificacionDesdeMovimiento } from "@/lib/notificaciones/crear";
 import { requireSessionUsuario } from "@/lib/auth/session";
 import { nombreCompleto } from "@/lib/nombre-completo";
@@ -115,8 +117,12 @@ async function readActivoInput(formData: FormData) {
     numeroFC: formData.has("numeroFC") ? (formData.get("numeroFC") as string).trim() || null : undefined,
     codigoProyecto: (formData.get("codigoProyecto") as string | null)?.trim() || null,
     costoAdquisicion: parseDecimal(formData, "costoAdquisicion", "Costo de adquisición"),
-    valorContable: parseDecimal(formData, "valorContable", "Valor contable"),
-    valorActual: parseDecimal(formData, "valorActual", "Valor actual"),
+    // Fase 60: con la depreciación definida el formulario no envía estos dos
+    // campos (los muestra calculados y bloqueados) — `undefined` le dice a
+    // Prisma "no toques la columna"; sincronizarValoresContables los
+    // recalcula en la misma transacción.
+    valorContable: formData.has("valorContable") ? parseDecimal(formData, "valorContable", "Valor contable") : undefined,
+    valorActual: formData.has("valorActual") ? parseDecimal(formData, "valorActual", "Valor actual") : undefined,
     estadoPatrimonial: ((formData.get("estadoPatrimonial") as string | null) ||
       "DISPONIBLE") as EstadoPatrimonial,
     condicionFisica: condicionFisicaRaw ? (condicionFisicaRaw as CondicionFisica) : null,
@@ -144,6 +150,7 @@ export async function createActivoAction(formData: FormData): Promise<void> {
       },
       include: { tipoActivo: true, sede: true },
     });
+    await sincronizarValoresContables(tx, [created.id]);
     await tx.movimiento.create({
       data: { activoId: created.id, usuarioId: actor.id, ...buildMovimientoDeAlta(created) },
     });
@@ -180,6 +187,8 @@ export async function updateActivoAction(activoId: string, formData: FormData): 
 
   await prisma.$transaction(async (tx) => {
     const anterior = await tx.activo.findUniqueOrThrow({ where: { id: activoId } });
+    // Fase 58: con depreciación registrada, costo/fecha/tipo quedan fijos.
+    await assertSinCambiosDepreciables(tx, anterior, data);
 
     await tx.activoEspecificacionValor.deleteMany({ where: { activoId } });
     await tx.activo.update({
@@ -189,6 +198,7 @@ export async function updateActivoAction(activoId: string, formData: FormData): 
         especificaciones: { create: especificaciones },
       },
     });
+    await sincronizarValoresContables(tx, [activoId]);
 
     // Fase 9: si cambió ubicación o estado patrimonial, queda un Movimiento
     // (ver lib/activos/movimientos.ts) — no crea uno si solo cambió texto
@@ -349,8 +359,14 @@ export async function deleteActivoAction(activoId: string): Promise<void> {
   const actor = await requireSessionUsuario();
   const activo = await prisma.activo.findUniqueOrThrow({
     where: { id: activoId },
-    include: { _count: { select: { documentos: true } } },
+    include: { _count: { select: { documentos: true, depreciaciones: true } } },
   });
+
+  // Fase 58: el historial de depreciación es un registro contable — un
+  // activo con trimestres registrados no se borra (la FK además es Restrict).
+  if (activo._count.depreciaciones > 0) {
+    throw new Error("No se puede eliminar: tiene depreciación registrada (mantiene el historial contable).");
+  }
 
   // Eliminación controlada: un activo que viene de una importación no se
   // borra — rompería la trazabilidad Activo -> ImportItem -> Import (mismo

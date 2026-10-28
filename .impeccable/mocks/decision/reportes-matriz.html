@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Matriz con desglose</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;font:14px/1.43 system-ui,"Segoe UI",Roboto,sans-serif;color:#1f1f1f;background:linear-gradient(135deg,#f9fcff,#f4f9fb 60%,#fffef4);display:flex}
+.side{width:240px;background:#fff;border-right:1px solid #ebebeb;padding:16px 12px}
+.logo{font-weight:700;color:#2a78d6;margin:4px 8px 20px}
+.nav{padding:8px 10px;border-radius:14px;font-weight:600;color:#444;margin-bottom:2px}
+.nav.on{background:#fff;color:#2a78d6;box-shadow:0 1px 3px rgba(0,0,0,.1);border-left:5px solid #2a78d6}
+.grp{font-size:12px;color:#5f5f5f;margin:14px 10px 6px}
+main{flex:1;padding:24px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:20px;font-weight:500}.sub{color:#5f5f5f}
+.row{display:flex;justify-content:space-between}
+.btn{height:32px;padding:0 10px;border:1px solid #e5e5e5;border-radius:10px;background:#fff;display:inline-flex;align-items:center;margin-left:8px}
+.card{background:#fff;border-radius:14px;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.1)}
+.kp{display:flex;gap:40px;padding:14px 18px}
+.kp span{font-size:12px;color:#5f5f5f}.kp b{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse}
+th{font-size:12px;font-weight:500;color:#5f5f5f;text-align:right;padding:9px 12px;border-bottom:1px solid #ebebeb}
+th:first-child,td:first-child{text-align:left}
+td{padding:9px 12px;border-bottom:1px solid #f2f2f2;text-align:right;font-variant-numeric:tabular-nums}
+td.c{color:#2a78d6;text-decoration:underline;text-underline-offset:3px}
+td.sel{background:#eaf2fc;outline:2px solid #2a78d6;outline-offset:-2px;font-weight:600}
+tfoot td{font-weight:600;border-top:1px solid #dcdcdc}
+.dt h3{font-size:14px;font-weight:600;padding:12px 16px;border-bottom:1px solid #ededed}
+.dt td{text-align:left;font-size:13px}
+.code{font-family:ui-monospace,monospace;font-size:12px;color:#5f5f5f}
+</style></head><body>
+<aside class="side"><div class="logo">CESAL · Patrimonio</div>
+<div class="grp">Principal</div><div class="nav">Dashboard</div><div class="nav">Activos</div><div class="nav">Importaciones</div><div class="nav">Depreciación</div><div class="nav on">Reportes</div>
+<div class="grp">Organización</div><div class="nav">Sedes</div><div class="nav">Movimientos</div><div class="nav">Auditoría</div></aside>
+<main>
+<div class="row"><div><h1>Reportes</h1><p class="sub">Inventario por sede y tipo de activo. Elige una celda para ver esos activos.</p></div><div><span class="btn">Imprimir</span><span class="btn">Exportar a Excel</span></div></div>
+<div class="card kp"><div><span>Activos</span><b>254</b></div><div><span>Costo de adquisición</span><b>S/ 742.160,00</b></div><div><span>Valor neto contable</span><b>S/ 488.386,30</b></div><div><span>Corte</span><b style="font-size:16px;margin-top:4px">20/10/2026</b></div></div>
+<div class="card"><table><thead><tr><th>Sede</th><th>Edificaciones</th><th>Vehículos</th><th>Eq. informáticos</th><th>Eq. de oficina</th><th>Intangibles</th><th>Maquinaria</th><th>Mobiliario</th><th>Total</th><th>Valor neto</th></tr></thead>
+<tbody>
+<tr><td>San Isidro</td><td class="c">1</td><td class="c">4</td><td class="c">41</td><td class="c">12</td><td class="c">5</td><td class="c">9</td><td class="c">26</td><td><b>98</b></td><td>S/ 201.334,50</td></tr>
+<tr><td>Huachipa</td><td class="c">1</td><td class="c">3</td><td class="sel">23</td><td class="c">9</td><td>0</td><td class="c">18</td><td class="c">27</td><td><b>81</b></td><td>S/ 158.770,10</td></tr>
+<tr><td>Abancay</td><td>0</td><td class="c">1</td><td class="c">9</td><td class="c">4</td><td>0</td><td class="c">5</td><td class="c">8</td><td><b>27</b></td><td>S/ 41.020,00</td></tr>
+<tr><td>Atalaya</td><td>0</td><td class="c">1</td><td class="c">4</td><td class="c">1</td><td class="c">1</td><td class="c">2</td><td class="c">3</td><td><b>12</b></td><td>S/ 21.006,30</td></tr>
+</tbody><tfoot><tr><td>Total</td><td>2</td><td>9</td><td>88</td><td>31</td><td>6</td><td>41</td><td>77</td><td>254</td><td>S/ 488.386,30</td></tr></tfoot></table></div>
+<div class="card dt"><h3>Equipos informáticos en Huachipa · 23 activos</h3><table><thead><tr><th>Activo</th><th>Ubicación</th><th>Responsable</th><th>Estado</th><th style="text-align:right">Valor neto</th></tr></thead><tbody>
+<tr><td>LECTOR CODIGO BARRAS<div class="code">INF-LE-26-0001</div></td><td>Huachipa › CETPRO - Huachipa</td><td>Sin responsable</td><td>Disponible</td><td style="text-align:right">S/ 220,00</td></tr>
+<tr><td>Laptop Lenovo ThinkPad E14<div class="code">INF-LA-25-0014</div></td><td>Huachipa › CAE - Huachipa</td><td>Sergio</td><td>Asignado</td><td style="text-align:right">S/ 2.187,50</td></tr>
+</tbody></table></div>
+</main></body></html>

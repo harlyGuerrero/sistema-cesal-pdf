@@ -14,6 +14,7 @@ export async function GET(request: Request) {
     q: searchParams.get("q") ?? undefined,
     entidad: searchParams.get("entidad") ?? undefined,
     accion: searchParams.get("accion") ?? undefined,
+    usuarioId: searchParams.get("usuarioId") ?? undefined,
     fechaDesde: searchParams.get("fechaDesde") ?? undefined,
     fechaHasta: searchParams.get("fechaHasta") ?? undefined,
   });

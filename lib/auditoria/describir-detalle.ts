@@ -1,5 +1,6 @@
 import { ROL_USUARIO_LABELS } from "@/lib/usuarios/labels";
 import { TIPO_DOCUMENTO_LABELS } from "@/lib/activos/labels";
+import { formatSoles, parseCentavos } from "@/lib/depreciacion/calculo";
 
 function asRecord(detalle: unknown): Record<string, unknown> {
   return detalle && typeof detalle === "object" ? (detalle as Record<string, unknown>) : {};
@@ -132,6 +133,17 @@ export function describirDetalleAuditoria(entidad: string, accion: string, detal
     if (accion === "ELIMINAR_DOCUMENTO") {
       return `Se eliminó el documento «${nombreOriginal}»${activoContexto ? ` de «${activoContexto}»` : ""}.`;
     }
+  }
+
+  if (entidad === "ProcesamientoDepreciacion" && accion === "PROCESAR_DEPRECIACION") {
+    const periodo = str(d.periodo) ?? "—";
+    const importe = parseCentavos(str(d.importeTotal));
+    const n = (value: unknown) => (typeof value === "number" ? value : 0);
+    return (
+      `Se procesó la depreciación hasta el ${periodo}: ${n(d.periodosRegistrados)} periodo(s) en ` +
+      `${n(d.activosProcesados)} activo(s) por ${formatSoles(importe ?? 0)}` +
+      ` (${n(d.yaProcesados)} ya al día, ${n(d.omitidos)} omitidos, ${n(d.conErrores)} con errores).`
+    );
   }
 
   // Combinación no contemplada arriba (o detalle vacío/con forma antigua):

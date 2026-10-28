@@ -67,7 +67,7 @@ export default async function UsuariosPage({
   const porcentaje = (value: number) => (totalGlobal > 0 ? `${Math.round((value / totalGlobal) * 100)}% del total` : "Sin datos");
 
   return (
-    <main className="space-y-6 p-6">
+    <main className="space-y-6 p-4 sm:p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-medium">Usuarios</h1>
@@ -208,7 +208,7 @@ export default async function UsuariosPage({
       </Card>
 
       {total > 0 && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>
             Mostrando {(page - 1) * PAGE_SIZE + 1} a {Math.min(page * PAGE_SIZE, total)} de {total} usuarios
           </p>

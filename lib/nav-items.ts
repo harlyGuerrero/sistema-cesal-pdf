@@ -12,6 +12,7 @@ import {
   ScrollTextIcon,
   HistoryIcon,
   FileBarChart2Icon,
+  TrendingDownIcon,
 } from "lucide-react";
 import type { NavMainItem as NavItem } from "@/components/nav-main";
 
@@ -25,6 +26,7 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
   { title: "Dashboard", url: "/", icon: LayoutDashboardIcon },
   { title: "Activos", url: "/activos", icon: PackageIcon },
   { title: "Importaciones", url: "/importaciones", icon: FileStackIcon },
+  { title: "Depreciación", url: "/depreciacion", icon: TrendingDownIcon },
   { title: "Reportes", url: "/reportes", icon: FileBarChart2Icon },
 ];
 

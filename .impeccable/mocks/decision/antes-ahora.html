@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Antes / Ahora</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;font:14px/1.43 system-ui,"Segoe UI",Roboto,sans-serif;color:#1f1f1f;background:linear-gradient(135deg,#f9fcff,#f4f9fb 60%,#fffef4);display:flex}
+.side{width:240px;background:#fff;border-right:1px solid #ebebeb;padding:16px 12px}
+.logo{font-weight:700;color:#2a78d6;margin:4px 8px 20px}
+.nav{padding:8px 10px;border-radius:14px;font-weight:600;color:#444;margin-bottom:2px}
+.nav.on{background:#fff;color:#2a78d6;box-shadow:0 1px 3px rgba(0,0,0,.1);border-left:5px solid #2a78d6}
+.grp{font-size:12px;color:#666666;margin:14px 10px 6px}
+main{flex:1;padding:24px;display:flex;flex-direction:column;gap:20px}
+h1{font-size:20px;font-weight:500}
+.sub{color:#5f5f5f}
+.row{display:flex;justify-content:space-between;align-items:flex-start}
+.btn{height:32px;padding:0 10px;border:1px solid #e5e5e5;border-radius:10px;background:#fff;display:inline-flex;align-items:center}
+.card{background:#fff;border-radius:14px;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.1);padding:16px}
+.kpis{display:flex;gap:28px;align-items:center}
+.big{font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;gap:6px;align-items:center;font-size:13px;color:#555}
+.dot{width:8px;height:8px;border-radius:50%}
+.filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:12px}
+.f label{font-size:12px;color:#5f5f5f;display:block;margin-bottom:4px}
+.in{height:32px;border:1px solid #e5e5e5;border-radius:10px;padding:6px 10px;color:#6b6b6b}
+.day{font-size:12px;font-weight:600;letter-spacing:.04em;color:#5f5f5f;text-transform:uppercase;margin:4px 0 8px}
+.ev{display:grid;grid-template-columns:36px 1fr 120px;gap:14px;padding:14px 0;border-top:1px solid #f0f0f0}
+.ic{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.t{font-weight:600;font-size:15px}
+.a{color:#5f5f5f;font-size:13px}
+.a b{color:#1f1f1f;font-weight:500}
+.cmp{display:grid;grid-template-columns:1fr 40px 1fr;margin-top:10px;align-items:stretch;max-width:760px}
+.side-b{border-radius:10px;padding:10px 12px;background:#f7f7f7}
+.side-b.now{background:#eef5fd}
+.k{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#666666;margin-bottom:4px}
+.now .k{color:#2a78d6}
+.v{font-size:13px}
+.line{display:flex;align-items:center;justify-content:center}
+.line span{width:100%;height:2px;background:#2a78d6;position:relative}
+.line span:after{content:"";position:absolute;right:-2px;top:-4px;border-left:8px solid #2a78d6;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.meta{font-size:12px;color:#5f5f5f;text-align:right}
+.more{font-size:12px;color:#2a78d6;font-weight:500;margin-top:8px}
+</style></head><body>
+<aside class="side"><div class="logo">CESAL · Patrimonio</div>
+<div class="grp">Principal</div><div class="nav">Dashboard</div><div class="nav">Activos</div><div class="nav">Importaciones</div><div class="nav">Depreciación</div>
+<div class="grp">Organización</div><div class="nav">Sedes</div><div class="nav">Responsables</div><div class="nav on">Movimientos</div><div class="nav">Auditoría</div></aside>
+<main>
+<div class="row"><div><h1>Historial de movimientos</h1><p class="sub">Consulta los cambios realizados en los activos de CESAL.</p></div><span class="btn">Exportar a Excel</span></div>
+<div class="card kpis"><div><div class="big">14</div><div class="sub" style="font-size:12px">movimientos en octubre</div></div>
+<span class="chip"><span class="dot" style="background:#0ca30c"></span><b>5</b> altas</span>
+<span class="chip"><span class="dot" style="background:#2a78d6"></span><b>4</b> asignaciones</span>
+<span class="chip"><span class="dot" style="background:#e87ba4"></span><b>3</b> cambios de ubicación</span>
+<span class="chip"><span class="dot" style="background:#d03b3b"></span><b>1</b> baja</span></div>
+<div class="card filters">
+<div class="f"><label>Buscar activo</label><div class="in">Código patrimonial o nombre…</div></div>
+<div class="f"><label>Tipo de movimiento</label><div class="in">Todos</div></div>
+<div class="f"><label>Registrado por</label><div class="in">Todos</div></div>
+<div class="f"><label>Desde</label><div class="in">01/10/2026</div></div>
+<div class="f"><label>Hasta</label><div class="in">20/10/2026</div></div></div>
+<div class="card">
+<div class="day">Hoy · martes, 20 de octubre de 2026</div>
+<div class="ev"><div class="ic" style="background:#e9f6e9;color:#0a8a0a">↺</div>
+<div><div class="t">Estado cambiado de Asignado a Disponible</div><div class="a"><b>LECTOR CODIGO BARRAS</b> · INF-LE-26-0001 · Huachipa › CETPRO - Huachipa</div>
+<div class="cmp"><div class="side-b"><div class="k">Antes</div><div class="v">Asignado</div></div><div class="line"><span></span></div><div class="side-b now"><div class="k">Ahora</div><div class="v"><b>Disponible</b></div></div></div>
+<div class="more">Ver detalles</div></div>
+<div class="meta">12:38<br>Ángela Aliaga</div></div>
+<div class="ev"><div class="ic" style="background:#eaf2fc;color:#2a78d6">+</div>
+<div><div class="t">Activo asignado a Sergio</div><div class="a"><b>LECTOR CODIGO BARRAS</b> · INF-LE-26-0001 · Huachipa › CETPRO - Huachipa</div>
+<div class="cmp"><div class="side-b"><div class="k">Antes</div><div class="v">Sin responsable · Disponible</div></div><div class="line"><span></span></div><div class="side-b now"><div class="k">Ahora</div><div class="v"><b>Sergio</b> · Asignado</div></div></div>
+<div class="more">Ver detalles</div></div>
+<div class="meta">12:37<br>Ángela Aliaga</div></div>
+</div></main></body></html>

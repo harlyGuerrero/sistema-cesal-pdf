@@ -6,14 +6,17 @@ import { FilterIcon, Loader2Icon, SearchIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ENTIDADES_AUDITADAS, TIPO_ACCION_AUDITORIA_OPTIONS } from "@/lib/auditoria/labels";
+import { ENTIDADES_AUDITADAS } from "@/lib/auditoria/labels";
+import { ENTIDAD_AUDITORIA_LABELS } from "@/lib/auditoria/narrativa";
 
 const DEBOUNCE_MS = 350;
 
 // Fase 32: mismo patrón de filtros en vivo que /movimientos
 // (movimientos-filters.tsx) — buscador con debounce, selects/fechas/orden al
 // toque, todo vía router.replace sin recarga completa.
-export function AuditoriaFilters() {
+// Fase 59: la acción se elige en las pestañas de la tabla; acá queda quién
+// lo hizo, sobre qué tipo de registro y las fechas.
+export function AuditoriaFilters({ usuarios }: { usuarios: { id: string; nombre: string }[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -67,14 +70,17 @@ export function AuditoriaFilters() {
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
       <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         <div className="col-span-2 space-y-1">
-          <label className="truncate text-xs font-medium text-muted-foreground">Buscar usuario</label>
+          <label htmlFor="auditoria-q" className="truncate text-xs font-medium text-muted-foreground">
+            Buscar
+          </label>
           <div className="relative">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
+              id="auditoria-q"
               value={q}
               onChange={(event) => handleSearchChange(event.target.value)}
               onKeyDown={handleSearchKeyDown}
-              placeholder="Buscar por nombre de usuario..."
+              placeholder="Activo, código, nombre o usuario..."
               className="pl-8"
             />
             {isPending && (
@@ -84,19 +90,19 @@ export function AuditoriaFilters() {
         </div>
 
         <div className="space-y-1">
-          <label className="truncate text-xs font-medium text-muted-foreground">Entidad</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Sobre</label>
           <Select
             value={searchParams.get("entidad") ?? "all"}
             onValueChange={(value) => applyParams({ entidad: value as string })}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Todas las entidades" />
+              <SelectValue placeholder="Todo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas las entidades</SelectItem>
+              <SelectItem value="all">Todo</SelectItem>
               {ENTIDADES_AUDITADAS.map((e) => (
                 <SelectItem key={e} value={e}>
-                  {e}
+                  {ENTIDAD_AUDITORIA_LABELS[e] ?? e}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -104,19 +110,19 @@ export function AuditoriaFilters() {
         </div>
 
         <div className="space-y-1">
-          <label className="truncate text-xs font-medium text-muted-foreground">Acción</label>
+          <label className="truncate text-xs font-medium text-muted-foreground">Registrado por</label>
           <Select
-            value={searchParams.get("accion") ?? "all"}
-            onValueChange={(value) => applyParams({ accion: value as string })}
+            value={searchParams.get("usuarioId") ?? "all"}
+            onValueChange={(value) => applyParams({ usuarioId: value as string })}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Todas las acciones" />
+              <SelectValue placeholder="Todos los usuarios" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas las acciones</SelectItem>
-              {TIPO_ACCION_AUDITORIA_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+              <SelectItem value="all">Todos los usuarios</SelectItem>
+              {usuarios.map((usuario) => (
+                <SelectItem key={usuario.id} value={usuario.id}>
+                  {usuario.nombre}
                 </SelectItem>
               ))}
             </SelectContent>

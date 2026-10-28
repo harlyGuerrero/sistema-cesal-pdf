@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "crear-admin": "tsx scripts/crear-super-admin.ts"
+    "crear-admin": "tsx scripts/crear-super-admin.ts",
+    "sincronizar-valores": "tsx scripts/sincronizar-valores-contables.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

@@ -28,7 +28,7 @@ export default async function UsuarioDetailPage({
   return (
     <>
       <PageBreadcrumb items={[{ label: nombreCompleto(usuario) }]} />
-      <main className="p-6">
+      <main className="p-4 sm:p-6">
         <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border bg-card shadow-sm">
           <FormPageHeader
             icon={UserCogIcon}
@@ -36,7 +36,7 @@ export default async function UsuarioDetailPage({
             description={usuario.email}
           />
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <FormSection icon={UserCogIcon} title="Datos de la cuenta" color="var(--color-chart-5)">
               <UsuarioEditForm
                 usuarioId={usuario.id}
@@ -51,7 +51,7 @@ export default async function UsuarioDetailPage({
           </div>
 
           {!esUsuarioActual && (
-            <div className="border-t p-6">
+            <div className="border-t p-4 sm:p-6">
               <DeleteUsuarioButton usuarioId={usuario.id} />
             </div>
           )}

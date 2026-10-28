@@ -30,6 +30,10 @@ export function ReportesFilters({ sedes, tiposActivo }: ReportesFiltersProps) {
         else params.set(key, value);
       }
       params.delete("page");
+      // Fase 59: cambiar un filtro cambia las filas de la matriz; la celda
+      // elegida deja de tener sentido.
+      params.delete("fila");
+      params.delete("col");
       startTransition(() => {
         router.replace(`${pathname}?${params.toString()}`, { scroll: false });
       });

@@ -1,47 +1,66 @@
 import Link from "next/link";
-import { describirMovimiento, type MovimientoDetalleRow } from "@/lib/activos/movimientos";
-import { TIPO_MOVIMIENTO_LABELS } from "@/lib/activos/labels";
-import { MOVIMIENTO_META } from "@/lib/activos/movimiento-meta";
-import type { TipoMovimiento } from "@/lib/generated/prisma/client";
+import { HistoryIcon } from "lucide-react";
+import { IconoTipo } from "@/components/historial/historial-parts";
+import { narrarMovimiento, type MovimientoNarrable } from "@/lib/activos/movimiento-narrativa";
+import { nombreCompleto } from "@/lib/nombre-completo";
+import { formatearTiempoRelativo } from "@/lib/notificaciones/tiempo-relativo";
 
-export interface MovimientoFeedRow extends MovimientoDetalleRow {
+export interface MovimientoFeedRow extends MovimientoNarrable {
   id: string;
-  tipo: TipoMovimiento;
   fecha: Date;
-  motivo: string | null;
-  activo: { id: string; nombreActivo: string };
+  usuario: { nombres: string; apellidos: string } | null;
+  activo: { id: string; nombreActivo: string; codigoPatrimonial: string };
 }
 
+const FECHA_EXACTA = new Intl.DateTimeFormat("es-PE", { dateStyle: "long", timeStyle: "short", timeZone: "America/Lima" });
+
+// Fase 15, rediseñada en Fase 59: "Últimos movimientos" del Dashboard, con
+// la misma frase que /movimientos (narrarMovimiento) en vez del nombre del
+// tipo más un detalle técnico. Cada entrada responde qué pasó, a qué activo,
+// quién lo registró y hace cuánto; el detalle completo está en /movimientos.
 export function MovimientosFeed({ movimientos }: { movimientos: MovimientoFeedRow[] }) {
+  if (movimientos.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-2 py-6 text-center">
+        <span className="flex size-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <HistoryIcon className="size-4" />
+        </span>
+        <p className="text-sm font-medium">Todavía no hay movimientos</p>
+        <p className="max-w-56 text-sm text-muted-foreground">
+          Cada alta, asignación o cambio de ubicación de un activo aparecerá aquí.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <ul className="space-y-4">
+    <ol className="divide-y">
       {movimientos.map((movimiento) => {
-        const { icon: Icon, color } = MOVIMIENTO_META[movimiento.tipo];
-        const detalle = movimiento.motivo ?? describirMovimiento(movimiento)[0] ?? null;
+        const n = narrarMovimiento(movimiento);
         return (
-          <li key={movimiento.id} className="flex items-start gap-3">
-            <span
-              className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full"
-              style={{ backgroundColor: `color-mix(in oklch, ${color} 15%, transparent)`, color }}
-            >
-              <Icon className="size-3.5" />
-            </span>
+          <li key={movimiento.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
+            <IconoTipo icon={n.categoria.icon} color={n.categoria.color} />
             <div className="min-w-0 flex-1 space-y-0.5">
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-sm font-medium">{TIPO_MOVIMIENTO_LABELS[movimiento.tipo]}</span>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {movimiento.fecha.toLocaleDateString("es-PE")}
-                </span>
-              </div>
-              <Link href={`/activos/${movimiento.activo.id}`} className="block truncate text-sm hover:underline">
-                {movimiento.activo.nombreActivo}
-              </Link>
-              {detalle && <p className="truncate text-xs text-muted-foreground">{detalle}</p>}
+              <p className="line-clamp-2 text-sm leading-snug font-medium text-pretty">{n.titulo}</p>
+              <p className="truncate text-sm">
+                <Link
+                  href={`/activos/${movimiento.activo.id}`}
+                  className="underline-offset-4 hover:text-primary hover:underline"
+                >
+                  {movimiento.activo.nombreActivo}
+                </Link>{" "}
+                <span className="font-mono text-xs text-muted-foreground">{movimiento.activo.codigoPatrimonial}</span>
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {movimiento.usuario ? nombreCompleto(movimiento.usuario) : "Usuario no registrado"} ·{" "}
+                <time dateTime={movimiento.fecha.toISOString()} title={FECHA_EXACTA.format(movimiento.fecha)}>
+                  {formatearTiempoRelativo(movimiento.fecha)}
+                </time>
+              </p>
             </div>
           </li>
         );
       })}
-      {movimientos.length === 0 && <li className="text-sm text-muted-foreground">Sin movimientos todavía.</li>}
-    </ul>
+    </ol>
   );
 }

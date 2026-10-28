@@ -31,7 +31,7 @@ export default async function TiposActivoPage() {
   const totalCategorias = tiposActivo.reduce((sum, tipo) => sum + tipo._count.categorias, 0);
 
   return (
-    <main className="space-y-6 p-6">
+    <main className="space-y-6 p-4 sm:p-6">
       <div>
         <h1 className="text-xl font-medium">Tipos de Activo</h1>
         <p className="text-sm text-muted-foreground">

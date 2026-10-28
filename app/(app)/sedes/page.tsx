@@ -59,7 +59,7 @@ export default async function SedesPage({
   const porcentaje = (value: number) => (totalSedes > 0 ? `${Math.round((value / totalSedes) * 100)}% del total` : "Sin datos");
 
   return (
-    <main className="space-y-6 p-6">
+    <main className="space-y-6 p-4 sm:p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-medium">Sedes</h1>

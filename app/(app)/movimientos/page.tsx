@@ -1,316 +1,32 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import {
-  ArrowRightLeftIcon,
-  Building2Icon,
-  ClipboardListIcon,
-  DownloadIcon,
-  MapPinIcon,
-  UserCogIcon,
-  UserPlusIcon,
-} from "lucide-react";
+import { DownloadIcon, HistoryIcon, SearchXIcon, XIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ROL_USUARIO_LABELS } from "@/lib/usuarios/labels";
-import { TIPO_MOVIMIENTO_OPTIONS } from "@/lib/activos/labels";
-import { inicialesPersona, nombreCompleto } from "@/lib/nombre-completo";
+  EncabezadoOrden,
+  PaginacionHistorial,
+  PestanasConteo,
+  VacioHistorial,
+} from "@/components/historial/historial-parts";
+import { TIPO_MOVIMIENTO_LABELS, TIPO_MOVIMIENTO_OPTIONS } from "@/lib/activos/labels";
+import { MOVIMIENTO_META } from "@/lib/activos/movimiento-meta";
+import { nombreCompleto } from "@/lib/nombre-completo";
 import { buildMovimientosWhere } from "@/lib/activos/movimientos-filtros";
-import type { Prisma } from "@/lib/generated/prisma/client";
-import { MovimientoBadge } from "../movimiento-badge";
-import { MovimientoDetalleCell } from "./movimiento-detalle";
+import type { TipoMovimiento } from "@/lib/generated/prisma/client";
 import { MovimientosFilters } from "./movimientos-filters";
+import { MovimientosTabla } from "./movimientos-tabla";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 15;
 
-// Fase 12 de Activos, rediseñada en Fase 15: vista global de movimientos —
-// la ficha de un Activo (Fase 9) ya muestra su propio historial, pero esta
-// pantalla es la única forma de ver/filtrar movimientos a través de todos
-// los activos a la vez. Dirección visual (stat cards + filtros + tabla con
-// color/ícono por tipo) tomada de una referencia que el usuario aprobó
-// explícitamente tras rechazar dos intentos anteriores — ver CLAUDE.md
-// sobre iterar módulo por módulo con criterio propio.
-export default async function MovimientosPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    tipo?: string;
-    sedeId?: string;
-    unidadOperativaId?: string;
-    q?: string;
-    fechaDesde?: string;
-    fechaHasta?: string;
-    sort?: string;
-    page?: string;
-  }>;
-}) {
-  const {
-    tipo,
-    sedeId,
-    unidadOperativaId,
-    q,
-    fechaDesde,
-    fechaHasta,
-    sort,
-    page: pageParam,
-  } = await searchParams;
-  const page = Math.max(1, Number(pageParam) || 1);
-  const orderBy: Prisma.MovimientoOrderByWithRelationInput = {
-    fecha: sort === "asc" ? "asc" : "desc",
-  };
-
-  const where = buildMovimientosWhere({ tipo, sedeId, unidadOperativaId, q, fechaDesde, fechaHasta });
-
-  const exportParams = new URLSearchParams();
-  if (tipo) exportParams.set("tipo", tipo);
-  if (sedeId) exportParams.set("sedeId", sedeId);
-  if (unidadOperativaId) exportParams.set("unidadOperativaId", unidadOperativaId);
-  if (q) exportParams.set("q", q);
-  if (fechaDesde) exportParams.set("fechaDesde", fechaDesde);
-  if (fechaHasta) exportParams.set("fechaHasta", fechaHasta);
-  const exportQs = exportParams.toString();
-  const exportHref = exportQs ? `/api/movimientos/export?${exportQs}` : "/api/movimientos/export";
-
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-
-  const [movimientos, total, sedes, unidadesOperativas, countsPorTipoMes, totalMes] = await Promise.all([
-    prisma.movimiento.findMany({
-      where,
-      include: {
-        activo: { select: { id: true, nombreActivo: true, codigoPatrimonial: true } },
-        usuario: true,
-        responsableAnterior: true,
-        responsableNuevo: true,
-        sedeAnterior: true,
-        sedeNueva: true,
-        unidadOperativaAnterior: true,
-        unidadOperativaNueva: true,
-        ambienteAnterior: true,
-        ambienteNuevo: true,
-      },
-      orderBy,
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-    prisma.movimiento.count({ where }),
-    prisma.sede.findMany({ orderBy: { name: "asc" } }),
-    prisma.unidadOperativa.findMany({
-      include: { sede: true },
-      orderBy: [{ sede: { name: "asc" } }, { name: "asc" }],
-    }),
-    prisma.movimiento.groupBy({ by: ["tipo"], where: { fecha: { gte: startOfMonth } }, _count: true }),
-    prisma.movimiento.count({ where: { fecha: { gte: startOfMonth } } }),
-  ]);
-
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const countByTipoMes = new Map(countsPorTipoMes.map((row) => [row.tipo, row._count]));
-
-  return (
-    <main className="space-y-6 p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h1 className="text-xl font-medium">Movimientos</h1>
-          <p className="text-sm text-muted-foreground">
-            Historial completo de todos los movimientos realizados a los activos.
-          </p>
-        </div>
-        <Button variant="outline" className="w-full sm:w-auto" render={<a href={exportHref} />} nativeButton={false}>
-          <DownloadIcon />
-          Exportar a Excel
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <StatCard
-          label="Total de movimientos"
-          value={totalMes}
-          icon={ClipboardListIcon}
-          color="var(--color-chart-1)"
-        />
-        <StatCard
-          label="Asignaciones"
-          value={countByTipoMes.get("ASIGNACION") ?? 0}
-          icon={UserPlusIcon}
-          color="var(--color-good)"
-        />
-        <StatCard
-          label="Reasignaciones"
-          value={countByTipoMes.get("REASIGNACION") ?? 0}
-          icon={ArrowRightLeftIcon}
-          color="var(--color-chart-1)"
-        />
-        <StatCard
-          label="Cambios de responsable"
-          value={countByTipoMes.get("CAMBIO_RESPONSABLE") ?? 0}
-          icon={UserCogIcon}
-          color="var(--color-chart-2)"
-        />
-        <StatCard
-          label="Transferencias de sede"
-          value={countByTipoMes.get("TRANSFERENCIA") ?? 0}
-          icon={Building2Icon}
-          color="var(--color-chart-1)"
-        />
-        <StatCard
-          label="Cambios de ubicación"
-          value={countByTipoMes.get("CAMBIO_UBICACION") ?? 0}
-          icon={MapPinIcon}
-          color="var(--color-chart-5)"
-        />
-      </div>
-
-      <Card>
-        <CardContent>
-          <Suspense fallback={<div className="h-8" />}>
-            <MovimientosFilters
-              tiposMovimiento={TIPO_MOVIMIENTO_OPTIONS}
-              sedes={sedes}
-              unidadesOperativas={unidadesOperativas}
-            />
-          </Suspense>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <p className="text-sm font-medium">Historial de movimientos ({total.toLocaleString("es-PE")})</p>
-        </CardHeader>
-        <CardContent className="overflow-x-auto px-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="pl-6">Movimiento</TableHead>
-                <TableHead>Activo</TableHead>
-                <TableHead>Detalle</TableHead>
-                <TableHead>Ubicación actual</TableHead>
-                <TableHead>Usuario</TableHead>
-                <TableHead className="pr-6 text-right">Fecha y hora</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {movimientos.map((movimiento) => {
-                const sede = movimiento.sedeNueva ?? movimiento.sedeAnterior;
-                const unidad = movimiento.unidadOperativaNueva ?? movimiento.unidadOperativaAnterior;
-
-                return (
-                  <TableRow key={movimiento.id}>
-                    <TableCell className="pl-6">
-                      <MovimientoBadge tipo={movimiento.tipo} />
-                    </TableCell>
-                    <TableCell>
-                      <Link href={`/activos/${movimiento.activo.id}`} className="text-sm hover:underline">
-                        {movimiento.activo.nombreActivo}
-                      </Link>
-                      {movimiento.activo.codigoPatrimonial && (
-                        <p className="text-xs text-muted-foreground">{movimiento.activo.codigoPatrimonial}</p>
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-80">
-                      <MovimientoDetalleCell movimiento={movimiento} />
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      <p className="font-medium">{sede?.name ?? "—"}</p>
-                      <p className="text-xs text-muted-foreground">{unidad?.name ?? "—"}</p>
-                    </TableCell>
-                    <TableCell>
-                      {movimiento.usuario ? (
-                        <div className="flex items-center gap-2">
-                          <Avatar className="size-7 shrink-0 rounded-full">
-                            <AvatarFallback className="rounded-full bg-muted text-[10px] font-semibold uppercase">
-                              {inicialesPersona(movimiento.usuario)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="text-sm">{nombreCompleto(movimiento.usuario)}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {ROL_USUARIO_LABELS[movimiento.usuario.rol]}
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="pr-6 text-right text-xs whitespace-nowrap text-muted-foreground">
-                      {movimiento.fecha.toLocaleString("es-PE")}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {movimientos.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    Sin movimientos que coincidan con el filtro.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {total > 0 && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <p>
-            Mostrando {(page - 1) * PAGE_SIZE + 1} a {Math.min(page * PAGE_SIZE, total)} de {total} movimientos
-          </p>
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            tipo={tipo}
-            sedeId={sedeId}
-            unidadOperativaId={unidadOperativaId}
-            q={q}
-            fechaDesde={fechaDesde}
-            fechaHasta={fechaHasta}
-            sort={sort}
-          />
-        </div>
-      )}
-    </main>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  color,
-}: {
-  label: string;
-  value: number;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">{label}</p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums">{value.toLocaleString("es-PE")}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">Este mes</p>
-        </div>
-        <span
-          className="flex size-9 shrink-0 items-center justify-center rounded-full"
-          style={{ backgroundColor: `color-mix(in oklch, ${color} 15%, transparent)`, color }}
-        >
-          <Icon className="size-4" />
-        </span>
-      </CardContent>
-    </Card>
-  );
-}
+// Fase 59: el tipo guardado CAMBIO_UBICACION también registra ediciones que
+// solo cambiaron el estado (ver movimiento-narrativa.ts), y la fila las
+// cuenta como "Cambio de estado". La pestaña tiene que decir lo mismo que
+// las filas que filtra.
+const ETIQUETA_PESTANA: Record<string, string> = {
+  CAMBIO_UBICACION: "Ubicación o estado",
+};
 
 interface FilterState {
   tipo?: string;
@@ -319,88 +35,202 @@ interface FilterState {
   q?: string;
   fechaDesde?: string;
   fechaHasta?: string;
+  usuarioId?: string;
+  activoId?: string;
   sort?: string;
 }
 
-function buildHref(page: number, filters: FilterState): string {
+function buildHref(filters: FilterState, page?: number): string {
   const params = new URLSearchParams();
-  if (filters.tipo) params.set("tipo", filters.tipo);
-  if (filters.sedeId) params.set("sedeId", filters.sedeId);
-  if (filters.unidadOperativaId) params.set("unidadOperativaId", filters.unidadOperativaId);
-  if (filters.q) params.set("q", filters.q);
-  if (filters.fechaDesde) params.set("fechaDesde", filters.fechaDesde);
-  if (filters.fechaHasta) params.set("fechaHasta", filters.fechaHasta);
-  if (filters.sort) params.set("sort", filters.sort);
-  params.set("page", String(page));
-  return `/movimientos?${params.toString()}`;
-}
-
-// Ventana de números de página con elipsis (1 … 4 5 [6] 7 8 … 13) — nunca
-// más de 7 elementos visibles para que no desborde en pantallas angostas.
-function pageWindow(page: number, totalPages: number): (number | "ellipsis")[] {
-  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
-  const pages = new Set<number>([1, totalPages, page - 1, page, page + 1]);
-  const sorted = [...pages].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
-  const result: (number | "ellipsis")[] = [];
-  for (let i = 0; i < sorted.length; i++) {
-    if (i > 0 && sorted[i] - sorted[i - 1] > 1) result.push("ellipsis");
-    result.push(sorted[i]);
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) params.set(key, value);
   }
-  return result;
+  if (page && page > 1) params.set("page", String(page));
+  const qs = params.toString();
+  return qs ? `/movimientos?${qs}` : "/movimientos";
 }
 
-function Pagination({
-  page,
-  totalPages,
-  ...filters
-}: { page: number; totalPages: number } & FilterState) {
-  if (totalPages <= 1) return null;
-
-  return (
-    <div className="flex items-center gap-1">
-      <PageButton disabled={page <= 1} href={buildHref(page - 1, filters)}>
-        «
-      </PageButton>
-      {pageWindow(page, totalPages).map((entry, index) =>
-        entry === "ellipsis" ? (
-          <span key={`ellipsis-${index}`} className="px-1.5 text-muted-foreground">
-            …
-          </span>
-        ) : (
-          <PageButton key={entry} href={buildHref(entry, filters)} active={entry === page}>
-            {entry}
-          </PageButton>
-        )
-      )}
-      <PageButton disabled={page >= totalPages} href={buildHref(page + 1, filters)}>
-        »
-      </PageButton>
-    </div>
-  );
-}
-
-function PageButton({
-  children,
-  href,
-  active,
-  disabled,
+// Fase 12 de Activos, rediseñada en Fase 15 y en Fase 59: historial global
+// de movimientos como tabla legible (ver movimientos-tabla.tsx). Las
+// pestañas filtran por el tipo guardado y cuentan dentro de los demás
+// filtros; la columna Fecha ordena. Mismas consultas, exportación y
+// paginación que antes, más los filtros por usuario y por activo.
+export default async function MovimientosPage({
+  searchParams,
 }: {
-  children: React.ReactNode;
-  href: string;
-  active?: boolean;
-  disabled?: boolean;
+  searchParams: Promise<FilterState & { page?: string }>;
 }) {
-  const className = `flex size-7 shrink-0 items-center justify-center rounded-md text-sm ${
-    active
-      ? "bg-primary text-primary-foreground"
-      : disabled
-        ? "text-muted-foreground/50"
-        : "text-foreground hover:bg-muted"
-  }`;
-  if (disabled) return <span className={className}>{children}</span>;
+  const { page: pageParam, ...filters } = await searchParams;
+  const { tipo, sedeId, unidadOperativaId, q, fechaDesde, fechaHasta, usuarioId, activoId, sort } = filters;
+  const page = Math.max(1, Number(pageParam) || 1);
+  const sentido = sort === "asc" ? "asc" : "desc";
+
+  const filtrosSinTipo = { sedeId, unidadOperativaId, q, fechaDesde, fechaHasta, usuarioId, activoId };
+  const where = buildMovimientosWhere({ ...filtrosSinTipo, tipo });
+
+  const exportParams = new URLSearchParams();
+  for (const [key, value] of Object.entries({ ...filtrosSinTipo, tipo })) {
+    if (value) exportParams.set(key, value);
+  }
+  const exportQs = exportParams.toString();
+  const exportHref = exportQs ? `/api/movimientos/export?${exportQs}` : "/api/movimientos/export";
+
+  const [movimientos, total, conteosPorTipo, totalGlobal, sedes, unidadesOperativas, usuarios, activoFiltrado] =
+    await Promise.all([
+      prisma.movimiento.findMany({
+        where,
+        include: {
+          activo: {
+            select: {
+              id: true,
+              nombreActivo: true,
+              codigoPatrimonial: true,
+              sede: { select: { name: true } },
+              unidadOperativa: { select: { name: true } },
+              ambiente: { select: { name: true } },
+            },
+          },
+          usuario: { select: { nombres: true, apellidos: true } },
+          responsableAnterior: true,
+          responsableNuevo: true,
+          sedeAnterior: true,
+          sedeNueva: true,
+          unidadOperativaAnterior: true,
+          unidadOperativaNueva: true,
+          ambienteAnterior: true,
+          ambienteNuevo: true,
+        },
+        orderBy: { fecha: sentido },
+        skip: (page - 1) * PAGE_SIZE,
+        take: PAGE_SIZE,
+      }),
+      prisma.movimiento.count({ where }),
+      prisma.movimiento.groupBy({ by: ["tipo"], where: buildMovimientosWhere(filtrosSinTipo), _count: true }),
+      prisma.movimiento.count(),
+      prisma.sede.findMany({ orderBy: { name: "asc" } }),
+      prisma.unidadOperativa.findMany({
+        include: { sede: true },
+        orderBy: [{ sede: { name: "asc" } }, { name: "asc" }],
+      }),
+      prisma.usuario.findMany({
+        select: { id: true, nombres: true, apellidos: true },
+        orderBy: [{ nombres: "asc" }, { apellidos: "asc" }],
+      }),
+      activoId
+        ? prisma.activo.findUnique({ where: { id: activoId }, select: { nombreActivo: true, codigoPatrimonial: true } })
+        : Promise.resolve(null),
+    ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const conteo = new Map(conteosPorTipo.map((row) => [row.tipo, row._count]));
+  const totalSinTipo = conteosPorTipo.reduce((suma, row) => suma + row._count, 0);
+  const tipoActivo = tipo && tipo !== "all" ? tipo : undefined;
+  const pestanas = [
+    { key: "all", label: "Todos", count: totalSinTipo, href: buildHref({ ...filters, tipo: undefined }), activa: !tipoActivo },
+    ...TIPO_MOVIMIENTO_OPTIONS.filter((option) => (conteo.get(option.value as TipoMovimiento) ?? 0) > 0 || option.value === tipoActivo).map(
+      (option) => {
+        const { icon, color } = MOVIMIENTO_META[option.value as TipoMovimiento];
+        return {
+          key: option.value,
+          label: ETIQUETA_PESTANA[option.value] ?? TIPO_MOVIMIENTO_LABELS[option.value],
+          count: conteo.get(option.value as TipoMovimiento) ?? 0,
+          href: buildHref({ ...filters, tipo: option.value }),
+          activa: tipoActivo === option.value,
+          icon,
+          color,
+        };
+      }
+    ),
+  ];
+  const hayFiltros = Object.entries({ ...filtrosSinTipo, tipo }).some(([, value]) => value && value !== "all");
+
   return (
-    <Link href={href} className={className}>
-      {children}
-    </Link>
+    <main className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-medium">Historial de movimientos</h1>
+          <p className="text-sm text-muted-foreground">Consulta los cambios realizados en los activos de CESAL.</p>
+        </div>
+        <Button variant="outline" className="w-full sm:w-auto" render={<a href={exportHref} />} nativeButton={false}>
+          <DownloadIcon />
+          Exportar a Excel
+        </Button>
+      </div>
+
+      <Card>
+        <CardContent>
+          <Suspense fallback={<div className="h-8" />}>
+            <MovimientosFilters
+              sedes={sedes}
+              unidadesOperativas={unidadesOperativas}
+              usuarios={usuarios.map((usuario) => ({ id: usuario.id, nombre: nombreCompleto(usuario) }))}
+            />
+          </Suspense>
+        </CardContent>
+      </Card>
+
+      {activoId && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-primary/5 px-4 py-2.5 text-sm ring-1 ring-primary/15">
+          <p>
+            Historial de{" "}
+            <span className="font-medium">
+              {activoFiltrado
+                ? `${activoFiltrado.nombreActivo} (${activoFiltrado.codigoPatrimonial})`
+                : "un activo que ya no existe"}
+            </span>
+          </p>
+          <Link
+            href={buildHref({ ...filters, activoId: undefined })}
+            className="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-primary hover:underline"
+          >
+            <XIcon className="size-3.5" />
+            Ver todos los activos
+          </Link>
+        </div>
+      )}
+
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b px-4 py-3">
+          <PestanasConteo pestanas={pestanas} etiqueta="Filtrar por tipo de movimiento" />
+        </CardHeader>
+        <CardContent className="px-0">
+          {movimientos.length === 0 ? (
+            hayFiltros && totalGlobal > 0 ? (
+              <VacioHistorial
+                icon={SearchXIcon}
+                titulo="Ningún movimiento coincide con la búsqueda"
+                texto="Prueba con otro código o nombre, amplía las fechas o usa «Limpiar» para quitar los filtros."
+              />
+            ) : (
+              <VacioHistorial
+                icon={HistoryIcon}
+                titulo="Todavía no hay movimientos registrados"
+                texto="Cada alta, asignación o cambio de ubicación de un activo aparecerá aquí automáticamente."
+              />
+            )
+          ) : (
+            <MovimientosTabla
+              movimientos={movimientos}
+              encabezadoFecha={
+                <EncabezadoOrden
+                  label="Fecha"
+                  sentido={sentido}
+                  href={buildHref({ ...filters, sort: sentido === "desc" ? "asc" : undefined })}
+                />
+              }
+            />
+          )}
+        </CardContent>
+      </Card>
+
+      <PaginacionHistorial
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={PAGE_SIZE}
+        sustantivo={total === 1 ? "movimiento" : "movimientos"}
+        href={(p) => buildHref(filters, p)}
+      />
+    </main>
   );
 }

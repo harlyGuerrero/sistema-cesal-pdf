@@ -47,7 +47,7 @@ export default async function NotificacionesPage({
   return (
     <>
       <PageBreadcrumb items={[{ label: "Notificaciones" }]} />
-      <main className="space-y-6 p-6">
+      <main className="space-y-6 p-4 sm:p-6">
         <div>
           <h1 className="text-xl font-medium">Notificaciones</h1>
           <p className="text-sm text-muted-foreground">Consulta las actividades y eventos relevantes del sistema.</p>
@@ -72,7 +72,7 @@ export default async function NotificacionesPage({
         )}
 
         {total > 0 && totalPages > 1 && (
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <p>
               Mostrando {(page - 1) * PAGE_SIZE + 1} a {Math.min(page * PAGE_SIZE, total)} de {total} notificaciones
             </p>

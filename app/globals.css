@@ -221,3 +221,11 @@
     display: none !important;
   }
 }
+/* Fase 58: revelado circular al cambiar de tema (hooks/use-animated-theme.ts).
+   Se apaga el fundido por defecto de la View Transition: el tema nuevo entra
+   solo por el clip-path que anima el hook. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}

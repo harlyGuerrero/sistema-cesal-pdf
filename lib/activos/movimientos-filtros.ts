@@ -7,6 +7,8 @@ export interface MovimientosFiltrosParams {
   q?: string;
   fechaDesde?: string;
   fechaHasta?: string;
+  usuarioId?: string;
+  activoId?: string;
 }
 
 // Fase 45: extraído de app/(app)/movimientos/page.tsx para que la
@@ -14,7 +16,7 @@ export interface MovimientosFiltrosParams {
 // exactamente igual que la pantalla — mismo criterio que
 // lib/activos/filtros.ts y lib/activos/reportes.ts.
 export function buildMovimientosWhere(params: MovimientosFiltrosParams): Prisma.MovimientoWhereInput {
-  const { tipo, sedeId, unidadOperativaId, q, fechaDesde, fechaHasta } = params;
+  const { tipo, sedeId, unidadOperativaId, q, fechaDesde, fechaHasta, usuarioId, activoId } = params;
   const filtros: Prisma.MovimientoWhereInput[] = [];
 
   if (tipo && tipo !== "all") filtros.push({ tipo: tipo as TipoMovimiento });
@@ -36,6 +38,10 @@ export function buildMovimientosWhere(params: MovimientosFiltrosParams): Prisma.
       },
     });
   }
+  // Fase 59: quién registró el movimiento, y un activo puntual (enlace
+  // "Ver solo este activo" del historial).
+  if (usuarioId && usuarioId !== "all") filtros.push({ usuarioId });
+  if (activoId) filtros.push({ activoId });
   if (fechaDesde) filtros.push({ fecha: { gte: new Date(`${fechaDesde}T00:00:00`) } });
   if (fechaHasta) filtros.push({ fecha: { lte: new Date(`${fechaHasta}T23:59:59`) } });
 

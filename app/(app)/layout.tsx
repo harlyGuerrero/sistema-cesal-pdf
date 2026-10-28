@@ -39,8 +39,10 @@ export default async function AuthenticatedLayout({ children }: LayoutProps<"/">
           body (globals.css) a través del <main> de cada página — SidebarInset
           trae bg-background sólido por defecto, que lo tapaba entero. El
           header sí se queda opaco (bg-background explícito) para no heredar
-          la transparencia: la barra fija con el breadcrumb no es "el main". */}
-      <SidebarInset className="bg-transparent">
+          la transparencia: la barra fija con el breadcrumb no es "el main".
+          min-w-0: como ítem flex junto al sidebar, sin esto una tabla ancha
+          estiraba la página entera en vez de desplazarse dentro de su tarjeta. */}
+      <SidebarInset className="min-w-0 bg-transparent">
         <BreadcrumbProvider>
           <header className="flex h-12 shrink-0 items-center gap-3 border-b bg-background px-4 print:hidden">
             <SidebarTrigger className="-ml-1" />

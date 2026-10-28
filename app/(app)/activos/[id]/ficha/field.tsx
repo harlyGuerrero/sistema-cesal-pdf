@@ -6,6 +6,17 @@ import { cn } from "@/lib/utils";
 // FormSection en los formularios) y líneas punteadas entre campos. Puramente
 // de layout, sin lógica de negocio (esa vive en page.tsx). El color es
 // decorativo/de identidad entre secciones, no codifica datos.
+// Grilla de campos: 1 columna en celular, 2 desde sm y al imprimir. Cada
+// Field lleva una línea punteada debajo y la última no (last:). Con 2
+// columnas la última fila puede tener dos campos: el penúltimo también queda
+// sin línea cuando arranca esa fila (posición impar), para que la última
+// fila se vea igual sin importar si tiene uno o dos campos. Supone que solo
+// el último campo puede ocupar las dos columnas (span2), como "Descripción".
+const ULTIMA_FILA_SIN_LINEA =
+  "sm:[&>*:nth-last-child(2):nth-child(odd)]:border-b-0 sm:[&>*:nth-last-child(2):nth-child(odd)]:pb-0 " +
+  "print:[&>*:nth-last-child(2):nth-child(odd)]:border-b-0 print:[&>*:nth-last-child(2):nth-child(odd)]:pb-0";
+const CAMPOS_EN_DOS_COLUMNAS = `grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 print:grid-cols-2 ${ULTIMA_FILA_SIN_LINEA}`;
+
 export function Section({
   title,
   icon: Icon,
@@ -38,7 +49,7 @@ export function Section({
           {title}
         </h2>
       </div>
-      <div className={cn("p-4", bodyClassName ?? "grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 print:grid-cols-2")}>
+      <div className={cn("p-4", bodyClassName ?? CAMPOS_EN_DOS_COLUMNAS)}>
         {children}
       </div>
     </section>
@@ -55,7 +66,7 @@ export function Field({
   span2?: boolean;
 }) {
   return (
-    <div className={cn("space-y-0.5 border-b border-dashed pb-2 last:border-b-0 last:pb-0", span2 && "col-span-2")}>
+    <div className={cn("space-y-0.5 border-b border-dashed pb-2 last:border-b-0 last:pb-0", span2 && "sm:col-span-2 print:col-span-2")}>
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-sm font-medium">{value ?? <span className="font-normal text-muted-foreground">—</span>}</p>
     </div>

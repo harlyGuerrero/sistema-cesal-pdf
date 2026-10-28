@@ -97,8 +97,9 @@ function cambio(label: string, antes: string | null, despues: string | null): st
 }
 
 // Fase 9/12: descripción legible de qué cambió un Movimiento, a partir de
-// los snapshots antes/después — reusada por la ficha de un Activo
-// (historial-section.tsx) y por la vista global de movimientos (/movimientos).
+// los snapshots antes/después — la usan el feed del Dashboard y la
+// exportación a Excel. /movimientos, el historial del activo y la ficha usan
+// desde Fase 59 la versión en lenguaje natural (movimiento-narrativa.ts).
 export function describirMovimiento(movimiento: MovimientoDetalleRow): string[] {
   return [
     cambio(
@@ -119,62 +120,6 @@ export function describirMovimiento(movimiento: MovimientoDetalleRow): string[] 
       movimiento.estadoNuevo ? (ESTADO_PATRIMONIAL_LABELS[movimiento.estadoNuevo] ?? movimiento.estadoNuevo) : null
     ),
   ].filter((linea): linea is string => linea !== null);
-}
-
-export interface CampoDiff {
-  antes: string | null;
-  despues: string | null;
-}
-
-export interface MovimientoCambios {
-  responsable: CampoDiff | null;
-  sede: CampoDiff | null;
-  unidadOperativa: CampoDiff | null;
-  ambiente: CampoDiff | null;
-  estado: CampoDiff | null;
-}
-
-function diff(antes: string | null, despues: string | null): CampoDiff | null {
-  if (antes === despues) return null;
-  if (antes === null && despues === null) return null;
-  return { antes, despues };
-}
-
-// Fase 15: misma comparación antes/después que describirMovimiento, pero sin
-// aplanar a texto — para el detalle visual de /movimientos (tarjetas De/A +
-// chip de color por transición de estado), que necesita cada campo por
-// separado en vez de una sola línea.
-export function cambiosDeMovimiento(movimiento: MovimientoDetalleRow): MovimientoCambios {
-  return {
-    responsable: diff(
-      movimiento.responsableAnterior ? nombreCompleto(movimiento.responsableAnterior) : null,
-      movimiento.responsableNuevo ? nombreCompleto(movimiento.responsableNuevo) : null
-    ),
-    sede: diff(movimiento.sedeAnterior?.name ?? null, movimiento.sedeNueva?.name ?? null),
-    unidadOperativa: diff(
-      movimiento.unidadOperativaAnterior?.name ?? null,
-      movimiento.unidadOperativaNueva?.name ?? null
-    ),
-    ambiente: diff(movimiento.ambienteAnterior?.name ?? null, movimiento.ambienteNuevo?.name ?? null),
-    estado: diff(movimiento.estadoAnterior, movimiento.estadoNuevo),
-  };
-}
-
-export type TonoTransicionEstado = "good" | "warning" | "critical" | "neutral";
-
-// Fase 15: qué tan "bueno" es un cambio de estadoPatrimonial, para colorear
-// el chip de Estado en /movimientos con los mismos 4 colores de estado fijos
-// que ya usa el resto del sistema (skill dataviz) — nunca uno nuevo por
-// transición. Perder el responsable (Asignado → Disponible) se trata como
-// alerta leve, no como algo malo: el activo queda ocioso, no dañado.
-export function tonoTransicionEstado(antes: string | null, despues: string | null): TonoTransicionEstado {
-  if (despues === "BAJA") return "critical";
-  if (antes === "BAJA") return "good";
-  if (despues === "MANTENIMIENTO") return "warning";
-  if (antes === "MANTENIMIENTO") return "good";
-  if (despues === "ASIGNADO") return "good";
-  if (antes === "ASIGNADO" && despues === "DISPONIBLE") return "warning";
-  return "neutral";
 }
 
 export function buildMovimientoDeAlta(

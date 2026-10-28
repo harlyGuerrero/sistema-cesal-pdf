@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useAnimatedThemeChange } from "@/hooks/use-animated-theme";
 import { MoonIcon, SunIcon, LogOutIcon, MoreVerticalIcon, UserIcon } from "lucide-react";
 
 import { NavMain, resolveActiveUrl } from "@/components/nav-main";
@@ -40,7 +41,9 @@ export function AppSidebar({
   usuario,
   ...props
 }: React.ComponentProps<typeof Sidebar> & { usuario: SessionUsuario }) {
-  const { resolvedTheme, setTheme } = useTheme();
+  const { resolvedTheme } = useTheme();
+  const changeTheme = useAnimatedThemeChange();
+  const darkModeSwitchRef = React.useRef<HTMLElement>(null);
   const [mounted, setMounted] = React.useState(false);
   const [isPending, startTransition] = useTransition();
   // resolvedTheme es undefined en el server (next-themes no conoce el tema
@@ -111,8 +114,9 @@ export function AppSidebar({
           </Label>
           <Switch
             id="dark-mode"
+            ref={darkModeSwitchRef}
             checked={isDarkMode}
-            onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+            onCheckedChange={(checked) => changeTheme(checked ? "dark" : "light", darkModeSwitchRef.current)}
           />
         </div>
         <SidebarMenu>

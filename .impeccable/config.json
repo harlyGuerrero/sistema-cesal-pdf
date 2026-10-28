@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font-size",
+        "value": "10px",
+        "files": [
+          "app/(app)/reportes/page.tsx"
+        ],
+        "createdAt": "2026-10-20T14:06:01.239Z",
+        "reason": "Claude: tamaño solo de impresión (print:text-[10px]) heredado de la Fase 34 para que la matriz de 11 columnas quepa en A4; en pantalla usa la escala de DESIGN.md"
+      }
+    ]
+  }
+}

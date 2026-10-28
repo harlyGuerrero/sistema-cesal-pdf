@@ -22,7 +22,7 @@ export function FormSection({
   className?: string;
 }) {
   return (
-    <div className={cn("space-y-4 rounded-xl border p-5", className)}>
+    <div className={cn("space-y-4 rounded-xl border p-4 sm:p-5", className)}>
       <div className="flex items-center gap-2">
         <span
           className="flex size-7 shrink-0 items-center justify-center rounded-md"

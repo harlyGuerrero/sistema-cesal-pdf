@@ -19,7 +19,7 @@ export default async function MiCuentaPage() {
   return (
     <>
       <PageBreadcrumb items={[{ label: "Mi Cuenta" }]} />
-      <main className="space-y-6 p-6">
+      <main className="space-y-6 p-4 sm:p-6">
         <div>
           <h1 className="text-xl font-medium">Mi Cuenta</h1>
           <p className="text-sm text-muted-foreground">Consulta y actualiza tu información personal.</p>

@@ -1,92 +1,129 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { CalendarIcon, DownloadIcon, ScrollTextIcon, Trash2Icon, UsersIcon } from "lucide-react";
+import { DownloadIcon, ScrollTextIcon, SearchXIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { FilaExpandible } from "@/components/historial/fila-expandible";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { TIPO_ACCION_AUDITORIA_LABELS, TIPO_ACCION_AUDITORIA_META } from "@/lib/auditoria/labels";
-import { describirDetalleAuditoria, resumenDetalleCrudo } from "@/lib/auditoria/describir-detalle";
+  DatosDetalle,
+  IconoTipo,
+  PaginacionHistorial,
+  PestanasConteo,
+  VacioHistorial,
+} from "@/components/historial/historial-parts";
+import { TIPO_ACCION_AUDITORIA_LABELS, TIPO_ACCION_AUDITORIA_META, TIPO_ACCION_AUDITORIA_OPTIONS } from "@/lib/auditoria/labels";
+import { narrarAuditoria } from "@/lib/auditoria/narrativa";
 import { buildAuditoriaWhere } from "@/lib/auditoria/filtros";
-import { inicialesPersona, nombreCompleto } from "@/lib/nombre-completo";
-import type { TipoAccionAuditoria } from "@/lib/generated/prisma/client";
+import { nombreCompleto } from "@/lib/nombre-completo";
 import { AuditoriaFilters } from "./auditoria-filters";
 
 const PAGE_SIZE = 30;
-const ACCIONES_DESTRUCTIVAS: TipoAccionAuditoria[] = ["ELIMINAR", "ELIMINAR_DOCUMENTO", "DAR_DE_BAJA"];
+const ZONA = "America/Lima";
+const FECHA = new Intl.DateTimeFormat("es-PE", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: ZONA });
+const HORA = new Intl.DateTimeFormat("es-PE", { hour: "2-digit", minute: "2-digit", timeZone: ZONA });
+const FECHA_EXACTA = new Intl.DateTimeFormat("es-PE", { dateStyle: "full", timeStyle: "medium", timeZone: ZONA });
 
-// Fase 11 de Activos, restilizada en Fase 32: log de solo lectura,
-// filtrable por entidad/acción/usuario/rango de fechas — mismo lenguaje
-// visual que /movimientos (Fase 15): stat cards + filtros en vivo + tabla
-// con color/ícono por acción. Fase 13 agrega login, pero no restringe esta
-// pantalla por rol: ADMIN y SUPER_ADMIN tienen ambos acceso completo salvo
-// a la gestión de Usuario (ver CLAUDE.md y proxy.ts).
+interface FilterState {
+  q?: string;
+  entidad?: string;
+  accion?: string;
+  usuarioId?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
+}
+
+function buildHref(filters: FilterState, page?: number): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value) params.set(key, value);
+  }
+  if (page && page > 1) params.set("page", String(page));
+  const qs = params.toString();
+  return qs ? `/auditoria?${qs}` : "/auditoria";
+}
+
+// Fase 11 de Activos, restilizada en Fase 32 y en Fase 59: quién hizo qué
+// en el sistema, distinto del historial de movimientos (qué le pasó a cada
+// activo). Fase 59 la lleva a la misma tabla legible que /movimientos: la
+// primera columna dice en castellano qué se hizo (lib/auditoria/narrativa.ts),
+// las pestañas filtran por acción y cuentan dentro de los demás filtros, y
+// el detalle de cada registro se abre en su fila. Sin restricción por rol:
+// ADMIN y SUPER_ADMIN la ven igual (ver CLAUDE.md y proxy.ts).
 export default async function AuditoriaPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    q?: string;
-    entidad?: string;
-    accion?: string;
-    fechaDesde?: string;
-    fechaHasta?: string;
-    page?: string;
-  }>;
+  searchParams: Promise<FilterState & { page?: string }>;
 }) {
-  const { q, entidad, accion, fechaDesde, fechaHasta, page: pageParam } = await searchParams;
+  const { page: pageParam, ...filters } = await searchParams;
+  const { q, entidad, accion, usuarioId, fechaDesde, fechaHasta } = filters;
   const page = Math.max(1, Number(pageParam) || 1);
 
-  const where = buildAuditoriaWhere({ q, entidad, accion, fechaDesde, fechaHasta });
+  const filtrosSinAccion = { q, entidad, usuarioId, fechaDesde, fechaHasta };
+  const where = buildAuditoriaWhere({ ...filtrosSinAccion, accion });
 
   const exportParams = new URLSearchParams();
-  if (q) exportParams.set("q", q);
-  if (entidad) exportParams.set("entidad", entidad);
-  if (accion) exportParams.set("accion", accion);
-  if (fechaDesde) exportParams.set("fechaDesde", fechaDesde);
-  if (fechaHasta) exportParams.set("fechaHasta", fechaHasta);
+  for (const [key, value] of Object.entries({ ...filtrosSinAccion, accion })) {
+    if (value) exportParams.set(key, value);
+  }
   const exportQs = exportParams.toString();
   const exportHref = exportQs ? `/api/auditoria/export?${exportQs}` : "/api/auditoria/export";
 
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-
-  const [logs, total, totalGlobal, hoyGlobal, destructivasGlobal, usuariosDistintos] = await Promise.all([
+  const [logs, total, conteosPorAccion, totalGlobal, usuarios] = await Promise.all([
     prisma.auditoriaLog.findMany({
       where,
-      include: { usuario: true },
+      include: { usuario: { select: { nombres: true, apellidos: true } } },
       orderBy: { fecha: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
     prisma.auditoriaLog.count({ where }),
+    prisma.auditoriaLog.groupBy({ by: ["accion"], where: buildAuditoriaWhere(filtrosSinAccion), _count: true }),
     prisma.auditoriaLog.count(),
-    prisma.auditoriaLog.count({ where: { fecha: { gte: startOfDay } } }),
-    prisma.auditoriaLog.count({ where: { accion: { in: ACCIONES_DESTRUCTIVAS } } }),
-    prisma.auditoriaLog.findMany({
-      where: { usuarioId: { not: null } },
-      distinct: ["usuarioId"],
-      select: { usuarioId: true },
+    prisma.usuario.findMany({
+      select: { id: true, nombres: true, apellidos: true },
+      orderBy: [{ nombres: "asc" }, { apellidos: "asc" }],
     }),
   ]);
 
+  const filas = logs.map((log) => ({ log, n: narrarAuditoria(log.entidad, log.accion, log.detalle, log.entidadId) }));
+  // Solo se enlaza a un activo que todavía existe (uno eliminado sigue en
+  // la auditoría, pero su ficha ya no).
+  const idsActivos = [...new Set(filas.map(({ n }) => n.objeto.activoId).filter((id): id is string => id !== null))];
+  const activosExistentes = new Set(
+    idsActivos.length > 0
+      ? (await prisma.activo.findMany({ where: { id: { in: idsActivos } }, select: { id: true } })).map((a) => a.id)
+      : []
+  );
+
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const porcentaje = (value: number) => (totalGlobal > 0 ? `${Math.round((value / totalGlobal) * 100)}% del total` : "Sin datos");
+  const conteo = new Map(conteosPorAccion.map((row) => [row.accion as string, row._count]));
+  const totalSinAccion = conteosPorAccion.reduce((suma, row) => suma + row._count, 0);
+  const accionActiva = accion && accion !== "all" ? accion : undefined;
+  const pestanas = [
+    { key: "all", label: "Todo", count: totalSinAccion, href: buildHref({ ...filters, accion: undefined }), activa: !accionActiva },
+    ...TIPO_ACCION_AUDITORIA_OPTIONS.filter((option) => (conteo.get(option.value) ?? 0) > 0 || option.value === accionActiva).map(
+      (option) => ({
+        key: option.value,
+        label: option.label,
+        count: conteo.get(option.value) ?? 0,
+        href: buildHref({ ...filters, accion: option.value }),
+        activa: accionActiva === option.value,
+        icon: TIPO_ACCION_AUDITORIA_META[option.value]?.icon,
+        color: TIPO_ACCION_AUDITORIA_META[option.value]?.color,
+      })
+    ),
+  ];
+  const hayFiltros = Object.values({ ...filtrosSinAccion, accion }).some((value) => value && value !== "all");
 
   return (
-    <main className="space-y-6 p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <main className="space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h1 className="text-xl font-medium">Auditoría</h1>
           <p className="text-sm text-muted-foreground">
-            Qué hizo el usuario en el sistema — distinto del historial de movimientos de cada activo.
+            Quién hizo qué en el sistema y cuándo. Lo que le pasó a cada activo está en el historial de movimientos.
           </p>
         </div>
         <Button variant="outline" className="w-full sm:w-auto" render={<a href={exportHref} />} nativeButton={false}>
@@ -95,257 +132,138 @@ export default async function AuditoriaPage({
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Total de registros"
-          value={totalGlobal}
-          icon={ScrollTextIcon}
-          color="var(--primary)"
-          hint="registros históricos"
-        />
-        <StatCard
-          label="Hoy"
-          value={hoyGlobal}
-          icon={CalendarIcon}
-          color="var(--color-good)"
-          hint={porcentaje(hoyGlobal)}
-        />
-        <StatCard
-          label="Acciones destructivas"
-          value={destructivasGlobal}
-          icon={Trash2Icon}
-          color="var(--color-critical)"
-          hint={porcentaje(destructivasGlobal)}
-        />
-        <StatCard
-          label="Usuarios con actividad"
-          value={usuariosDistintos.length}
-          icon={UsersIcon}
-          color="var(--color-chart-5)"
-          hint="con al menos un registro"
-        />
-      </div>
-
       <Card>
         <CardContent>
           <Suspense fallback={<div className="h-8" />}>
-            <AuditoriaFilters />
+            <AuditoriaFilters usuarios={usuarios.map((usuario) => ({ id: usuario.id, nombre: nombreCompleto(usuario) }))} />
           </Suspense>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <p className="text-sm font-medium">Registros encontrados ({total.toLocaleString("es-PE")})</p>
+      <Card className="gap-0 py-0">
+        <CardHeader className="border-b px-4 py-3">
+          <PestanasConteo pestanas={pestanas} etiqueta="Filtrar por acción" />
         </CardHeader>
-        <CardContent className="overflow-x-auto px-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="pl-6">Fecha</TableHead>
-                <TableHead>Acción</TableHead>
-                <TableHead>Entidad</TableHead>
-                <TableHead>Detalle</TableHead>
-                <TableHead className="pr-6">Usuario</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {logs.map((log) => {
-                const meta = TIPO_ACCION_AUDITORIA_META[log.accion];
-                const AccionIcon = meta?.icon;
-                const color = meta?.color ?? "var(--color-neutral)";
-
-                return (
-                  <TableRow key={log.id}>
-                    <TableCell className="pl-6">
-                      <div className="flex items-center gap-1.5 text-sm whitespace-nowrap">
-                        <CalendarIcon className="size-3.5 shrink-0 text-muted-foreground" />
-                        <div>
-                          <p>{log.fecha.toLocaleDateString("es-PE")}</p>
-                          <p className="text-xs text-muted-foreground">{log.fecha.toLocaleTimeString("es-PE")}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
-                        style={{ backgroundColor: `color-mix(in oklch, ${color} 15%, transparent)`, color }}
-                      >
-                        {AccionIcon && <AccionIcon className="size-3" />}
-                        {TIPO_ACCION_AUDITORIA_LABELS[log.accion] ?? log.accion}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{log.entidad}</TableCell>
-                    <TableCell
-                      className="max-w-96 truncate text-sm"
-                      title={resumenDetalleCrudo(log.detalle)}
-                    >
-                      {describirDetalleAuditoria(log.entidad, log.accion, log.detalle)}
-                    </TableCell>
-                    <TableCell className="pr-6">
-                      {log.usuario ? (
-                        <div className="flex items-center gap-2">
-                          <Avatar className="size-6 shrink-0 rounded-full">
-                            <AvatarFallback className="rounded-full bg-muted text-[10px] font-semibold uppercase">
-                              {inicialesPersona(log.usuario)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="truncate text-sm">{nombreCompleto(log.usuario)}</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {logs.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    Sin registros que coincidan con el filtro.
-                  </TableCell>
+        <CardContent className="px-0">
+          {filas.length === 0 ? (
+            hayFiltros && totalGlobal > 0 ? (
+              <VacioHistorial
+                icon={SearchXIcon}
+                titulo="Ningún registro coincide con la búsqueda"
+                texto="Prueba con otro nombre o código, amplía las fechas o usa «Limpiar» para quitar los filtros."
+              />
+            ) : (
+              <VacioHistorial
+                icon={ScrollTextIcon}
+                titulo="Todavía no hay acciones registradas"
+                texto="Cada vez que alguien crea, edita o elimina algo en el sistema, quedará anotado aquí."
+              />
+            )
+          ) : (
+            <Table className="table-fixed max-md:block">
+              <TableHeader className="max-md:hidden">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[44%] pl-4">Qué se hizo</TableHead>
+                  <TableHead>Sobre</TableHead>
+                  <TableHead>Quién lo hizo</TableHead>
+                  <TableHead className="w-32">Fecha</TableHead>
+                  <TableHead className="w-12">
+                    <span className="sr-only">Detalles</span>
+                  </TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody className="max-md:block max-md:divide-y">
+                {filas.map(({ log, n }) => {
+                  const meta = TIPO_ACCION_AUDITORIA_META[log.accion] ?? { icon: ScrollTextIcon, color: "var(--color-neutral)" };
+                  const quien = log.usuario ? nombreCompleto(log.usuario) : "Usuario no registrado";
+                  const enlaceActivo = n.objeto.activoId && activosExistentes.has(n.objeto.activoId) ? `/activos/${n.objeto.activoId}` : null;
+                  return (
+                    <FilaExpandible
+                      key={log.id}
+                      columnas={5}
+                      etiqueta={n.titulo}
+                      celdas={
+                        <>
+                          <TableCell className="pl-4 whitespace-normal max-md:col-start-1 max-md:row-start-1 max-md:p-0">
+                            <div className="flex gap-3">
+                              <IconoTipo icon={meta.icon} color={meta.color} />
+                              <div className="min-w-0 space-y-0.5">
+                                <p className="leading-snug font-medium text-pretty">{n.titulo}</p>
+                                <p className="text-xs text-muted-foreground">{TIPO_ACCION_AUDITORIA_LABELS[log.accion] ?? log.accion}</p>
+                                {n.resumen.map((linea) => (
+                                  <p key={linea} className="text-sm text-muted-foreground">
+                                    {linea}
+                                  </p>
+                                ))}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell className="whitespace-normal max-md:col-span-2 max-md:p-0 max-md:pl-10">
+                            {/* El tipo sobra cuando el nombre ya lo dice
+                                ("Depreciación trimestral"). */}
+                            {!n.objeto.nombre?.toLowerCase().startsWith(n.objeto.tipo.toLowerCase()) && (
+                              <p className="text-xs text-muted-foreground">{n.objeto.tipo}</p>
+                            )}
+                            {n.objeto.nombre &&
+                              (enlaceActivo ? (
+                                <Link href={enlaceActivo} className="font-medium underline-offset-4 hover:text-primary hover:underline">
+                                  {n.objeto.nombre}
+                                </Link>
+                              ) : (
+                                <p className="font-medium">{n.objeto.nombre}</p>
+                              ))}
+                            {n.objeto.codigo && <p className="font-mono text-xs text-muted-foreground">{n.objeto.codigo}</p>}
+                          </TableCell>
+                          <TableCell className="whitespace-normal max-md:col-span-2 max-md:p-0 max-md:pl-10 max-md:text-xs max-md:text-muted-foreground">
+                            <span className="md:hidden">Por </span>
+                            {quien}
+                          </TableCell>
+                          <TableCell className="tabular-nums max-md:col-span-2 max-md:p-0 max-md:pl-10 max-md:text-xs max-md:text-muted-foreground">
+                            <time dateTime={log.fecha.toISOString()}>
+                              {FECHA.format(log.fecha)}
+                              <span className="block text-xs text-muted-foreground max-md:inline max-md:before:content-['_·_']">
+                                {HORA.format(log.fecha)}
+                              </span>
+                            </time>
+                          </TableCell>
+                        </>
+                      }
+                      detalle={
+                        <div className="space-y-4">
+                          {n.detalles.length > 0 ? (
+                            <DatosDetalle datos={n.detalles} />
+                          ) : (
+                            <p className="text-sm text-muted-foreground">Este registro no guarda más detalles.</p>
+                          )}
+                          <DatosDetalle
+                            datos={[
+                              { label: "Fecha exacta", value: <span className="first-letter:uppercase">{FECHA_EXACTA.format(log.fecha)}</span> },
+                            ]}
+                          />
+                          {enlaceActivo && (
+                            <Link href={enlaceActivo} className="inline-block text-sm font-medium text-primary underline-offset-4 hover:underline">
+                              Ver el activo
+                            </Link>
+                          )}
+                        </div>
+                      }
+                    />
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
-      {total > 0 && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <p>
-            Mostrando {(page - 1) * PAGE_SIZE + 1} a {Math.min(page * PAGE_SIZE, total)} de {total} registros
-          </p>
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            q={q}
-            entidad={entidad}
-            accion={accion}
-            fechaDesde={fechaDesde}
-            fechaHasta={fechaHasta}
-          />
-        </div>
-      )}
+      <PaginacionHistorial
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={PAGE_SIZE}
+        sustantivo={total === 1 ? "registro" : "registros"}
+        href={(p) => buildHref(filters, p)}
+      />
     </main>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  color,
-  hint,
-}: {
-  label: string;
-  value: number;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  hint: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">{label}</p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums">{value.toLocaleString("es-PE")}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
-        </div>
-        <span
-          className="flex size-9 shrink-0 items-center justify-center rounded-full"
-          style={{ backgroundColor: `color-mix(in oklch, ${color} 15%, transparent)`, color }}
-        >
-          <Icon className="size-4" />
-        </span>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface FilterState {
-  q?: string;
-  entidad?: string;
-  accion?: string;
-  fechaDesde?: string;
-  fechaHasta?: string;
-}
-
-function buildHref(page: number, filters: FilterState): string {
-  const params = new URLSearchParams();
-  if (filters.q) params.set("q", filters.q);
-  if (filters.entidad) params.set("entidad", filters.entidad);
-  if (filters.accion) params.set("accion", filters.accion);
-  if (filters.fechaDesde) params.set("fechaDesde", filters.fechaDesde);
-  if (filters.fechaHasta) params.set("fechaHasta", filters.fechaHasta);
-  params.set("page", String(page));
-  return `/auditoria?${params.toString()}`;
-}
-
-function pageWindow(page: number, totalPages: number): (number | "ellipsis")[] {
-  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
-  const pages = new Set<number>([1, totalPages, page - 1, page, page + 1]);
-  const sorted = [...pages].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b);
-  const result: (number | "ellipsis")[] = [];
-  for (let i = 0; i < sorted.length; i++) {
-    if (i > 0 && sorted[i] - sorted[i - 1] > 1) result.push("ellipsis");
-    result.push(sorted[i]);
-  }
-  return result;
-}
-
-function Pagination({
-  page,
-  totalPages,
-  ...filters
-}: { page: number; totalPages: number } & FilterState) {
-  if (totalPages <= 1) return null;
-
-  return (
-    <div className="flex items-center gap-1">
-      <PageButton disabled={page <= 1} href={buildHref(page - 1, filters)}>
-        «
-      </PageButton>
-      {pageWindow(page, totalPages).map((entry, index) =>
-        entry === "ellipsis" ? (
-          <span key={`ellipsis-${index}`} className="px-1.5 text-muted-foreground">
-            …
-          </span>
-        ) : (
-          <PageButton key={entry} href={buildHref(entry, filters)} active={entry === page}>
-            {entry}
-          </PageButton>
-        )
-      )}
-      <PageButton disabled={page >= totalPages} href={buildHref(page + 1, filters)}>
-        »
-      </PageButton>
-    </div>
-  );
-}
-
-function PageButton({
-  children,
-  href,
-  active,
-  disabled,
-}: {
-  children: React.ReactNode;
-  href: string;
-  active?: boolean;
-  disabled?: boolean;
-}) {
-  const className = `flex size-7 shrink-0 items-center justify-center rounded-md text-sm ${
-    active
-      ? "bg-primary text-primary-foreground"
-      : disabled
-        ? "text-muted-foreground/50"
-        : "text-foreground hover:bg-muted"
-  }`;
-  if (disabled) return <span className={className}>{children}</span>;
-  return (
-    <Link href={href} className={className}>
-      {children}
-    </Link>
   );
 }

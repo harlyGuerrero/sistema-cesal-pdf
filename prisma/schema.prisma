@@ -165,6 +165,7 @@ enum TipoAccionAuditoria {
   TRANSFERIR
   ADJUNTAR_DOCUMENTO
   ELIMINAR_DOCUMENTO
+  PROCESAR_DEPRECIACION
 }
 
 // Fase 13: los únicos dos roles del sistema (ver CLAUDE.md). SUPER_ADMIN
@@ -212,14 +213,95 @@ model TipoActivo {
   code TipoActivoCode @unique
   name String
 
-  activos     Activo[]
-  importItems ImportItem[]
-  categorias  CategoriaActivo[]
+  activos          Activo[]
+  importItems      ImportItem[]
+  categorias       CategoriaActivo[]
+  tasaDepreciacion TasaDepreciacion?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("categories")
+}
+
+// Fase 58: tasa de depreciación anual por tipo de activo (porcentaje, ej.
+// 25.0000 = 25 %). La trimestral no se guarda: se deriva como anual / 4 en
+// un solo lugar (lib/depreciacion/tasas.ts). Una fila por tipo como máximo;
+// un tipo sin fila o con activa=false queda "configuración pendiente" y sus
+// activos no se deprecian. No hay vigencias: cada DepreciacionPeriodo guarda
+// la tasa que se le aplicó, así que cambiar la tasa no reescribe el pasado.
+model TasaDepreciacion {
+  id           String     @id @default(cuid())
+  tipoActivoId String     @unique
+  tipoActivo   TipoActivo @relation(fields: [tipoActivoId], references: [id])
+  tasaAnual    Decimal    @db.Decimal(7, 4)
+  activa       Boolean    @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tasas_depreciacion")
+}
+
+// Fase 58: un trimestre depreciado de un Activo. Instantánea inmutable:
+// guarda el costo y la tasa con que se calculó, el importe del periodo y el
+// acumulado/valor neto resultantes. El acumulado es verificable: siempre es
+// la suma de importeDepreciado de los periodos anteriores más este (los
+// periodos se registran en orden, sin huecos, desde el trimestre de
+// adquisición — ver lib/depreciacion/calculo.ts). La unique impide registrar
+// dos veces el mismo trimestre del mismo activo; los CHECK de la migración
+// impiden importes negativos o un acumulado mayor al costo.
+model DepreciacionPeriodo {
+  id       String @id @default(cuid())
+  activoId String
+  activo   Activo @relation(fields: [activoId], references: [id], onDelete: Restrict)
+
+  anio      Int
+  trimestre Int
+
+  costoBase             Decimal @db.Decimal(14, 2)
+  tasaTrimestral        Decimal @db.Decimal(7, 4)
+  importeDepreciado     Decimal @db.Decimal(14, 2)
+  depreciacionAcumulada Decimal @db.Decimal(14, 2)
+  valorNeto             Decimal @db.Decimal(14, 2)
+
+  procesamientoId String
+  procesamiento   ProcesamientoDepreciacion @relation(fields: [procesamientoId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([activoId, anio, trimestre])
+  @@index([anio, trimestre])
+  @@index([procesamientoId])
+  @@map("depreciacion_periodos")
+}
+
+// Fase 58: una ejecución de "Procesar trimestre" — quién, cuándo, hasta qué
+// trimestre y con qué resultado. No es única por (anio, trimestre): volver a
+// procesar el mismo trimestre es válido (ej. para activos dados de alta
+// después) y no duplica nada, porque la unicidad vive en DepreciacionPeriodo.
+model ProcesamientoDepreciacion {
+  id        String @id @default(cuid())
+  anio      Int
+  trimestre Int
+
+  usuarioId String?
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
+
+  activosProcesados   Int
+  periodosRegistrados Int
+  yaProcesados        Int
+  omitidos            Int
+  conErrores          Int
+  importeTotal        Decimal @db.Decimal(14, 2)
+
+  periodos DepreciacionPeriodo[]
+
+  createdAt DateTime @default(now())
+
+  @@index([anio, trimestre])
+  @@index([usuarioId])
+  @@map("procesamientos_depreciacion")
 }
 
 // Nivel administrable bajo un TipoActivo (ej. "Redes y conectividad" bajo
@@ -394,10 +476,11 @@ model Usuario {
   rol          RolUsuario @default(ADMIN)
   estado       Boolean    @default(true)
 
-  movimientos        Movimiento[]
-  documentosCargados Documento[]
-  auditoriaLogs      AuditoriaLog[]
-  notificaciones     Notificacion[]
+  movimientos                Movimiento[]
+  documentosCargados         Documento[]
+  auditoriaLogs              AuditoriaLog[]
+  notificaciones             Notificacion[]
+  procesamientosDepreciacion ProcesamientoDepreciacion[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -651,6 +734,7 @@ model Activo {
   especificaciones ActivoEspecificacionValor[]
   movimientos      Movimiento[]
   documentos       Documento[]
+  depreciaciones   DepreciacionPeriodo[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -683,25 +767,25 @@ model CodigoPatrimonialContador {
 }
 
 model Import {
-  id            String       @id @default(cuid())
-  fileName      String
-  fileHash      String       @unique
-  fileSize      Int
-  mimeType      String
-  numeroFactura String?
+  id             String          @id @default(cuid())
+  fileName       String
+  fileHash       String          @unique
+  fileSize       Int
+  mimeType       String
+  numeroFactura  String?
   // Fase 52: correlativo interno de CESAL para esta factura (ver comentario
   // en Activo.numeroFC) — siempre manual, nunca se intenta autodetectar.
-  numeroFC      String?
+  numeroFC       String?
   // Fase 57: importe total del comprobante — se precarga con lo que detecta
   // el Document Service (invoice_total.py) y se corrige a mano en la
   // revisión. Misma moneda que los ítems (ImportItem.currency).
-  totalFactura  Decimal?        @db.Decimal(14, 2)
+  totalFactura   Decimal?        @db.Decimal(14, 2)
   // Si los precios de la factura vienen con o sin IGV, o exonerada (ej.
   // compras en la Amazonía). Lo decide una persona en la revisión: el
   // extractor no puede saberlo. null = todavía sin definir.
   igvTratamiento IgvTratamiento?
-  status        ImportStatus @default(UPLOADED)
-  errorMessage  String?
+  status         ImportStatus    @default(UPLOADED)
+  errorMessage   String?
 
   createdAt   DateTime  @default(now())
   processedAt DateTime?

@@ -11,14 +11,14 @@ export default async function NewResponsablePage() {
   return (
     <>
       <PageBreadcrumb items={[{ label: "Nuevo responsable" }]} />
-      <main className="p-6">
+      <main className="p-4 sm:p-6">
         <div className="mx-auto max-w-xl overflow-hidden rounded-2xl border bg-card shadow-sm">
           <FormPageHeader
             icon={UsersIcon}
             title="Nuevo responsable"
             description="Registra a la persona a la que se le pueden asignar activos."
           />
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <FormSection icon={IdCardIcon} title="Datos del responsable" color="var(--color-chart-2)">
               <NewResponsableForm sedes={sedes} />
             </FormSection>

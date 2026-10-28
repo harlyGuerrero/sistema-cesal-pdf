@@ -10,9 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const DEBOUNCE_MS = 350;
 
 interface MovimientosFiltersProps {
-  tiposMovimiento: { value: string; label: string }[];
   sedes: { id: string; name: string }[];
   unidadesOperativas: { id: string; name: string; sede: { name: string } }[];
+  usuarios: { id: string; nombre: string }[];
 }
 
 // Fase 15: filtros en vivo — cambiar cualquier campo actualiza la URL
@@ -22,7 +22,7 @@ interface MovimientosFiltersProps {
 // cliente (seguirían viviendo en movimientos/page.tsx, un Server Component).
 // Solo el texto de búsqueda usa debounce — los selects/fechas aplican al
 // toque, porque ya son eventos discretos, no tecla por tecla.
-export function MovimientosFilters({ tiposMovimiento, sedes, unidadesOperativas }: MovimientosFiltersProps) {
+export function MovimientosFilters({ sedes, unidadesOperativas, usuarios }: MovimientosFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -75,20 +75,25 @@ export function MovimientosFilters({ tiposMovimiento, sedes, unidadesOperativas 
     startTransition(() => router.replace(pathname, { scroll: false }));
   }
 
+  // El tipo (pestañas) y el orden (encabezado Fecha) se fijan fuera de esta
+  // barra; "Limpiar" igual los quita.
   const hasFilters = [...searchParams.keys()].some((key) => key !== "page");
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-      <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
+      <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
         <div className="col-span-2 space-y-1">
-          <label className="truncate text-xs font-medium text-muted-foreground">Buscar movimiento</label>
+          <label htmlFor="movimientos-q" className="truncate text-xs font-medium text-muted-foreground">
+            Buscar activo
+          </label>
           <div className="relative">
             <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
+              id="movimientos-q"
               value={q}
               onChange={(event) => handleSearchChange(event.target.value)}
               onKeyDown={handleSearchKeyDown}
-              placeholder="Buscar por activo, código o responsable..."
+              placeholder="Código patrimonial o nombre del activo..."
               className="pl-8"
             />
             {isPending && (
@@ -98,16 +103,19 @@ export function MovimientosFilters({ tiposMovimiento, sedes, unidadesOperativas 
         </div>
 
         <div className="space-y-1">
-          <label className="truncate text-xs font-medium text-muted-foreground">Tipo de movimiento</label>
-          <Select value={searchParams.get("tipo") ?? "all"} onValueChange={(value) => applyParams({ tipo: value as string })}>
+          <label className="truncate text-xs font-medium text-muted-foreground">Registrado por</label>
+          <Select
+            value={searchParams.get("usuarioId") ?? "all"}
+            onValueChange={(value) => applyParams({ usuarioId: value as string })}
+          >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Todos los tipos" />
+              <SelectValue placeholder="Todos los usuarios" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos los tipos</SelectItem>
-              {tiposMovimiento.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+              <SelectItem value="all">Todos los usuarios</SelectItem>
+              {usuarios.map((usuario) => (
+                <SelectItem key={usuario.id} value={usuario.id}>
+                  {usuario.nombre}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -169,18 +177,6 @@ export function MovimientosFilters({ tiposMovimiento, sedes, unidadesOperativas 
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="truncate text-xs font-medium text-muted-foreground">Orden</label>
-          <Select value={searchParams.get("sort") === "asc" ? "asc" : "desc"} onValueChange={(value) => applyParams({ sort: value as string })}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="desc">Más recientes</SelectItem>
-              <SelectItem value="asc">Más antiguos</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       {/* Fijos: siempre al final de la barra, nunca se mezclan con el resto

@@ -1,5 +1,12 @@
 import { notFound } from "next/navigation";
-import { IdCardIcon, MapPinIcon, ShieldCheckIcon, ShoppingCartIcon, SlidersHorizontalIcon } from "lucide-react";
+import {
+  IdCardIcon,
+  MapPinIcon,
+  ShieldCheckIcon,
+  ShoppingCartIcon,
+  SlidersHorizontalIcon,
+  TrendingDownIcon,
+} from "lucide-react";
 import { prisma } from "@/lib/db";
 import {
   CONDICION_FISICA_LABELS,
@@ -8,18 +15,32 @@ import {
 import { PrintButton } from "@/components/print-button";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { nombreCompleto } from "@/lib/nombre-completo";
-import { formatMonto, preciosConIgv } from "@/lib/activos/igv";
+import { preciosConIgv } from "@/lib/activos/igv";
+import { formatFecha, formatSoles } from "@/lib/depreciacion/calculo";
 import { Section, Field } from "./field";
 import { HistorialSection } from "./historial-section";
 import { DocumentosSection } from "./documentos-section";
+import { DepreciacionActivoContent } from "../depreciacion-section";
+import { cargarDepreciacionActivo } from "@/lib/depreciacion/detalle";
 
 function formatMoney(value: { toString(): string } | null): string | null {
   if (!value) return null;
-  return `S/ ${Number(value.toString()).toLocaleString("es-PE", { minimumFractionDigits: 2 })}`;
+  return formatMontoFicha(Number(value.toString()));
 }
 
+// Fechas guardadas sin hora (fecha de adquisición, campos de fecha): se
+// muestran tal cual se guardaron, en UTC. Convertirlas a la hora de Lima las
+// retrasaba un día ("10/6/2026" para una compra del 11/06/2026).
 function formatDate(date: Date | null): string | null {
-  return date ? date.toLocaleDateString("es-PE") : null;
+  return date ? formatFecha(date) : null;
+}
+
+// Mismo formato de montos en toda la ficha ("S/ 250,00"), igual que la
+// sección Depreciación; respeta la moneda de la factura cuando no es soles.
+function formatMontoFicha(valor: number | null, moneda: string | null = null): string | null {
+  if (valor === null) return null;
+  const simbolo = moneda === "USD" ? "US$" : moneda === "EUR" ? "€" : "S/";
+  return formatSoles(Math.round(valor * 100)).replace("S/", simbolo);
 }
 
 function formatEspecificacionValor(valor: {
@@ -61,6 +82,7 @@ export default async function FichaActivoPage({
 }) {
   const { id } = await params;
 
+  const depreciacionPromise = cargarDepreciacionActivo(prisma, id);
   const activo = await prisma.activo.findUnique({
     where: { id },
     include: {
@@ -100,7 +122,8 @@ export default async function FichaActivoPage({
     },
   });
 
-  if (!activo) {
+  const depreciacion = await depreciacionPromise;
+  if (!activo || !depreciacion) {
     notFound();
   }
 
@@ -122,7 +145,7 @@ export default async function FichaActivoPage({
           { label: "Ficha técnica" },
         ]}
       />
-      <main className="mx-auto max-w-3xl space-y-6 p-6 print:max-w-none print:space-y-4 print:p-8">
+      <main className="mx-auto max-w-3xl space-y-6 p-4 sm:p-6 print:max-w-none print:space-y-4 print:p-8">
       <header className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-1">
           <p className="text-xs tracking-wide text-muted-foreground uppercase">Ficha técnica</p>
@@ -158,17 +181,17 @@ export default async function FichaActivoPage({
         <Field label="Fecha de adquisición" value={formatDate(activo.fechaAdquisicion)} />
         <Field label="Proveedor" value={activo.proveedor?.razonSocial} />
         <Field label="N° de factura" value={activo.numeroFactura} />
-        <Field label="Total de la factura" value={formatMonto(totalFactura, moneda)} />
+        <Field label="Total de la factura" value={formatMontoFicha(totalFactura, moneda)} />
         <Field
           label="Precio unitario (sin IGV)"
           value={
             igvSinDefinir ? (
               <>
-                {formatMonto(precioFactura, moneda)}{" "}
+                {formatMontoFicha(precioFactura, moneda)}{" "}
                 <span className="font-normal text-muted-foreground">(IGV sin definir)</span>
               </>
             ) : (
-              formatMonto(precios?.sinIgv ?? null, moneda)
+              formatMontoFicha(precios?.sinIgv ?? null, moneda)
             )
           }
         />
@@ -179,11 +202,11 @@ export default async function FichaActivoPage({
               <span className="font-normal text-muted-foreground">Definir el IGV en la importación</span>
             ) : igvTratamiento === "EXONERADO" ? (
               <>
-                {formatMonto(precios?.conIgv ?? null, moneda)}{" "}
+                {formatMontoFicha(precios?.conIgv ?? null, moneda)}{" "}
                 <span className="font-normal text-muted-foreground">(exonerada)</span>
               </>
             ) : (
-              formatMonto(precios?.conIgv ?? null, moneda)
+              formatMontoFicha(precios?.conIgv ?? null, moneda)
             )
           }
         />
@@ -214,6 +237,10 @@ export default async function FichaActivoPage({
         </section>
       )}
 
+      <Section title="Depreciación" icon={TrendingDownIcon} color="var(--color-chart-3)" bodyClassName="p-4">
+        <DepreciacionActivoContent data={depreciacion} />
+      </Section>
+
       <DocumentosSection documentos={activo.documentos} />
 
       <HistorialSection movimientos={activo.movimientos} />
@@ -222,7 +249,7 @@ export default async function FichaActivoPage({
         <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
           <ShieldCheckIcon className="size-3" />
         </span>
-        Generado el {new Date().toLocaleDateString("es-PE")} — CESAL, sistema de gestión patrimonial.
+        Generado el {new Date().toLocaleDateString("es-PE", { timeZone: "America/Lima" })} — CESAL, sistema de gestión patrimonial.
       </footer>
       </main>
     </>

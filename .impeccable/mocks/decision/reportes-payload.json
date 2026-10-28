@@ -1,0 +1,86 @@
+{
+  "title": "Reportes: elige la estructura",
+  "question": "El mundo visual de CESAL no cambia. Elige cómo se organiza el módulo de Reportes para dirección, auditoría y consultas diarias, con costo y valor neto de la depreciación, igual de cuidado en pantalla, impresión y Excel.",
+  "options": [
+    {
+      "id": "pestanas-informe",
+      "kind": "assigned",
+      "kicker": "THE ROLL",
+      "label": "Pestañas por informe",
+      "lineage": "Carpeta de informes con separadores: cada pestaña responde una pregunta",
+      "thesis": "Cuatro informes listos en pestañas (por sede, por tipo, por estado, detalle), cada uno con su tabla, sus totales y su exportación.",
+      "palette": ["#2a78d6", "#ffffff", "#0ca30c", "#eb6834"],
+      "materials": ["pestañas", "tablas con totales", "encabezado de informe"],
+      "viewport": "Encabezado con fecha de corte y filtros; pestañas «Por sede · Por tipo · Por estado · Detalle»; debajo la tabla del informe con cantidad, costo y valor neto y su fila de totales.",
+      "risk": "La comparación cruzada (sede × tipo) queda en una sola pestaña, no a la vista de entrada.",
+      "raised": [
+        { "from": "rw-centre-rail-reference-setting", "raise": "Cada cifra lleva su nota: de dónde sale el costo y hasta qué trimestre está calculado el valor neto." },
+        { "from": "design-annual-s-plate-section", "raise": "El encabezado del informe declara su fuente: fecha de corte, filtros aplicados y quién lo generó, en pantalla e impreso." }
+      ],
+      "html": ".impeccable/mocks/decision/reportes-pestanas.html"
+    },
+    {
+      "id": "hoja-oficial",
+      "kind": "dealt",
+      "label": "Hoja de inventario oficial",
+      "lineage": "Formato oficial de inventario: membrete, cuadro resumen, firmas",
+      "thesis": "La pantalla es la hoja que se entrega: membrete CESAL, cuadro resumen, tabla de detalle y espacio para firmas, idéntica impresa.",
+      "palette": ["#171717", "#ffffff", "#2a78d6"],
+      "materials": ["membrete", "cuadro resumen", "líneas de firma"],
+      "viewport": "Una hoja centrada con membrete, «Informe de inventario al 20/10/2026», cuadro de totales por tipo con costo y valor neto, y la lista de activos.",
+      "risk": "Muy buena para auditoría y dirección; más lenta para una consulta rápida del día.",
+      "html": ".impeccable/mocks/decision/reportes-hoja.html"
+    },
+    {
+      "id": "matriz-drill",
+      "kind": "dealt",
+      "label": "Matriz con desglose",
+      "lineage": "Tabla dinámica de inventario: sede × tipo, cada celda abre su lista",
+      "thesis": "La matriz sede × tipo es la protagonista; cada celda es un enlace que muestra esos activos debajo, con costo y valor neto en los totales.",
+      "palette": ["#2a78d6", "#ffffff", "#eef5fd", "#171717"],
+      "materials": ["matriz con celdas clicables", "lista que responde a la celda"],
+      "viewport": "Indicadores de cantidad, costo y valor neto; la matriz sede × 7 tipos con totales; al elegir una celda, la lista de esos activos aparece abajo.",
+      "risk": "Siete columnas de tipos aprietan en pantallas medianas; en móvil la matriz se desliza.",
+      "html": ".impeccable/mocks/decision/reportes-matriz.html"
+    },
+    {
+      "id": "c-centre-rail", "kind": "challenger", "catalogId": "rw-centre-rail-reference-setting", "verdict": "declined",
+      "label": "Página con margen anotado", "palette": ["#f4f1ea", "#1a1a1a", "#8a1c1c"], "materials": ["columnas gemelas", "notas al margen"],
+      "thesis": "Texto en columnas con un margen de notas que explica cada dato.", "viewport": "Bloque de texto pequeño en un margen amplio.", "risk": "Una página de libro, no una herramienta.",
+      "case": "Pierde densidad de tabla; su rigor de notas pasa a la propuesta principal.", "kept": "Cada cifra explica de dónde sale."
+    },
+    {
+      "id": "c-annual", "kind": "challenger", "catalogId": "design-annual-s-plate-section", "verdict": "declined",
+      "label": "Lámina de anuario", "palette": ["#f7f6f2", "#111111"], "materials": ["marcas de registro", "sello de crédito"],
+      "thesis": "Cada lámina acreditada con su fuente.", "viewport": "Lámina con créditos al pie.", "risk": "Ornamento editorial sobre datos.",
+      "case": "No ayuda a leer cifras; su crédito de fuente pasa a la propuesta principal.", "kept": "El informe declara fuente, corte y autor."
+    },
+    {
+      "id": "c-laban", "kind": "challenger", "catalogId": "notation-diagram-systems-labanotation", "verdict": "declined",
+      "label": "Partitura de movimiento", "palette": ["#ffffff", "#111111"], "materials": ["pentagrama vertical"],
+      "thesis": "Notación vertical donde forma y largo son datos.", "viewport": "Pentagrama vertical.", "risk": "Ilegible para quien no conoce la notación.",
+      "case": "Exige aprender una notación; contradice «que cualquier empleado lo entienda».", "kept": "La longitud de una barra es una cantidad exacta."
+    },
+    {
+      "id": "c-feed", "kind": "challenger", "catalogId": "pop-culture-shelf-vertical-video-feed-surface", "verdict": "declined",
+      "label": "Feed vertical", "palette": ["#000000", "#ffffff"], "materials": ["una pieza por pantalla"],
+      "thesis": "Un dato por pantalla, deslizar para el siguiente.", "viewport": "Pantalla completa por ítem.", "risk": "Imposible comparar.",
+      "case": "Un informe se compara; un feed lo impide.", "kept": "Una idea por bloque."
+    },
+    {
+      "id": "c-crouwel", "kind": "challenger", "catalogId": "crouwel-grid-specimen", "verdict": "declined",
+      "label": "Retícula Crouwel", "palette": ["#ffffff", "#1d4ed8"], "materials": ["retícula visible"],
+      "thesis": "La retícula como estructura visible.", "viewport": "Cartel en retícula.", "risk": "Un cartel, no un informe.",
+      "case": "Sin relación con la tarea.", "kept": "Columnas numéricas alineadas al dígito."
+    },
+    {
+      "id": "c-flap", "kind": "challenger", "catalogId": "signals-instruments-split-flap-concourse", "verdict": "declined",
+      "label": "Tablero de estación", "palette": ["#111111", "#ffffff", "#f5a623"], "materials": ["filas fijas"],
+      "thesis": "Filas que cambian sin moverse.", "viewport": "Tablero.", "risk": "Disfraz de tablero.",
+      "case": "Se funde en una tabla común.", "kept": "Las columnas nunca cambian de lugar entre informes."
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "code" },
+  "steer": true
+}

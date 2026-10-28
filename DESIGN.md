@@ -103,6 +103,24 @@ components:
     backgroundColor: "{colors.papel}"
     textColor: "{colors.azul-cesal}"
     rounded: "{rounded.xl}"
+  history-tab:
+    textColor: "{colors.tinta-suave}"
+    rounded: "{rounded.lg}"
+    padding: "0 12px"
+    height: "32px"
+    typography: "{typography.body}"
+  history-tab-active:
+    backgroundColor: "color-mix(in oklch, #2a78d6 10%, transparent)"
+    textColor: "{colors.azul-cesal}"
+  matrix-cell-link:
+    textColor: "{colors.azul-cesal}"
+    rounded: "{rounded.md}"
+    padding: "4px 8px"
+    typography: "{typography.body}"
+  matrix-cell-selected:
+    backgroundColor: "color-mix(in oklch, #2a78d6 10%, transparent)"
+    textColor: "{colors.azul-cesal}"
+    rounded: "{rounded.md}"
 ---
 
 # Design System: Sistema Patrimonial CESAL
@@ -252,6 +270,26 @@ Un bloque de formulario con borde propio (14px de radio, 20px de padding). En la
 
 ### Gráficos
 Son de shadcn (`ChartContainer`) sobre recharts, con los colores de la serie por tipo de activo en orden fijo. Tienen tooltip al pasar el mouse, y una leyenda con valor y porcentaje cuando hay dos o más series. El elemento destacado (barra o sector) se marca con un contorno punteado o un anillo exterior, nunca con un color distinto.
+
+### Tabla de historial legible (firma)
+Un historial (Movimientos, historial del activo y Auditoría) es una tabla que se lee en frases, no una tabla de columnas técnicas ni una línea de tiempo decorada.
+- **Primera columna, la frase:** "Qué pasó" ocupa cerca del 44% del ancho (58% cuando no hay columna Activo). Lleva el chip tintado circular de 28px con el ícono del tipo, la frase en 14px medium, la categoría en 12px Tinta Suave y, si hace falta, una o dos líneas de resumen en Tinta Suave. La frase solo dice lo que el registro guardó.
+- **Columnas fijas:** Activo (nombre enlazado, código en mono de 12px, ubicación de hoy), Registrado por y Fecha (fecha tabular con la hora debajo en 12px). El encabezado Fecha es un enlace que alterna el orden y muestra la flecha del sentido actual.
+- **Pestañas con conteo:** encima de la tabla, una pestaña por tipo con su ícono de color y la cantidad tabular en `es-PE`. Miden 32px de alto, con esquinas de 10px y 12px de padding horizontal. La activa lleva fondo Azul CESAL al 10% y texto azul medium; las demás van en Tinta Suave, con hover Papel Gris. Son enlaces: el filtro vive en la URL. En móvil se deslizan en horizontal.
+- **Fila expandible:** toda la fila abre el detalle (un enlace dentro de ella navega y no abre). Al final, un chevron azul de 28px con `aria-expanded` gira 180° al abrir. La fila abierta y su detalle comparten el fondo Papel Gris al 40%.
+- **Rejilla Antes / Ahora:** columnas acotadas (etiqueta de 8rem y dos valores de hasta 16rem, máximo 768px) para que el antes y el ahora queden cerca aunque la tabla sea ancha. Los campos que cambiaron van en medium; los demás, en Tinta Suave con "(sin cambios)". Si no hay situación anterior (un alta), queda una sola columna, "Registrado". Debajo van los pares etiqueta/valor (Motivo, Observaciones, Fecha exacta) con la misma columna de etiqueta de 8rem.
+- **Móvil (menos de 768px):** la tabla deja de ser tabla. Se oculta el encabezado y cada fila se apila: la frase con el chevron en la primera línea y, debajo, con sangría de 40px, el activo, quién y cuándo en 12px Tinta Suave ("Registrado por …", fecha · hora).
+- **Movimiento:** el detalle se despliega corto (200ms ease-out, aparece y baja 4px) y sin animación con `prefers-reduced-motion`. Es el único movimiento del historial.
+- **Paginación y vacío:** "Mostrando X a Y de Z" con botones de 32px (la página actual en Azul CESAL sólido). El estado vacío distingue "todavía no hay nada" de "el filtro no encontró", con un círculo de 40px en Papel Gris y su ícono.
+- **Color por tipo:** cada tipo de movimiento o acción toma ícono y color de su mapa `*_META`, y el mismo hecho se ve igual en todas las pantallas: la asignación usa Azul CESAL con el ícono de usuario con más, y el alta usa verde con el ícono de círculo con más.
+
+### Matriz enlazable (firma)
+Una matriz de conteos donde cada cifra es una puerta a los activos que cuenta (Reportes: sede o unidad operativa × tipo de activo).
+- **Cifras enlazables:** toda cifra mayor que cero es un enlace en Azul CESAL, subrayado en reposo (desplazado 4px), con esquinas de 8px y 4px × 8px de padding. Tiene `aria-label` con lo que cuenta ("Equipos informáticos en Huachipa: 12"). En hover toma un fondo azul al 10%. Un cero va en Tinta Suave y no enlaza. Al imprimir se quita el subrayado.
+- **Celda elegida:** fondo azul al 10%, texto azul y un anillo interior de 2px en Azul CESAL, con `aria-current`. Su fila completa lleva un tinte azul al 5%. Los totales de fila y de columna también se eligen y van en semibold.
+- **Columna fija:** la primera columna (sede o unidad) queda fija a la izquierda al deslizar en horizontal. Su fondo es opaco y del mismo tono que su fila (Papel; azul al 5% mezclado con Papel en la fila elegida; Papel Gris al 40% mezclado con Papel en la fila de totales) para tapar las cifras que pasan por debajo.
+- **Encabezados de tipo:** alineados a la derecha y abajo, con el ícono de 14px del tipo en su color de `TIPO_ACTIVO_META` sobre el nombre oficial completo.
+- **Desglose:** debajo de la matriz, una tarjeta titulada con la celda elegida y un enlace "Ver todos" para quitar la selección. Pantalla, impresión y Excel muestran lo mismo.
 
 ## Do's and Don'ts
 

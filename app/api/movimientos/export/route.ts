@@ -17,6 +17,8 @@ export async function GET(request: Request) {
     q: searchParams.get("q") ?? undefined,
     fechaDesde: searchParams.get("fechaDesde") ?? undefined,
     fechaHasta: searchParams.get("fechaHasta") ?? undefined,
+    usuarioId: searchParams.get("usuarioId") ?? undefined,
+    activoId: searchParams.get("activoId") ?? undefined,
   });
 
   const movimientos = await prisma.movimiento.findMany({

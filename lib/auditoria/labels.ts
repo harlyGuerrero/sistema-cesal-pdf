@@ -1,11 +1,12 @@
 import {
   ArrowRightLeftIcon,
-  CheckCircleIcon,
+  PlusCircleIcon,
   FileXIcon,
   PaperclipIcon,
   PencilIcon,
   PlusIcon,
   TrashIcon,
+  TrendingDownIcon,
   UserPlusIcon,
   XCircleIcon,
   type LucideIcon,
@@ -28,6 +29,7 @@ export const TIPO_ACCION_AUDITORIA_LABELS: Record<string, string> = {
   TRANSFERIR: "Transferir",
   ADJUNTAR_DOCUMENTO: "Adjuntar documento",
   ELIMINAR_DOCUMENTO: "Eliminar documento",
+  PROCESAR_DEPRECIACION: "Procesar depreciación",
 };
 
 export const TIPO_ACCION_AUDITORIA_OPTIONS = Object.entries(TIPO_ACCION_AUDITORIA_LABELS).map(
@@ -42,6 +44,7 @@ export const ENTIDADES_AUDITADAS = [
   "Sede",
   "UnidadOperativa",
   "Ambiente",
+  "ProcesamientoDepreciacion",
 ] as const;
 
 // Fase 32: ícono + color fijo por acción, agrupadas por semántica en vez de
@@ -50,12 +53,15 @@ export const ENTIDADES_AUDITADAS = [
 // de baja") — el ícono sigue distinguiendo cada acción dentro de su grupo.
 export const TIPO_ACCION_AUDITORIA_META: Record<string, { icon: LucideIcon; color: string }> = {
   CREAR: { icon: PlusIcon, color: "var(--color-good)" },
-  DAR_DE_ALTA: { icon: CheckCircleIcon, color: "var(--color-good)" },
+  // Fase 59: mismo ícono y color que ALTA / ASIGNACION en Movimientos, para
+  // que un mismo hecho se vea igual en las dos pantallas.
+  DAR_DE_ALTA: { icon: PlusCircleIcon, color: "var(--color-good)" },
   ACTUALIZAR: { icon: PencilIcon, color: "var(--primary)" },
-  ASIGNAR: { icon: UserPlusIcon, color: "var(--color-chart-2)" },
+  ASIGNAR: { icon: UserPlusIcon, color: "var(--primary)" },
   TRANSFERIR: { icon: ArrowRightLeftIcon, color: "var(--color-chart-5)" },
   ADJUNTAR_DOCUMENTO: { icon: PaperclipIcon, color: "var(--color-chart-4)" },
   ELIMINAR: { icon: TrashIcon, color: "var(--color-critical)" },
   DAR_DE_BAJA: { icon: XCircleIcon, color: "var(--color-critical)" },
   ELIMINAR_DOCUMENTO: { icon: FileXIcon, color: "var(--color-critical)" },
+  PROCESAR_DEPRECIACION: { icon: TrendingDownIcon, color: "var(--color-chart-3)" },
 };

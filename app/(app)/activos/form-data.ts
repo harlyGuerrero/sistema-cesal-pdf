@@ -12,6 +12,7 @@ export async function getActivoFormData(): Promise<{
     prisma.tipoActivo.findMany({
       orderBy: { name: "asc" },
       include: {
+        tasaDepreciacion: true,
         categorias: {
           orderBy: { nombre: "asc" },
           include: {
@@ -38,5 +39,13 @@ export async function getActivoFormData(): Promise<{
     }),
   ]);
 
-  return { tiposActivo, sedes };
+  // Fase 60: la tasa viaja como texto (un Decimal no se puede pasar a un
+  // Client Component); solo la activa cuenta como configurada.
+  return {
+    tiposActivo: tiposActivo.map(({ tasaDepreciacion, ...tipo }) => ({
+      ...tipo,
+      tasaAnual: tasaDepreciacion?.activa ? tasaDepreciacion.tasaAnual.toString() : null,
+    })),
+    sedes,
+  };
 }

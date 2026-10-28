@@ -76,7 +76,7 @@ export default async function ImportDetailPage({
   return (
     <>
       <PageBreadcrumb items={[{ label: importRecord.fileName }]} />
-      <main className="space-y-6 p-6">
+      <main className="space-y-6 p-4 sm:p-6">
       <Card>
         <CardContent className="flex items-center gap-4">
           <span

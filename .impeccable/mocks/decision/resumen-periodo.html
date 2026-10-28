@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Resumen del periodo</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;font:14px/1.43 system-ui,"Segoe UI",Roboto,sans-serif;color:#1f1f1f;background:linear-gradient(135deg,#f9fcff,#f4f9fb 60%,#fffef4);display:flex}
+.side{width:240px;background:#fff;border-right:1px solid #ebebeb;padding:16px 12px}
+.logo{font-weight:700;color:#2a78d6;margin:4px 8px 20px}
+.nav{padding:8px 10px;border-radius:14px;font-weight:600;color:#444;margin-bottom:2px}
+.nav.on{background:#fff;color:#2a78d6;box-shadow:0 1px 3px rgba(0,0,0,.1);border-left:5px solid #2a78d6}
+.grp{font-size:12px;color:#666666;margin:14px 10px 6px}
+main{flex:1;padding:24px;display:grid;grid-template-columns:1fr 300px;grid-template-rows:auto auto 1fr;gap:20px}
+.head{grid-column:1/3;display:flex;justify-content:space-between}
+h1{font-size:20px;font-weight:500}
+.sub{color:#5f5f5f}
+.btn{height:32px;padding:0 10px;border:1px solid #e5e5e5;border-radius:10px;background:#fff;display:inline-flex;align-items:center}
+.card{background:#fff;border-radius:14px;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.1);padding:20px}
+.story{grid-column:1/2}
+.period{display:flex;gap:6px;margin-bottom:14px}
+.seg{padding:5px 12px;border-radius:10px;border:1px solid #e5e5e5;font-size:13px}
+.seg.on{background:#2a78d6;color:#fff;border-color:#2a78d6}
+.p{font-size:17px;line-height:1.6;max-width:760px}
+.p a{color:#2a78d6;text-decoration:underline;text-underline-offset:3px;font-weight:600}
+.aside{grid-row:2/4;grid-column:2}
+.aside h3{font-size:14px;font-weight:600;margin-bottom:12px}
+.f{margin-bottom:12px}.f label{font-size:12px;color:#5f5f5f;display:block;margin-bottom:4px}
+.in{height:32px;border:1px solid #e5e5e5;border-radius:10px;padding:6px 10px;color:#6b6b6b}
+.list{grid-column:1/2}
+.day{font-size:12px;font-weight:600;letter-spacing:.04em;color:#5f5f5f;text-transform:uppercase;margin:6px 0}
+.it{display:grid;grid-template-columns:10px 1fr 160px;gap:14px;padding:11px 0;border-top:1px solid #f0f0f0;align-items:baseline}
+.dot{width:8px;height:8px;border-radius:50%;margin-top:6px}
+.s{font-size:14px}.s b{font-weight:600}
+.c{font-size:12px;color:#5f5f5f}
+.m{font-size:12px;color:#5f5f5f;text-align:right}
+</style></head><body>
+<aside class="side"><div class="logo">CESAL · Patrimonio</div>
+<div class="grp">Principal</div><div class="nav">Dashboard</div><div class="nav">Activos</div><div class="nav">Importaciones</div><div class="nav">Depreciación</div>
+<div class="grp">Organización</div><div class="nav">Sedes</div><div class="nav">Responsables</div><div class="nav on">Movimientos</div><div class="nav">Auditoría</div></aside>
+<main>
+<div class="head"><div><h1>Historial de movimientos</h1><p class="sub">Consulta los cambios realizados en los activos de CESAL.</p></div><span class="btn">Exportar a Excel</span></div>
+<div class="card story">
+<div class="period"><span class="seg">Hoy</span><span class="seg">Esta semana</span><span class="seg on">Este mes</span><span class="seg">Rango…</span></div>
+<p class="p">En octubre se registraron <a>5 activos nuevos</a>, <a>4 asignaciones</a> y <a>3 cambios de ubicación</a>. Se dio de baja <a>1 activo</a>. La mayor actividad fue en <b>Huachipa</b>, y quien más registró fue <b>Ángela Aliaga</b>.</p>
+</div>
+<div class="card aside"><h3>Filtrar</h3>
+<div class="f"><label>Buscar activo</label><div class="in">Código o nombre…</div></div>
+<div class="f"><label>Tipo de movimiento</label><div class="in">Todos</div></div>
+<div class="f"><label>Registrado por</label><div class="in">Todos</div></div>
+<div class="f"><label>Sede</label><div class="in">Todas</div></div>
+<div class="f"><label>Desde / hasta</label><div class="in">01/10 – 20/10/2026</div></div></div>
+<div class="card list">
+<div class="day">Hoy · 20 de octubre</div>
+<div class="it"><span class="dot" style="background:#898781"></span><div><div class="s">Estado de <b>LECTOR CODIGO BARRAS</b> cambiado de Asignado a <b>Disponible</b></div><div class="c">INF-LE-26-0001 · Huachipa › CETPRO - Huachipa</div></div><div class="m">12:38 · Ángela Aliaga</div></div>
+<div class="it"><span class="dot" style="background:#2a78d6"></span><div><div class="s"><b>LECTOR CODIGO BARRAS</b> asignado a <b>Sergio</b></div><div class="c">INF-LE-26-0001 · Huachipa › CETPRO - Huachipa</div></div><div class="m">12:37 · Ángela Aliaga</div></div>
+<div class="it"><span class="dot" style="background:#0ca30c"></span><div><div class="s"><b>LECTOR CODIGO BARRAS</b> registrado en el sistema</div><div class="c">INF-LE-26-0001 · Ubicación inicial: Huachipa › CETPRO - Huachipa</div></div><div class="m">12:37 · Ángela Aliaga</div></div>
+<div class="day">Lunes, 19 de octubre</div>
+<div class="it"><span class="dot" style="background:#e87ba4"></span><div><div class="s">Sede de <b>Laptop Lenovo ThinkPad E14</b> cambiada de San Isidro a <b>Abancay</b></div><div class="c">INF-LA-26-0003 · Abancay</div></div><div class="m">17:05 · Ángela Aliaga</div></div>
+</div></main></body></html>

@@ -94,14 +94,16 @@ export function TipoActivoPieCard({ data, total }: { data: TipoActivoPieDatum[];
                 outerRadius={90}
                 strokeWidth={5}
                 onClick={(_, index) => setActiveKey(data[index].key)}
-                shape={({ outerRadius = 0, ...props }) =>
+                // recharts incluye `key` en las props del sector: se pasa aparte en
+                // vez de propagarlo con el spread (React lo marca como error).
+                shape={({ outerRadius = 0, key, ...props }) =>
                   props.index === activeIndex ? (
-                    <g>
+                    <g key={key}>
                       <Sector {...props} outerRadius={outerRadius + 8} />
                       <Sector {...props} outerRadius={outerRadius + 20} innerRadius={outerRadius + 11} />
                     </g>
                   ) : (
-                    <Sector {...props} outerRadius={outerRadius} />
+                    <Sector key={key} {...props} outerRadius={outerRadius} />
                   )
                 }
               >

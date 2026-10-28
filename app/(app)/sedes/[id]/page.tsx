@@ -36,7 +36,7 @@ export default async function SedeDetailPage({
   return (
     <>
       <PageBreadcrumb items={[{ label: sede.name }]} />
-      <main className="p-6">
+      <main className="p-4 sm:p-6">
       <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border bg-card shadow-sm">
         <FormPageHeader
           icon={Building2Icon}
@@ -44,7 +44,7 @@ export default async function SedeDetailPage({
           description={`Región: ${REGION_LABELS[sede.region] ?? sede.region}`}
         />
 
-        <div className="space-y-5 p-6">
+        <div className="space-y-5 p-4 sm:p-6">
           <FormSection icon={MapPinIcon} title="Datos de la sede" color="var(--color-good)">
             <SedeEditForm sedeId={sede.id} name={sede.name} region={sede.region} />
           </FormSection>
@@ -66,7 +66,7 @@ export default async function SedeDetailPage({
           </FormSection>
         </div>
 
-        <div className="border-t p-6">
+        <div className="border-t p-4 sm:p-6">
           <DeleteSedeButton
             sedeId={sede.id}
             hasChildren={sede._count.unidadesOperativas > 0 || sede._count.ambientes > 0}

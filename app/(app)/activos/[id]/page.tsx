@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { FileTextIcon, PackageIcon, UserIcon } from "lucide-react";
+import { FileTextIcon, HistoryIcon, PackageIcon, TrendingDownIcon, UserIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { FormPageHeader } from "@/components/form-page-header";
@@ -11,6 +11,10 @@ import { getActivoFormData } from "../form-data";
 import { DeleteActivoButton } from "./delete-activo-button";
 import { ResponsableSection } from "./responsable-section";
 import { DocumentoList } from "./documento-list";
+import { DepreciacionActivoContent } from "./depreciacion-section";
+import { cargarDepreciacionActivo } from "@/lib/depreciacion/detalle";
+import { agregarHistorial, formatPeriodo } from "@/lib/depreciacion/calculo";
+import { MovimientosTabla } from "../../movimientos/movimientos-tabla";
 
 function toDateInputValue(date: Date | null): string {
   return date ? date.toISOString().slice(0, 10) : "";
@@ -27,7 +31,7 @@ export default async function ActivoDetailPage({
 }) {
   const { id } = await params;
 
-  const [activo, { tiposActivo, sedes }, responsables] = await Promise.all([
+  const [activo, { tiposActivo, sedes }, responsables, depreciacion] = await Promise.all([
     prisma.activo.findUnique({
       where: { id },
       include: {
@@ -35,7 +39,32 @@ export default async function ActivoDetailPage({
         importItem: true,
         especificaciones: { include: { campo: true, valorCatalogoValor: true } },
         documentos: { where: { estado: true }, orderBy: { createdAt: "desc" } },
-        _count: { select: { documentos: true } },
+        // Fase 59: historial de movimientos, del más reciente al más antiguo.
+        movimientos: {
+          orderBy: { fecha: "desc" },
+          include: {
+            activo: {
+              select: {
+                id: true,
+                nombreActivo: true,
+                codigoPatrimonial: true,
+                sede: { select: { name: true } },
+                unidadOperativa: { select: { name: true } },
+                ambiente: { select: { name: true } },
+              },
+            },
+            usuario: { select: { nombres: true, apellidos: true } },
+            responsableAnterior: true,
+            responsableNuevo: true,
+            sedeAnterior: true,
+            sedeNueva: true,
+            unidadOperativaAnterior: true,
+            unidadOperativaNueva: true,
+            ambienteAnterior: true,
+            ambienteNuevo: true,
+          },
+        },
+        _count: { select: { documentos: true, depreciaciones: true } },
       },
     }),
     getActivoFormData(),
@@ -43,9 +72,10 @@ export default async function ActivoDetailPage({
       where: { estado: true },
       orderBy: [{ nombres: "asc" }, { apellidos: "asc" }],
     }),
+    cargarDepreciacionActivo(prisma, id),
   ]);
 
-  if (!activo) {
+  if (!activo || !depreciacion) {
     notFound();
   }
 
@@ -98,7 +128,7 @@ export default async function ActivoDetailPage({
   return (
     <>
       <PageBreadcrumb items={[{ label: activo.nombreActivo }]} />
-      <main className="p-6">
+      <main className="p-4 sm:p-6">
         <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border bg-card shadow-sm">
           <FormPageHeader
             icon={PackageIcon}
@@ -117,7 +147,7 @@ export default async function ActivoDetailPage({
             }
           />
 
-          <div className="space-y-5 p-6 pb-0">
+          <div className="space-y-5 p-4 sm:p-6 pb-0">
             <FormSection icon={UserIcon} title="Responsable" color="var(--color-chart-2)">
               <ResponsableSection
                 activoId={activo.id}
@@ -129,6 +159,31 @@ export default async function ActivoDetailPage({
             <FormSection icon={FileTextIcon} title={`Documentos (${activo.documentos.length})`} color="var(--color-chart-3)">
               <DocumentoList activoId={activo.id} documentos={activo.documentos} />
             </FormSection>
+
+            <div id="historial" className="scroll-mt-20">
+              <FormSection
+                icon={HistoryIcon}
+                title={`Historial de movimientos (${activo.movimientos.length})`}
+                color="var(--color-chart-5)"
+              >
+                {activo.movimientos.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Este activo todavía no tiene movimientos registrados.
+                  </p>
+                ) : (
+                  <div className="-mx-4 border-t sm:-mx-5">
+                    <MovimientosTabla movimientos={activo.movimientos} mostrarActivo={false} />
+                  </div>
+                )}
+              </FormSection>
+            </div>
+
+            {/* Fase 58: ancla #depreciacion — el botón "Ver" de /depreciacion llega acá. */}
+            <div id="depreciacion" className="scroll-mt-20">
+              <FormSection icon={TrendingDownIcon} title="Depreciación" color="var(--color-chart-3)">
+                <DepreciacionActivoContent data={depreciacion} />
+              </FormSection>
+            </div>
           </div>
 
           <ActivoForm
@@ -137,12 +192,18 @@ export default async function ActivoDetailPage({
             tiposActivo={tiposActivo}
             sedes={sedes}
             esDeImportacion={activo.importItemId != null}
+            historialDepreciacion={agregarHistorial(depreciacion.historial)}
+            ultimoPeriodoDepreciado={
+              depreciacion.resumen.ultimoPeriodo ? formatPeriodo(depreciacion.resumen.ultimoPeriodo) : null
+            }
           />
 
-          <div className="border-t p-6">
+          <div className="border-t p-4 sm:p-6">
             <DeleteActivoButton
               activoId={activo.id}
-              hasHistory={activo.importItemId !== null || activo._count.documentos > 0}
+              hasHistory={
+                activo.importItemId !== null || activo._count.documentos > 0 || activo._count.depreciaciones > 0
+              }
             />
           </div>
         </div>

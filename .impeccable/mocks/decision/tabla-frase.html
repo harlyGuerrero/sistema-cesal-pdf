@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Tabla legible</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{width:1440px;height:900px;overflow:hidden;font:14px/1.43 system-ui,"Segoe UI",Roboto,sans-serif;color:#1f1f1f;background:linear-gradient(135deg,#f9fcff,#f4f9fb 60%,#fffef4);display:flex}
+.side{width:240px;background:#fff;border-right:1px solid #ebebeb;padding:16px 12px}
+.logo{font-weight:700;color:#2a78d6;margin:4px 8px 20px}
+.nav{padding:8px 10px;border-radius:14px;font-weight:600;color:#444;margin-bottom:2px}
+.nav.on{background:#fff;color:#2a78d6;box-shadow:0 1px 3px rgba(0,0,0,.1);border-left:5px solid #2a78d6}
+.grp{font-size:12px;color:#666666;margin:14px 10px 6px}
+main{flex:1;padding:24px;display:flex;flex-direction:column;gap:20px}
+h1{font-size:20px;font-weight:500}.sub{color:#5f5f5f}
+.row{display:flex;justify-content:space-between}
+.btn{height:32px;padding:0 10px;border:1px solid #e5e5e5;border-radius:10px;background:#fff;display:inline-flex;align-items:center}
+.card{background:#fff;border-radius:14px;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.1)}
+.filters{display:grid;grid-template-columns:2fr repeat(4,1fr) auto;gap:12px;padding:16px;align-items:end}
+.f label{font-size:12px;color:#5f5f5f;display:block;margin-bottom:4px}
+.in{height:32px;border:1px solid #e5e5e5;border-radius:10px;padding:6px 10px;color:#6b6b6b}
+.tabs{display:flex;gap:4px;padding:12px 16px 0}
+.tab{padding:6px 12px;border-radius:10px;font-size:13px;color:#555}
+.tab.on{background:#eaf2fc;color:#2a78d6;font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{font-size:12px;font-weight:500;color:#5f5f5f;text-align:left;padding:10px 16px;border-bottom:1px solid #ebebeb}
+td{padding:12px 16px;border-bottom:1px solid #f2f2f2;vertical-align:top}
+.what{display:flex;gap:10px;align-items:flex-start}
+.ic{width:28px;height:28px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.w{font-weight:600}
+.tag{font-size:12px;color:#5f5f5f}
+.code{font-family:ui-monospace,monospace;font-size:12px;color:#5f5f5f}
+.exp td{background:#fafafa;font-size:13px}
+.kv{display:grid;grid-template-columns:140px 1fr 1fr;gap:6px 16px;max-width:760px}
+.kv .k{color:#5f5f5f;font-size:12px}
+.chev{color:#2a78d6}
+</style></head><body>
+<aside class="side"><div class="logo">CESAL · Patrimonio</div>
+<div class="grp">Principal</div><div class="nav">Dashboard</div><div class="nav">Activos</div><div class="nav">Importaciones</div><div class="nav">Depreciación</div>
+<div class="grp">Organización</div><div class="nav">Sedes</div><div class="nav">Responsables</div><div class="nav on">Movimientos</div><div class="nav">Auditoría</div></aside>
+<main>
+<div class="row"><div><h1>Historial de movimientos</h1><p class="sub">Consulta los cambios realizados en los activos de CESAL.</p></div><span class="btn">Exportar a Excel</span></div>
+<div class="card filters">
+<div class="f"><label>Buscar activo</label><div class="in">Código patrimonial o nombre…</div></div>
+<div class="f"><label>Tipo</label><div class="in">Todos</div></div>
+<div class="f"><label>Registrado por</label><div class="in">Todos</div></div>
+<div class="f"><label>Desde</label><div class="in">01/10/2026</div></div>
+<div class="f"><label>Hasta</label><div class="in">20/10/2026</div></div>
+<span class="btn">Limpiar</span></div>
+<div class="card">
+<div class="tabs"><span class="tab on">Todos · 14</span><span class="tab">Altas · 5</span><span class="tab">Asignaciones · 4</span><span class="tab">Ubicación · 3</span><span class="tab">Bajas · 1</span></div>
+<table><thead><tr><th style="width:44%">Qué pasó</th><th>Activo</th><th>Registrado por</th><th>Fecha ↓</th><th></th></tr></thead><tbody>
+<tr><td><div class="what"><span class="ic" style="background:#f1f1f0;color:#666">●</span><div><div class="w">Estado cambiado de Asignado a Disponible</div><div class="tag">Cambio de estado</div></div></div></td><td>LECTOR CODIGO BARRAS<div class="code">INF-LE-26-0001</div></td><td>Ángela Aliaga</td><td>20/10/2026<div class="tag">12:38</div></td><td class="chev">▴</td></tr>
+<tr class="exp"><td colspan="5"><div class="kv"><span class="k"></span><span class="k">Antes</span><span class="k">Ahora</span>
+<span class="k">Estado</span><span>Asignado</span><b>Disponible</b>
+<span class="k">Ubicación</span><span>Huachipa › CETPRO - Huachipa</span><span>Sin cambios</span>
+<span class="k">Motivo</span><span>No especificado</span><span></span></div></td></tr>
+<tr><td><div class="what"><span class="ic" style="background:#eaf2fc;color:#2a78d6">+</span><div><div class="w">Activo asignado a Sergio</div><div class="tag">Asignación</div></div></div></td><td>LECTOR CODIGO BARRAS<div class="code">INF-LE-26-0001</div></td><td>Ángela Aliaga</td><td>20/10/2026<div class="tag">12:37</div></td><td class="chev">▾</td></tr>
+<tr><td><div class="what"><span class="ic" style="background:#e9f6e9;color:#0a8a0a">✓</span><div><div class="w">Activo registrado en el sistema</div><div class="tag">Alta · Huachipa › CETPRO - Huachipa</div></div></div></td><td>LECTOR CODIGO BARRAS<div class="code">INF-LE-26-0001</div></td><td>Ángela Aliaga</td><td>20/10/2026<div class="tag">12:37</div></td><td class="chev">▾</td></tr>
+<tr><td><div class="what"><span class="ic" style="background:#fcedf3;color:#c2557f">⌖</span><div><div class="w">Sede cambiada de San Isidro a Abancay</div><div class="tag">Transferencia de sede</div></div></div></td><td>Laptop Lenovo ThinkPad E14<div class="code">INF-LA-26-0003</div></td><td>Ángela Aliaga</td><td>19/10/2026<div class="tag">17:05</div></td><td class="chev">▾</td></tr>
+</tbody></table></div></main></body></html>

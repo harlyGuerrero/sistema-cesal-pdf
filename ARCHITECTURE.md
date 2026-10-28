@@ -200,6 +200,18 @@ Cada fila de producto detectada en un PDF se convierte en un `ImportItem`. Es el
 
 Registra qué motor procesó cada PDF, para permitir comparar motores y conservar trazabilidad histórica. Ejemplos de motor: `DOCLING`, `GLM_OCR`, `GRANITE_DOCLING`, `OLLAMA`. Un `Import` puede tener múltiples `ProcessingAttempt` (ej. Docling falla en una tabla y se reintenta con VLM).
 
+### Depreciación (Fase 58)
+
+Depreciación lineal trimestral sobre `Activo.costoAdquisicion`, valor residual S/ 0,00. Empieza en el trimestre calendario de `fechaAdquisicion` con la tasa trimestral completa; cada trimestre deprecia `costo × tasa trimestral` (sobre el costo, no sobre el saldo) y el último solo el saldo pendiente. El motor es puro y vive en `lib/depreciacion/calculo.ts`: montos en centavos enteros, redondeo half-up por periodo.
+
+- `TasaDepreciacion`: tasa **anual** por `TipoActivo` (sembrada con las tasas oficiales de CESAL). La trimestral se deriva como anual / 4 en un solo lugar (`lib/depreciacion/tasas.ts`). Un tipo sin tasa activa es "configuración pendiente" y sus activos no se deprecian.
+- `DepreciacionPeriodo`: instantánea inmutable por activo y trimestre (costo base, tasa aplicada, importe, acumulado, valor neto), única por `(activoId, anio, trimestre)`. Los periodos se registran en orden y sin huecos desde el trimestre de adquisición, así el acumulado siempre es verificable como la suma de los importes.
+- `ProcesamientoDepreciacion`: cada ejecución de "Procesar trimestre" (quién, hasta qué trimestre, resultado), auditada en `AuditoriaLog` como `PROCESAR_DEPRECIACION`.
+
+Procesar el trimestre P registra, para cada activo, todos los trimestres que le falten hasta P (activos cargados tarde incluidos). Es idempotente: un periodo ya registrado nunca se recalcula ni se duplica. Corre en una sola transacción con un lock consultivo, todo o nada. No se deprecian activos sin costo o fecha válidos (pendientes de revisión), ni activos dados de baja; un activo totalmente depreciado sigue en el patrimonio con su costo e historial y valor neto 0. Con depreciación registrada, el costo, la fecha y el tipo de un activo quedan fijos y el activo no se puede eliminar.
+
+El estado de depreciación (`PENDIENTE_REVISION`, `CONFIGURACION_PENDIENTE`, `PENDIENTE_DEPRECIACION`, `EN_DEPRECIACION`, `TOTALMENTE_DEPRECIADO`) no es una columna: se deriva de los datos del activo más su historial. El módulo `/depreciacion` y la sección del detalle del activo usan el mismo resumen, así que el valor neto coincide entre ambos.
+
 ## 7. Rol de Ollama
 
 Ollama **no** es el parser principal del PDF. Su función:
