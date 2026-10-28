@@ -5,7 +5,6 @@ import { BreadcrumbProvider } from "@/components/breadcrumb-context";
 import { BreadcrumbSlot } from "@/components/breadcrumb-slot";
 import { NotificationBell } from "@/components/notification-bell";
 import { getSessionUsuario } from "@/lib/auth/session";
-import { Separator } from "@/components/ui/separator";
 import { prisma } from "@/lib/db";
 
 const NOTIFICACIONES_CAMPANA_TAKE = 8;

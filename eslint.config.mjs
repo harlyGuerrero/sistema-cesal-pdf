@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Dependencias Python del Document Service (traen JS de terceros).
+    "document-service/.venv/**",
   ]),
 ]);
 
