@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArchiveXIcon, FileTextIcon, HistoryIcon, PackageIcon, TrendingDownIcon, UserIcon } from "lucide-react";
+import { ArchiveXIcon, FileTextIcon, HistoryIcon, PackageIcon, TagIcon, TrendingDownIcon, UserIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { FormPageHeader } from "@/components/form-page-header";
@@ -158,6 +158,15 @@ export default async function ActivoDetailPage({
                 >
                   <FileTextIcon />
                   Ver ficha técnica
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  render={<Link href={`/activos/${activo.id}/etiqueta`} />}
+                  nativeButton={false}
+                >
+                  <TagIcon />
+                  Etiqueta
                 </Button>
                 {/* Fase 66: la acción frecuente va arriba; eliminar queda al pie. */}
                 {dadoDeBaja ? (

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { ArchiveXIcon, EyeIcon, MoreVerticalIcon, PencilIcon, RotateCcwIcon, TrashIcon } from "lucide-react";
+import { ArchiveXIcon, EyeIcon, MoreVerticalIcon, PencilIcon, RotateCcwIcon, TagIcon, TrashIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -97,6 +97,10 @@ export function ActivoRowActions({
             <MoreVerticalIcon />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem render={<Link href={`/activos/${activoId}/etiqueta`} />}>
+              <TagIcon />
+              Imprimir etiqueta
+            </DropdownMenuItem>
             {dadoDeBaja ? (
               <DropdownMenuItem render={<Link href={`/activos/${activoId}`} />}>
                 <RotateCcwIcon />

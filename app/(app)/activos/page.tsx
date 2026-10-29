@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { ArchiveIcon, CheckCircle2Icon, PlusIcon, Trash2Icon, UserIcon, WrenchIcon } from "lucide-react";
+import { ArchiveIcon, CheckCircle2Icon, PlusIcon, TagIcon, Trash2Icon, UserIcon, WrenchIcon } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -74,6 +74,15 @@ export default async function ActivosPage({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ImportExportActivosBar exportQuery={{ q, tipoActivoId, sedeId, estadoPatrimonial }} />
+          {/* Fase 67: etiquetas de los activos filtrados, para inventario. */}
+          <Button
+            variant="outline"
+            render={<Link href={etiquetasHref({ q, tipoActivoId, sedeId, estadoPatrimonial })} />}
+            nativeButton={false}
+          >
+            <TagIcon />
+            Imprimir etiquetas
+          </Button>
           <Button render={<Link href="/activos/nuevo" />} nativeButton={false}>
             <PlusIcon />
             Nuevo activo
@@ -267,4 +276,13 @@ function PageButton({
       {children}
     </Link>
   );
+}
+
+function etiquetasHref(filtros: Record<string, string | undefined>): string {
+  const params = new URLSearchParams();
+  for (const [clave, valor] of Object.entries(filtros)) {
+    if (valor && valor !== "all") params.set(clave, valor);
+  }
+  const qs = params.toString();
+  return qs ? `/activos/etiquetas?${qs}` : "/activos/etiquetas";
 }

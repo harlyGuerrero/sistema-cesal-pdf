@@ -4,6 +4,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { BreadcrumbProvider } from "@/components/breadcrumb-context";
 import { BreadcrumbSlot } from "@/components/breadcrumb-slot";
 import { NotificationBell } from "@/components/notification-bell";
+import { EscanerGlobal } from "@/components/escaner-global";
 import { getSessionUsuario } from "@/lib/auth/session";
 import { prisma } from "@/lib/db";
 
@@ -33,6 +34,8 @@ export default async function AuthenticatedLayout({ children }: LayoutProps<"/">
 
   return (
     <SidebarProvider>
+      {/* Fase 67: escanear una etiqueta desde cualquier pantalla abre la ficha. */}
+      <EscanerGlobal />
       <AppSidebar className="print:hidden" usuario={usuario} />
       {/* bg-transparent: deja ver el fondo con glow de CESAL definido en
           body (globals.css) a través del <main> de cada página — SidebarInset

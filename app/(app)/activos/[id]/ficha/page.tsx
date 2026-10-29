@@ -15,6 +15,7 @@ import {
   MOTIVO_BAJA_LABELS,
 } from "@/lib/activos/labels";
 import { PrintButton } from "@/components/print-button";
+import { CodigoBarras } from "@/components/codigo-barras";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { nombreCompleto } from "@/lib/nombre-completo";
 import { preciosConIgv } from "@/lib/activos/igv";
@@ -157,8 +158,10 @@ export default async function FichaActivoPage({
             {activo.subcategoria && ` · ${activo.subcategoria.categoria.nombre} › ${activo.subcategoria.nombre}`}
           </p>
         </div>
-        <div className="shrink-0 print:hidden">
-          <PrintButton className="w-full sm:w-auto" />
+        <div className="flex shrink-0 flex-col items-stretch gap-3 sm:items-end">
+          <PrintButton className="w-full sm:w-auto print:hidden" />
+          {/* Fase 67: el mismo código que va en la etiqueta del bien. */}
+          <CodigoBarras codigoPatrimonial={activo.codigoPatrimonial} className="w-56 self-center border sm:self-end" />
         </div>
       </header>
 
